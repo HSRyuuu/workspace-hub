@@ -24,19 +24,43 @@
 
 ---
 
-## 설치 — .dmg 다운로드
+## 설치 — 소스에서 빌드
 
-1. [Releases](https://github.com/HSRyuuu/workspace-hub/releases) 에서 최신 `.dmg` 다운로드
-2. `.dmg` 더블클릭 → `workspace-hub.app` 을 `/Applications` 으로 드래그
-3. **첫 실행 시 Gatekeeper 경고**가 뜹니다. 코드사이닝이 안 되어 있어 그렇습니다. 터미널에서 한 번만 실행:
+배포된 `.dmg`를 따로 제공하지 않고, **저장소를 clone 해서 본인 머신에서 빌드**하는 방식입니다. 본인이 직접 빌드한 앱은 macOS Gatekeeper의 quarantine 대상이 아니라 별도 우회 명령 없이 바로 실행됩니다.
 
-   ```bash
-   xattr -dr com.apple.quarantine /Applications/workspace-hub.app
-   ```
+### 사전조건 (한 번만)
 
-   이후로는 정상적으로 실행됩니다.
+```bash
+brew install pnpm
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh   # rustup
+xcode-select --install                                            # 이미 있으면 skip
+```
 
-> 코드사이닝과 노타라이즈는 Apple Developer Program 비용($99/년)이 들기 때문에 개인 프로젝트 범위에서는 생략했습니다.
+### 설치 (install.sh 사용 — 권장)
+
+```bash
+git clone https://github.com/HSRyuuu/workspace-hub.git
+cd workspace-hub
+./install.sh
+```
+
+`install.sh` 는 사전조건 확인 → 의존성 설치 → `pnpm tauri build` → `/Applications` 으로 복사까지 한 번에 수행합니다. 빌드 자체는 수 분 소요됩니다(첫 빌드 기준).
+
+### 설치 (수동)
+
+스크립트를 쓰지 않고 직접 빌드하고 싶다면:
+
+```bash
+git clone https://github.com/HSRyuuu/workspace-hub.git
+cd workspace-hub/app
+pnpm install
+pnpm tauri build
+cp -R src-tauri/target/release/bundle/macos/workspace-hub.app /Applications/
+```
+
+설치 후 Launchpad/Finder 에서 `workspace-hub` 검색 → 더블클릭으로 실행.
+
+> 코드사이닝·노타라이즈(Apple Developer Program $99/년)는 개인 프로젝트 범위라 생략했습니다. 그래서 사전 빌드된 `.dmg` 대신 소스 빌드 방식을 택했습니다.
 
 ---
 
@@ -50,38 +74,6 @@
 
 - 백업하려면 위 폴더를 그대로 복사해두면 됩니다.
 - 앱을 삭제해도 데이터는 남습니다. 완전 삭제하려면 `~/.workspace-hub/` 디렉토리도 함께 지우세요.
-
----
-
-## 직접 빌드해서 쓰기
-
-릴리스 .dmg 대신 소스에서 빌드하고 싶다면:
-
-### 사전조건
-
-- Rust (rustup, 안정판) — `rustc >= 1.78`
-- Node.js 20+ / pnpm
-- Xcode Command Line Tools (`xcode-select --install`)
-
-### 빌드
-
-```bash
-git clone https://github.com/HSRyuuu/workspace-hub.git
-cd workspace-hub/app
-pnpm install
-pnpm tauri build
-```
-
-결과물:
-
-```
-app/src-tauri/target/release/bundle/dmg/workspace-hub_*.dmg
-app/src-tauri/target/release/bundle/macos/workspace-hub.app
-```
-
-`.app` 을 `/Applications` 에 끌어다 놓으면 됩니다. 본인이 직접 빌드한 앱은 Gatekeeper quarantine 이 안 붙어 위의 `xattr` 명령 없이 바로 실행됩니다.
-
-상세한 빌드 환경 사전조건은 [`BUILD_AND_RUN.md`](./BUILD_AND_RUN.md) 참고.
 
 ---
 

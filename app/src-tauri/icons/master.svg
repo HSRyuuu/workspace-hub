@@ -1,7 +1,8 @@
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
   <defs>
     <clipPath id="squircle">
-      <rect x="0" y="0" width="1024" height="1024" rx="229" ry="229"/>
+      <!-- Apple macOS app icon template: 824x824 body at (100,100), rx=185 — 100px margin for halo/shadow. -->
+      <rect x="100" y="100" width="824" height="824" rx="185" ry="185"/>
     </clipPath>
     <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="#f6f3ec"/>
@@ -9,8 +10,8 @@
     </linearGradient>
   </defs>
   <g clip-path="url(#squircle)">
-    <rect width="1024" height="1024" fill="url(#bg)"/>
-    <g transform="translate(512,512)">
+    <rect x="100" y="100" width="824" height="824" fill="url(#bg)"/>
+    <g transform="translate(512,512) scale(0.87)">
       <g stroke="#1d2230" stroke-width="28" stroke-linecap="round" opacity="0.85" fill="none">
         <line x1="0" y1="0" x2="-270" y2="-270"/>
         <line x1="0" y1="0" x2="270"  y2="-270"/>

@@ -2790,8 +2790,8 @@ textarea.info-input {
 }
 .app-card {
   position: relative;
-  width: 96px;
-  height: 96px;
+  width: 76px;
+  height: 76px;
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-md);
   background: var(--color-surface);
@@ -2821,12 +2821,12 @@ textarea.info-input {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 28px;
+  height: 28px;
   border-radius: var(--radius-md);
   background: var(--color-primary);
   color: var(--color-on-primary);
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 600;
 }
 .app-card-icon--ghost {
@@ -2851,8 +2851,8 @@ textarea.info-input {
   position: absolute;
   top: 4px;
   right: 4px;
-  width: 20px;
-  height: 20px;
+  width: 16px;
+  height: 16px;
   display: none;
   align-items: center;
   justify-content: center;

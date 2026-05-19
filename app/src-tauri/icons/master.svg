@@ -1,0 +1,39 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="squircle">
+      <rect x="0" y="0" width="1024" height="1024" rx="229" ry="229"/>
+    </clipPath>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f6f3ec"/>
+      <stop offset="1" stop-color="#e9e3d4"/>
+    </linearGradient>
+  </defs>
+  <g clip-path="url(#squircle)">
+    <rect width="1024" height="1024" fill="url(#bg)"/>
+    <g transform="translate(512,512)">
+      <g stroke="#1d2230" stroke-width="28" stroke-linecap="round" opacity="0.85" fill="none">
+        <line x1="0" y1="0" x2="-270" y2="-270"/>
+        <line x1="0" y1="0" x2="270"  y2="-270"/>
+        <line x1="0" y1="0" x2="270"  y2="270"/>
+        <line x1="0" y1="0" x2="-270" y2="270"/>
+      </g>
+      <circle r="118" fill="#1d2230"/>
+      <circle cx="-270" cy="-270" r="120" fill="#2dd4bf"/>
+      <circle cx="270"  cy="-270" r="120" fill="#fbbf24"/>
+      <circle cx="270"  cy="270"  r="120" fill="#fb7185"/>
+      <circle cx="-270" cy="270"  r="120" fill="#1d2230"/>
+      <path d="M-310 -275 l30 30 l55 -55" stroke="#1d2230" stroke-width="28" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+      <g fill="#1d2230">
+        <circle cx="235" cy="-305" r="12"/><circle cx="270" cy="-305" r="12"/><circle cx="305" cy="-305" r="12"/>
+        <circle cx="235" cy="-270" r="12"/><circle cx="270" cy="-270" r="12"/><circle cx="305" cy="-270" r="12"/>
+        <circle cx="235" cy="-235" r="12"/><circle cx="270" cy="-235" r="12"/><circle cx="305" cy="-235" r="12"/>
+      </g>
+      <g fill="#ffffff">
+        <rect x="210" y="236" width="120" height="14" rx="7"/>
+        <rect x="210" y="263" width="94"  height="14" rx="7"/>
+        <rect x="210" y="290" width="120" height="14" rx="7"/>
+      </g>
+      <path d="M-320 270 L-240 270 M-264 246 L-240 270 L-264 294" stroke="#f6f3ec" stroke-width="22" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+</svg>

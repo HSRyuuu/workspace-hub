@@ -1,0 +1,55 @@
+# Rust
+/target/
+**/*.rs.bk
+Cargo.lock.bak
+
+# Node / pnpm
+node_modules/
+.pnpm-store/
+
+# Tauri build artifacts
+app/src-tauri/target/
+app/dist/
+app/build/
+.tauri-dev-screen/
+
+# TypeScript incremental build cache
+*.tsbuildinfo
+
+# tsc-emitted siblings of vite.config.ts (개발 중 vite/tsc 가 자동 생성)
+app/vite.config.js
+app/vite.config.d.ts
+
+# 로컬 데이터 (개발 중 임시 sqlite를 프로젝트 루트에 두는 경우)
+/data/
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+
+# OS
+.DS_Store
+._*
+Thumbs.db
+
+# Logs
+*.log
+pnpm-debug.log*
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Editor
+.idea/
+.vscode/
+.history/
+*.swp
+*~
+
+# Env
+.env
+.env.local
+
+# OMC / Claude 에이전트 런타임 — 전체 비커밋 (세션·캐시·로그·내부 기획 메모 포함)
+.omc/
+app/.omc/

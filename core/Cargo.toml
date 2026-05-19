@@ -1,0 +1,22 @@
+[package]
+name = "workspace-hub-core"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+rusqlite = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+chrono = { workspace = true }
+clap = { workspace = true, optional = true }
+
+[features]
+# `clap-enums` 활성화 시 Priority/TodoStatus 에 clap::ValueEnum 이 derive 된다.
+# CLI 만 이 기능을 켜고, Tauri 앱은 clap 의존 없이 빌드.
+clap-enums = ["dep:clap"]
+
+[dev-dependencies]
+tempfile = { workspace = true }

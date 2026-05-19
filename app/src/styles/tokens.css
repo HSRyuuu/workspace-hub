@@ -1,0 +1,115 @@
+/*
+ * workspace-hub Design Tokens
+ * Source: docs/DESIGN.md (Linear 톤으로 이행 중 — Notion 보라 → Linear 인디고).
+ * 외부 폰트 다운로드 없음 — Inter 미설치 시 시스템 폰트로 fallback.
+ */
+
+:root {
+  /* === Surface & Canvas (라이트 단일 테마) === */
+  --color-canvas: #ffffff;
+  --color-surface: #fafafa;
+  --color-surface-soft: #f5f5f7;
+
+  /* === Hairlines / Borders === */
+  --color-hairline: rgba(15, 15, 15, 0.08);
+  --color-hairline-soft: rgba(15, 15, 15, 0.04);
+  --color-hairline-strong: rgba(15, 15, 15, 0.16);
+
+  /* === Text === */
+  --color-ink-deep: #0f0f12;
+  --color-ink: #18181b;
+  --color-charcoal: #27272a;
+  --color-slate: #3f3f46;
+  --color-steel: #52525b;
+  --color-stone: #71717a;
+  --color-muted: #a1a1aa;
+
+  /* === Primary (Ink black — 핵심 액션 버튼) === */
+  --color-primary: #18181b;
+  --color-primary-pressed: #09090b;
+  --color-primary-deep: #09090b;
+  --color-on-primary: #ffffff;
+  /* selected 행 / active 토글 — 옅은 회색 (검정 primary에 어울리는 중성 배경)
+     #f4f4f5 → #e4e4e7: 사이드바 배경(canvas, surface)과 차이가 너무 작아 hover/selected 가
+     시각적으로 안 잡히던 회귀를 해결. 흰 배경 위에서도 명확히 구분되는 톤. */
+  --color-primary-soft: #e4e4e7;
+  /* focus ring — 중성 회색 톤 (보라/블루 X) */
+  --color-primary-ring: #d4d4d8;
+
+  /* === Data colors — workspace dot · priority · 카테고리 === */
+  --color-data-blue: #3f6ac4;
+  --color-data-violet: #7c5cd9;
+  --color-data-teal: #0ea5a4;
+  --color-data-emerald: #10a26f;
+  --color-data-amber: #d97706;
+  --color-data-rose: #e11d48;
+  --color-data-slate: #64748b;
+
+  /* === Brand Navy (hero) — 본 앱은 hero 사용 안 함, 토큰만 보존 === */
+  --color-brand-navy: #1d1d3d;
+
+  /* === Card Tints (pastel) === */
+  --color-tint-peach: #fde6d7;
+  --color-tint-rose: #fdd9d9;
+  --color-tint-mint: #d7f0e0;
+  --color-tint-lavender: #e3dbf5;
+  --color-tint-sky: #d7e7f7;
+  --color-tint-yellow: #fbf2cf;
+  --color-tint-yellow-bold: #ffe66e;
+  --color-tint-cream: #f5efe0;
+  --color-tint-gray: #f0f0ee;
+
+  /* === Semantic === */
+  --color-success: #2f7a3a;
+  --color-warning: #c46f1a;
+  --color-error: #c33b3b;
+  --color-link-blue: #2469cf;
+
+  /* === Typography === */
+  --font-sans:
+    "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
+    "Apple SD Gothic Neo", system-ui, sans-serif;
+  --font-mono: "SF Mono", ui-monospace, Menlo, monospace;
+
+  --fs-hero: 48px;
+  --fs-display: 32px;
+  --fs-h1: 22px;
+  --fs-h2: 18px;
+  --fs-h3: 15px;
+  --fs-body: 12px;
+  --fs-sm: 11px;
+  --fs-xs: 10px;
+
+  /* === Radius === */
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
+  --radius-pill: 9999px;
+
+  /* === Spacing === */
+  --space-xxs: 3px;
+  --space-xs: 6px;
+  --space-sm: 9px;
+  --space-md: 12px;
+  --space-lg: 18px;
+  --space-xl: 24px;
+  --space-xxl: 36px;
+
+  /* === Shadows === */
+  --shadow-1: rgba(15, 15, 15, 0.04) 0px 1px 2px 0px;
+  --shadow-2: rgba(15, 15, 15, 0.08) 0px 4px 12px 0px;
+  --shadow-modal: rgba(15, 15, 15, 0.16) 0px 16px 48px -8px;
+
+  /* === Z-index Scale === */
+  --z-popover: 50;
+  --z-modal: 100;
+  --z-toast: 200;
+
+  /* === Priority chip (todo) — DESIGN.md 의 brand-orange/error 와 결합한 시맨틱 토큰 === */
+  --color-priority-high-bg: var(--color-tint-peach);
+  --color-priority-high-fg: #8b3a0a;
+  --color-priority-urgent-bg: var(--color-tint-rose);
+  --color-priority-urgent-fg: #8b1a1a;
+}

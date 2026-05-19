@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<title>workspace-hub · page header — remove direction</title>
+<style>
+  :root {
+    --canvas: #ffffff;
+    --surface: #fafafa;
+    --surface-soft: #f5f5f7;
+    --hairline: rgba(15, 15, 15, 0.08);
+    --hairline-strong: rgba(15, 15, 15, 0.16);
+    --ink-deep: #0f0f12;
+    --ink: #18181b;
+    --slate: #3f3f46;
+    --steel: #52525b;
+    --stone: #71717a;
+    --muted: #a1a1aa;
+    --primary: #18181b;
+    --on-primary: #ffffff;
+    --soft: #e4e4e7;
+    --data-emerald: #10a26f;
+    --font-sans: "Inter", -apple-system, "SF Pro Text", "Apple SD Gothic Neo", system-ui, sans-serif;
+    --font-display: "Fraunces", "Cormorant Garamond", "Apple SD Gothic Neo", Georgia, serif;
+    --font-mono: "SF Mono", ui-monospace, Menlo, monospace;
+  }
+
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&display=swap");
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #ececef;
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 56px 40px 80px;
+  }
+
+  .page-title {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 28px;
+    letter-spacing: -0.5px;
+    color: var(--ink-deep);
+    margin: 0 0 6px;
+  }
+  .page-sub {
+    color: var(--steel);
+    font-size: 13px;
+    margin: 0 0 36px;
+    max-width: 760px;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 32px;
+    max-width: 1120px;
+    margin: 0 auto;
+  }
+
+  .concept {
+    background: var(--canvas);
+    border: 1px solid var(--hairline);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(15, 15, 15, 0.04), 0 14px 38px -22px rgba(15, 15, 15, 0.18);
+  }
+  .concept__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--hairline);
+    background: linear-gradient(180deg, #fafafa 0%, #ffffff 100%);
+  }
+  .concept__head h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 16px;
+    letter-spacing: -0.2px;
+    color: var(--ink-deep);
+  }
+  .concept__head .tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.1px;
+    color: var(--stone);
+  }
+  .concept__note {
+    padding: 12px 20px 20px;
+    color: var(--steel);
+    font-size: 12.5px;
+    line-height: 1.55;
+    border-top: 1px solid var(--hairline);
+    background: var(--surface);
+  }
+  .concept__stage {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    min-height: 280px;
+    background: #fff;
+  }
+
+  /* ─── left rail (앱 좌측 아이콘 사이드바를 흉내) ─── */
+  .rail {
+    background: var(--surface);
+    border-right: 1px solid var(--hairline);
+    padding: 16px 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    position: relative;
+  }
+  .rail__btn {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: grid; place-items: center;
+    color: var(--stone);
+    cursor: default;
+    position: relative;
+  }
+  .rail__btn.is-active { background: var(--soft); color: var(--ink); }
+  .rail__btn svg { width: 18px; height: 18px; }
+
+  .canvas {
+    padding: 22px 28px 26px;
+    position: relative;
+  }
+
+  /* ───── shared mock body ───── */
+  .mock-input {
+    width: 100%;
+    height: 34px;
+    border: 1px solid var(--hairline-strong);
+    border-radius: 6px;
+    padding: 0 12px;
+    font-size: 12.5px;
+    color: var(--stone);
+    background: var(--canvas);
+    font-family: inherit;
+  }
+  .mock-tabs { display: flex; gap: 18px; margin-top: 14px; align-items: center; }
+  .mock-tab {
+    font-size: 12.5px;
+    color: var(--stone);
+    padding-bottom: 4px;
+    border-bottom: 1.5px solid transparent;
+    cursor: default;
+  }
+  .mock-tab.is-active { color: var(--ink); border-bottom-color: var(--ink); }
+  .mock-row {
+    margin-top: 10px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px dashed var(--hairline);
+    display: flex; align-items: center; padding: 0 12px;
+    font-size: 12px; color: var(--muted);
+  }
+  .mock-row + .mock-row { margin-top: 6px; }
+
+  /* ─────────────────────────────────────────────────────────────────────
+     concept A — Strip (완전 제거)
+     헤더 자체를 빼고 본문이 위에서 바로 시작. 좌측 사이드바 아이콘만 도메인 표시.
+     ───────────────────────────────────────────────────────────────────── */
+  .a-canvas { padding-top: 18px; }
+
+  /* ─────────────────────────────────────────────────────────────────────
+     concept B — Quiet Meta (라벨 제거, 카운트만 살림)
+     라벨은 사라지고 본문 첫 줄 끝에 11px 카운트만 우측 정렬로 흔적
+     ───────────────────────────────────────────────────────────────────── */
+  .b-meta {
+    position: absolute;
+    top: 22px;
+    right: 28px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    letter-spacing: 0.6px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .b-meta strong { color: var(--steel); font-weight: 600; }
+
+  /* ─────────────────────────────────────────────────────────────────────
+     concept C — Sidebar Tag (active 아이콘 옆에 가로 라벨)
+     헤더 영역엔 없음. 사이드바 active 아이콘 오른쪽으로 작은 라벨이 펼쳐짐.
+     ───────────────────────────────────────────────────────────────────── */
+  .rail--tagged { position: relative; overflow: visible; }
+  .c-tag {
+    position: absolute;
+    left: 50px;
+    top: 24px;
+    transform: translateY(0);
+    background: var(--ink-deep);
+    color: var(--on-primary);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+    z-index: 5;
+    box-shadow: 0 4px 14px -6px rgba(15,15,15,0.35);
+  }
+  .c-tag::before {
+    content: "";
+    position: absolute;
+    left: -4px; top: 50%; transform: translateY(-50%) rotate(45deg);
+    width: 7px; height: 7px;
+    background: var(--ink-deep);
+    border-radius: 1px;
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────
+     concept D — Search-first (헤더 영역을 입력바가 차지)
+     라벨 대신 placeholder가 도메인을 알려줌 ("새 할 일…")
+     ───────────────────────────────────────────────────────────────────── */
+  .d-input {
+    width: 100%;
+    height: 42px;
+    border: 1px solid var(--hairline);
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 0 16px 0 40px;
+    font-family: inherit;
+    font-size: 14px;
+    color: var(--stone);
+    position: relative;
+  }
+  .d-wrap { position: relative; }
+  .d-wrap::before {
+    content: "+";
+    position: absolute;
+    left: 16px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 18px;
+    font-weight: 300;
+    line-height: 1;
+  }
+</style>
+</head>
+<body>
+
+<h1 class="page-title">Header · remove direction</h1>
+<p class="page-sub">"TODO/캘린더" 라벨을 아예 보이지 않게 빼는 방향. 라벨이 사라진 자리를 어떻게 다루느냐로 4 변형. 좌측 사이드바 아이콘이 이미 도메인을 표시하므로 헤더 라벨은 중복.</p>
+
+<div class="grid">
+
+  <!-- ───────────────── A · Strip ───────────────── -->
+  <article class="concept">
+    <div class="concept__head">
+      <h3>A · Strip — 완전 제거</h3>
+      <span class="tag">no label · no meta · body starts at top</span>
+    </div>
+    <div class="concept__stage">
+      <aside class="rail">
+        <div class="rail__btn is-active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-7"/></svg>
+        </div>
+        <div class="rail__btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16M9 3v4M15 3v4"/></svg></div>
+        <div class="rail__btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 4h7l4 4v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M14 4v4h4"/></svg></div>
+        <div class="rail__btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
+      </aside>
+
+      <div class="canvas a-canvas">
+        <input class="mock-input" placeholder="할 일 입력 후 Enter" disabled />
+        <div class="mock-tabs">
+          <span class="mock-tab is-active">전체</span>
+          <span class="mock-tab">열림</span>
+          <span class="mock-tab">완료</span>
+        </div>
+        <div class="mock-row">test</div>
+        <div class="mock-row">미팅 노트 정리</div>
+        <div class="mock-row">PR 리뷰</div>
+      </div>
+    </div>
+    <div class="concept__note">
+      <strong>특징.</strong> 헤더 영역을 통째로 삭제. 본문이 화면 상단에서 바로 시작. 도메인 식별은 좌측 사이드바 active 아이콘이 전담.
+      <br/><strong>장점.</strong> 세로 공간 최대 회수(~48px). 가장 조용한 톤.
+      <br/><strong>리스크.</strong> 카운트(열림 4 · 완료 12)도 함께 사라짐 — 필요하다면 본문 어딘가에서 다시 노출해야 함.
+    </div>
+  </article>
+
+  <!-- ───────────────── B · Quiet Meta ───────────────── -->
+  <article class="concept">
+    <div class="concept__head">
+      <h3>B · Quiet Meta — 라벨만 제거, 카운트는 살림</h3>
+      <span class="tag">no title · mono count top-right</span>
+    </div>
+    <div class="concept__stage">
+      <aside class="rail">
+        <div class="rail__btn is-active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-7"/></svg>
+        </div>
+        <div class="rail__btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16M9 3v4M15 3v4"/></svg></div>
+        <div class="rail__btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 4h7l4 4v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M14 4v4h4"/></svg></div>
+        <div class="rail__btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
+      </aside>
+
+      <div class="canvas">
+        <span class="b-meta"><strong>04</strong> open · 12 done</span>
+        <input class="mock-input" placeholder="할 일 입력 후 Enter" disabled style="margin-top: 4px;" />
+        <div class="mock-tabs">
+          <span class="mock-tab is-active">전체</span>
+          <span class="mock-tab">열림</span>
+          <span class="mock-tab">완료</span>
+        </div>
+        <div class="mock-row">test</div>
+        <div class="mock-row">미팅 노트 정리</div>
+        <div class="mock-row">PR 리뷰</div>
+      </div>
+    </div>
+    <div class="concept__note">
+      <strong>특징.</strong> 큰 "TODO" 라벨은 빼고, 우측 상단에 모노스페이스 10px 카운트만 미세하게 남김. 라벨은 사라졌지만 상태 정보(열림 4 · 완료 12)는 유지.
+      <br/><strong>장점.</strong> A 만큼 조용하면서, 카운트 메타가 흔적처럼 남아 "이 페이지 상태"를 한눈에.
+      <br/><strong>리스크.</strong> 카운트가 본문 콘텐츠와 시각적으로 부딪힐 수 있음 — 우측 상단 고정으로 회피.
+    </div>
+  </article>
+
+  <!-- ───────────────── C · Sidebar Tag ───────────────── -->
+  <article class="concept">
+    <div class="concept__head">
+      <h3>C · Sidebar Tag — 사이드바 옆에 작은 라벨</h3>
+      <span class="tag">no header area · pill tag beside active icon</span>
+    </div>
+    <div class="concept__stage">
+      <aside class="rail rail--tagged">
+        <div class="rail__btn is-active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-7"/></svg>
+        </div>
+        <span class="c-tag">Todo</span>
+        <div class="rail__btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16M9 3v4M15 3v4"/></svg></div>
+        <div class="rail__btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 4h7l4 4v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M14 4v4h4"/></svg></div>
+        <div class="rail__btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
+      </aside>
+
+      <div class="canvas a-canvas">
+        <input class="mock-input" placeholder="할 일 입력 후 Enter" disabled />
+        <div class="mock-tabs">
+          <span class="mock-tab is-active">전체</span>
+          <span class="mock-tab">열림</span>
+          <span class="mock-tab">완료</span>
+        </div>
+        <div class="mock-row">test</div>
+        <div class="mock-row">미팅 노트 정리</div>
+        <div class="mock-row">PR 리뷰</div>
+      </div>
+    </div>
+    <div class="concept__note">
+      <strong>특징.</strong> 본문 헤더 영역은 빔. 대신 좌측 사이드바 active 아이콘 옆으로 작은 검정 라벨이 가로로 펼쳐져 도메인을 알려줌. 라벨은 항상 보이거나, hover/처음 진입시만 잠시 보이게도 가능.
+      <br/><strong>장점.</strong> A 의 세로 공간을 그대로 가져가면서도 "이 화면이 뭔지" 단서가 사이드바 안에서 해결됨.
+      <br/><strong>리스크.</strong> 사이드바 폭이 좁아서 라벨이 본문 위로 떠 있는 모양 — 본문 첫 행과 충돌할 수 있음. 작게/희미하게.
+    </div>
+  </article>
+
+  <!-- ───────────────── D · Search-first ───────────────── -->
+  <article class="concept">
+    <div class="concept__head">
+      <h3>D · Action-first — 입력바가 헤더 자리를 차지</h3>
+      <span class="tag">no title · primary action sits at top</span>
+    </div>
+    <div class="concept__stage">
+      <aside class="rail">
+        <div class="rail__btn is-active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-7"/></svg>
+        </div>
+        <div class="rail__btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 9h16M9 3v4M15 3v4"/></svg></div>
+        <div class="rail__btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 4h7l4 4v12a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z"/><path d="M14 4v4h4"/></svg></div>
+        <div class="rail__btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg></div>
+      </aside>
+
+      <div class="canvas a-canvas">
+        <div class="d-wrap">
+          <input class="d-input" placeholder="새 할 일… (Enter)" disabled />
+        </div>
+        <div class="mock-tabs">
+          <span class="mock-tab is-active">전체</span>
+          <span class="mock-tab">열림</span>
+          <span class="mock-tab">완료</span>
+        </div>
+        <div class="mock-row">test</div>
+        <div class="mock-row">미팅 노트 정리</div>
+        <div class="mock-row">PR 리뷰</div>
+      </div>
+    </div>
+    <div class="concept__note">
+      <strong>특징.</strong> 헤더 자리에 도메인의 1순위 액션(추가 입력바)을 더 크게/도드라지게 올려놓음. 라벨은 placeholder 의미("새 할 일…")에 흡수.
+      <br/><strong>장점.</strong> 라벨이 안 보여도 "지금 뭘 하는 곳"인지 placeholder 가 매번 알려줌. 추가 동작이 가장 빠른 위치로 올라옴.
+      <br/><strong>리스크.</strong> 도메인마다 1순위 액션이 다르면(메모는 입력, 캘린더는 이동 등) 일관성이 깨질 수 있음.
+    </div>
+  </article>
+
+</div>
+
+</body>
+</html>

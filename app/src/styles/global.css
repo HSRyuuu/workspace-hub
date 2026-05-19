@@ -2243,7 +2243,9 @@ button.chip {
 }
 .markdown-editor ul[data-type="taskList"] li > label {
   flex: 0 0 auto;
-  margin-top: 0.2em;
+  display: inline-flex;
+  align-items: center;
+  height: 1.55em;
   user-select: none;
 }
 .markdown-editor ul[data-type="taskList"] li > label > input[type="checkbox"] {

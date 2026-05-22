@@ -2504,6 +2504,16 @@ body.resize-cursor * {
   background: rgba(255, 255, 255, 0.12);
 }
 
+.error-toast--hint {
+  background: var(--color-ink-deep);
+}
+
+.error-toast--center {
+  right: auto;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
 /* ------------------------------------------------------------------ */
 /* Project — 좌측 프로젝트 목록 + 우측 상세(정보·앱·디렉터리·스크래치) */
 /* ------------------------------------------------------------------ */

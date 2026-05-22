@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import { showConfirmToast } from "../../components/ui/ConfirmToast";
-import { showErrorToast } from "../../components/ui/Toast";
+import { showErrorToast, showHintToast } from "../../components/ui/Toast";
 import { MarkdownEditor } from "../../components/ui/MarkdownEditor";
 import { memoApi, memoFolderApi } from "./api";
 import FolderTree from "./FolderTree";
@@ -254,21 +254,15 @@ export default function MemoPage() {
   );
 
   const handleDeleteMemo = useCallback(
-    (id: number) => {
-      showConfirmToast({
-        message: "이 메모를 휴지통으로 이동할까요?",
-        confirmLabel: "휴지통으로",
-        cancelLabel: "취소",
-        onConfirm: async () => {
-          try {
-            await memoApi.delete(id);
-            if (selectedId === id) setSelectedId(null);
-            await Promise.all([refreshMemos(), refreshTrashCount()]);
-          } catch (e) {
-            showErrorToast(String(e));
-          }
-        },
-      });
+    async (id: number) => {
+      try {
+        await memoApi.delete(id);
+        if (selectedId === id) setSelectedId(null);
+        await Promise.all([refreshMemos(), refreshTrashCount()]);
+        showHintToast("휴지통으로 이동되었습니다", "center");
+      } catch (e) {
+        showErrorToast(String(e));
+      }
     },
     [selectedId, refreshMemos, refreshTrashCount],
   );

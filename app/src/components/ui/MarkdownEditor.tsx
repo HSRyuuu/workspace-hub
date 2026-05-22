@@ -1,4 +1,4 @@
-import { useEditor, EditorContent, type Editor } from "@tiptap/react";
+import { useEditor, EditorContent, Extension, type Editor } from "@tiptap/react";
 import { BubbleMenu } from "@tiptap/react/menus";
 import type { EditorView } from "@tiptap/pm/view";
 import type { Slice } from "@tiptap/pm/model";
@@ -16,6 +16,38 @@ import { TableCell } from "@tiptap/extension-table-cell";
 import Placeholder from "@tiptap/extension-placeholder";
 import { Markdown, type MarkdownStorage } from "tiptap-markdown";
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+
+/** 클립보드 텍스트를 마크다운 해석 없이 code block 으로 삽입. 툴바 버튼·단축키 공용. */
+async function pastePlainText(editor: Editor) {
+  if (!editor.isEditable) return;
+  try {
+    const text = await navigator.clipboard.readText();
+    if (!text) return;
+    editor
+      .chain()
+      .focus()
+      .insertContent({
+        type: "codeBlock",
+        content: [{ type: "text", text }],
+      })
+      .run();
+  } catch {
+    // 권한/지원 안 됨 — 사용자가 일반 paste 로 재시도하도록 둠
+  }
+}
+
+/** Cmd/Ctrl+Shift+V: pastePlainText 단축키. */
+const PlainPasteShortcut = Extension.create({
+  name: "plainPasteShortcut",
+  addKeyboardShortcuts() {
+    return {
+      "Mod-Shift-v": () => {
+        void pastePlainText(this.editor);
+        return true;
+      },
+    };
+  },
+});
 
 export interface MarkdownEditorHandle {
   focus: () => void;
@@ -121,6 +153,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
           transformPastedText: true,
           transformCopiedText: true,
         }),
+        PlainPasteShortcut,
       ],
       content: initialMarkdown,
       editable: !readOnly,
@@ -222,7 +255,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
             onClick={setParagraph}
             title="본문 (⌘⌥0)"
           >
-            본문
+            P
           </button>
           {([1, 2, 3, 4, 5, 6] as const).map((l) => (
             <button
@@ -301,6 +334,14 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
             title="표 삽입 (3×3)"
           >
             ⊞
+          </button>
+          <span className="markdown-toolbar-sep" />
+          <button
+            type="button"
+            onClick={() => void pastePlainText(editor)}
+            title="텍스트만 붙여넣기 — 클립보드 내용을 마크다운 해석 없이 코드 블록으로 삽입 (⌘⇧V)"
+          >
+            텍스트
           </button>
           {saveIndicator && <span className="markdown-save-indicator">{saveIndicator}</span>}
         </div>

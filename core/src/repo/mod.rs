@@ -1,3 +1,4 @@
+pub mod file_explorer;
 pub mod memo;
 pub mod memo_folder;
 pub mod memo_project;

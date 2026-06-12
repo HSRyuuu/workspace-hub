@@ -4894,6 +4894,7 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-dialog",
+ "tauri-plugin-fs",
  "workspace-hub-core",
 ]
 

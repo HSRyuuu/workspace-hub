@@ -643,6 +643,7 @@ pub fn run() {
     let conn = db::open().expect("failed to open workspace-hub database");
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .manage(DbState(Mutex::new(conn)))
         .invoke_handler(tauri::generate_handler![
             todo_list,

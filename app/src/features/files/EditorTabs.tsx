@@ -38,6 +38,7 @@ export function EditorTabs({ tabs, activePath, onSelect, onClose }: EditorTabsPr
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
                 e.stopPropagation();
                 onClose(t.path);
               }

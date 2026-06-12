@@ -67,6 +67,8 @@ export default function FilesPage() {
   );
 
   const flushAll = useCallback(() => {
+    // NOTE: beforeunload 는 fire-and-forget — 마지막 <400ms 타이핑은 하드 종료 시
+    // 유실 가능. 완전 보장은 Rust 측 ExitRequested 이벤트 핸들러에서만 가능.
     for (const path of [...saveTimerRef.current.keys()]) void saveNow(path);
   }, [saveNow]);
 
@@ -96,6 +98,8 @@ export default function FilesPage() {
         setTabs([]);
         setActivePath(null);
         setDirtyPaths(new Set());
+        for (const [, timer] of saveTimerRef.current) clearTimeout(timer);
+        saveTimerRef.current.clear();
         contentRef.current.clear();
         await refreshFolders();
       } catch (e) {
@@ -195,6 +199,13 @@ export default function FilesPage() {
         for (const key of [...contentRef.current.keys()]) {
           if (affects(key)) contentRef.current.delete(key);
         }
+        // delete: 영향받는 경로의 pending 타이머 정리 (이미 삭제된 파일에 쓰기 방지)
+        for (const key of [...saveTimerRef.current.keys()]) {
+          if (affects(key)) {
+            clearTimeout(saveTimerRef.current.get(key)!);
+            saveTimerRef.current.delete(key);
+          }
+        }
       } else {
         // rename — 탭 path/name 치환
         const remap = (p: string) =>
@@ -214,9 +225,17 @@ export default function FilesPage() {
             contentRef.current.set(remap(key), v);
           }
         }
+        // rename: pending 타이머를 취소하고 새 path로 즉시 flush (옛 path로 saveNow하면 contentRef miss)
+        for (const key of [...saveTimerRef.current.keys()]) {
+          if (affects(key)) {
+            clearTimeout(saveTimerRef.current.get(key)!);
+            saveTimerRef.current.delete(key);
+            void saveNow(remap(key));
+          }
+        }
       }
     },
-    [activePath],
+    [activePath, saveNow],
   );
 
   // ── 렌더 ──────────────────────────────────────────────────────────────────

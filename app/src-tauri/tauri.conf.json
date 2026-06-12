@@ -9,6 +9,11 @@
     "beforeDevCommand": "pnpm dev",
     "beforeBuildCommand": "pnpm build"
   },
+  "plugins": {
+    "fs": {
+      "requireLiteralLeadingDot": false
+    }
+  },
   "app": {
     "windows": [
       {

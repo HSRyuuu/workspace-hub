@@ -5,8 +5,9 @@ import TodoPage from "./features/todo/TodoPage";
 import CalendarPage from "./features/calendar/CalendarPage";
 import MemoPage from "./features/memo/MemoPage";
 import ProjectPage from "./features/project/ProjectPage";
+import FilesPage from "./features/files/FilesPage";
 
-type Section = "todo" | "calendar" | "memos" | "project";
+type Section = "todo" | "calendar" | "memos" | "project" | "files";
 
 const ICON_SIZE = 18;
 const iconProps = {
@@ -46,12 +47,18 @@ const ProjectIcon = () => (
     <rect x="13.5" y="13.5" width="7" height="7" rx="1.5" />
   </svg>
 );
+const FilesIcon = () => (
+  <svg {...iconProps} aria-hidden>
+    <path d="M3.5 7.5v11A1.5 1.5 0 0 0 5 20h14a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 19 8h-7.2L9.6 5.7A1.5 1.5 0 0 0 8.5 5H5a1.5 1.5 0 0 0-1.5 1.5z" />
+  </svg>
+);
 
 const SECTIONS: { id: Section; label: string; enabled: boolean; Icon: () => JSX.Element }[] = [
   { id: "todo", label: "TODO", enabled: true, Icon: TodoIcon },
   { id: "calendar", label: "Calendar", enabled: true, Icon: CalendarIcon },
   { id: "memos", label: "Memo", enabled: true, Icon: MemoIcon },
   { id: "project", label: "Workspace", enabled: true, Icon: ProjectIcon },
+  { id: "files", label: "파일", enabled: true, Icon: FilesIcon },
 ];
 
 export default function App() {
@@ -83,11 +90,12 @@ export default function App() {
           </div>
         ))}
       </aside>
-      <main className={`main${section === "memos" || section === "project" ? " main--flush" : ""}`}>
+      <main className={`main${section === "memos" || section === "project" || section === "files" ? " main--flush" : ""}`}>
         {section === "todo" && <TodoPage />}
         {section === "calendar" && <CalendarPage onNavigateToTodo={() => setSection("todo")} />}
         {section === "memos" && <MemoPage />}
         {section === "project" && <ProjectPage />}
+        {section === "files" && <FilesPage />}
       </main>
     </div>
   );

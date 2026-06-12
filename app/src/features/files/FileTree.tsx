@@ -78,8 +78,8 @@ export function FileTree({ root, activePath, onOpenFile, onMutate }: FileTreePro
         if (newPath !== snapshot.node.path) {
           await fileOps.rename(snapshot.node.path, newPath);
           onMutate({ type: "rename", path: snapshot.node.path, newPath, isDir: snapshot.node.isDir });
+          await loadDir(dir);
         }
-        await loadDir(dir);
       } else {
         const newPath = `${snapshot.dirPath}/${name}`;
         if (snapshot.kind === "new-file") await fileOps.createFile(newPath);
@@ -115,6 +115,7 @@ export function FileTree({ root, activePath, onOpenFile, onMutate }: FileTreePro
   };
 
   const startCreate = (kind: "new-file" | "new-dir", dirPath: string) => {
+    committingRef.current = false;
     setCtxMenu(null);
     setExpanded((prev) => new Set(prev).add(dirPath));
     if (!childrenByDir.has(dirPath)) void loadDir(dirPath);
@@ -133,7 +134,7 @@ export function FileTree({ root, activePath, onOpenFile, onMutate }: FileTreePro
           void commitEditing(e.currentTarget.value, snapshot);
         }
         if (e.key === "Escape") {
-          committingRef.current = false;
+          committingRef.current = true;
           setEditing(null);
         }
       }}
@@ -201,6 +202,7 @@ export function FileTree({ root, activePath, onOpenFile, onMutate }: FileTreePro
           <button
             type="button"
             onClick={() => {
+              committingRef.current = false;
               setEditing({ kind: "rename", node: ctxMenu.node });
               setCtxMenu(null);
             }}

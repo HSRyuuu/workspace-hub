@@ -16,8 +16,9 @@ export function EditorTabs({ tabs, activePath, onSelect, onClose }: EditorTabsPr
   return (
     <div className="files-tabs" role="tablist">
       {tabs.map((t) => (
-        <div
+        <button
           key={t.path}
+          type="button"
           role="tab"
           aria-selected={t.path === activePath}
           className={`files-tab${t.path === activePath ? " active" : ""}`}
@@ -26,18 +27,25 @@ export function EditorTabs({ tabs, activePath, onSelect, onClose }: EditorTabsPr
         >
           <span className="files-tab-name">{t.name}</span>
           {t.dirty && <span className="files-tab-dirty" aria-label="unsaved" />}
-          <button
-            type="button"
+          <span
+            role="button"
+            tabIndex={0}
             className="files-tab-close"
             aria-label={`close ${t.name}`}
             onClick={(e) => {
               e.stopPropagation();
               onClose(t.path);
             }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.stopPropagation();
+                onClose(t.path);
+              }
+            }}
           >
             ×
-          </button>
-        </div>
+          </span>
+        </button>
       ))}
     </div>
   );

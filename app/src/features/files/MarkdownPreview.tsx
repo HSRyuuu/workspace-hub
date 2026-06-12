@@ -1,9 +1,10 @@
 import { useMemo } from "react";
 import { marked } from "marked";
+import DOMPurify from "dompurify";
 
 export function MarkdownPreview({ content }: { content: string }) {
   const html = useMemo(
-    () => marked.parse(content, { async: false }) as string,
+    () => DOMPurify.sanitize(marked.parse(content, { async: false }) as string),
     [content],
   );
   return (

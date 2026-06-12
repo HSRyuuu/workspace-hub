@@ -14,11 +14,12 @@ import type { TreeNode } from "./types";
  * 폴더 먼저, 이름순. 바이너리 확장자·.DS_Store 는 숨긴다(디렉토리는 모두 표시).
  */
 export async function listDir(dirPath: string): Promise<TreeNode[]> {
+  const base = dirPath.endsWith("/") ? dirPath.slice(0, -1) : dirPath;
   const entries = await readDir(dirPath);
   return entries
     .filter((e) => e.isDirectory || !isHiddenInTree(e.name))
     .map((e) => ({
-      path: `${dirPath}/${e.name}`,
+      path: `${base}/${e.name}`,
       name: e.name,
       isDir: e.isDirectory,
     }))

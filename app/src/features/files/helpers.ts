@@ -28,12 +28,12 @@ const LANGUAGE_BY_EXT: Record<string, LanguageId> = {
 
 /** 트리에서 숨기는 바이너리 확장자 — "텍스트는 최대한 포함"이므로 블랙리스트 방식. */
 const BINARY_EXTENSIONS = new Set([
-  "png", "jpg", "jpeg", "gif", "webp", "bmp", "ico", "icns", "tiff", "svgz",
+  "png", "jpg", "jpeg", "gif", "webp", "bmp", "ico", "icns", "tiff", "svgz", "heic", "avif",
   "pdf",
-  "zip", "tar", "gz", "bz2", "xz", "7z", "rar", "dmg", "pkg",
+  "zip", "tar", "gz", "tgz", "bz2", "xz", "7z", "rar", "dmg", "pkg",
   "exe", "dll", "so", "dylib", "bin", "o", "a", "class", "jar", "war",
   "pyc", "pyo", "wasm",
-  "mp3", "m4a", "wav", "flac", "ogg",
+  "mp3", "m4a", "wav", "flac", "ogg", "aac", "opus",
   "mp4", "mov", "avi", "mkv", "webm",
   "woff", "woff2", "ttf", "otf", "eot",
   "sqlite", "sqlite3", "db",

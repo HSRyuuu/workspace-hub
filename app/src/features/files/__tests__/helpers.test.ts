@@ -10,6 +10,11 @@ describe("extOf", () => {
     expect(extOf("Makefile")).toBe("");
     expect(extOf(".gitignore")).toBe("");
   });
+  it("returns empty for edge cases", () => {
+    expect(extOf(".")).toBe("");
+    expect(extOf("..")).toBe("");
+    expect(extOf("")).toBe("");
+  });
 });
 
 describe("languageForFile", () => {

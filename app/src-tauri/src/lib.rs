@@ -3,6 +3,7 @@ use std::sync::Mutex;
 
 use rusqlite::Connection;
 use serde::Serialize;
+use workspace_hub_core::models::file_explorer::FileExplorerFolder;
 use workspace_hub_core::models::memo::{
     Memo, MemoFolder, NewMemo, NewMemoFolder, UpdateMemo, UpdateMemoFolder,
 };
@@ -579,6 +580,42 @@ fn memo_project_unlink(
 }
 
 // =========================================================================
+// files (file explorer)
+// =========================================================================
+
+#[tauri::command]
+fn files_folder_list(state: tauri::State<DbState>) -> Result<Vec<FileExplorerFolder>, String> {
+    let conn = state.0.lock().map_err(lock_err)?;
+    repo::file_explorer::list(&conn).map_err(core_err)
+}
+
+#[tauri::command]
+fn files_folder_touch(
+    state: tauri::State<DbState>,
+    path: String,
+) -> Result<FileExplorerFolder, String> {
+    let conn = state.0.lock().map_err(lock_err)?;
+    repo::file_explorer::touch(&conn, &path).map_err(core_err)
+}
+
+#[tauri::command]
+fn files_folder_set_favorite(
+    state: tauri::State<DbState>,
+    id: i64,
+    favorite: bool,
+) -> Result<FileExplorerFolder, String> {
+    let conn = state.0.lock().map_err(lock_err)?;
+    repo::file_explorer::set_favorite(&conn, id, favorite).map_err(core_err)
+}
+
+#[tauri::command]
+fn files_folder_remove(state: tauri::State<DbState>, id: i64) -> Result<DeletedAck, String> {
+    let conn = state.0.lock().map_err(lock_err)?;
+    repo::file_explorer::remove(&conn, id).map_err(core_err)?;
+    Ok(DeletedAck { deleted: id })
+}
+
+// =========================================================================
 // shell util
 // =========================================================================
 
@@ -650,6 +687,10 @@ pub fn run() {
             memo_project_list_memos,
             memo_project_link,
             memo_project_unlink,
+            files_folder_list,
+            files_folder_touch,
+            files_folder_set_favorite,
+            files_folder_remove,
             open_in_finder,
             open_application,
         ])

@@ -1,9 +1,9 @@
 import { useEditor, EditorContent, Extension, type Editor } from "@tiptap/react";
 import { BubbleMenu } from "@tiptap/react/menus";
 import type { EditorView } from "@tiptap/pm/view";
-import type { Slice } from "@tiptap/pm/model";
-import type { ResolvedPos } from "@tiptap/pm/model";
+import type { Node as ProseMirrorNode, ResolvedPos, Slice } from "@tiptap/pm/model";
 import StarterKit from "@tiptap/starter-kit";
+import Paragraph from "@tiptap/extension-paragraph";
 import BulletList from "@tiptap/extension-bullet-list";
 import OrderedList from "@tiptap/extension-ordered-list";
 import ListItem from "@tiptap/extension-list-item";
@@ -16,6 +16,13 @@ import { TableCell } from "@tiptap/extension-table-cell";
 import Placeholder from "@tiptap/extension-placeholder";
 import { Markdown, type MarkdownStorage } from "tiptap-markdown";
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+
+/** prosemirror-markdown 의 MarkdownSerializerState 중 본 코드에서 쓰는 부분만. */
+interface SerializerState {
+  write(content: string): void;
+  renderInline(node: ProseMirrorNode): void;
+  closeBlock(node: ProseMirrorNode): void;
+}
 
 /** 클립보드 텍스트를 마크다운 해석 없이 code block 으로 삽입. 툴바 버튼·단축키 공용. */
 async function pastePlainText(editor: Editor) {
@@ -44,6 +51,37 @@ const PlainPasteShortcut = Extension.create({
       "Mod-Shift-v": () => {
         void pastePlainText(this.editor);
         return true;
+      },
+    };
+  },
+});
+
+/**
+ * 빈 paragraph 를 markdown round-trip 으로 보존하기 위한 paragraph override.
+ *
+ * 기본 직렬화기는 빈 paragraph 를 무시하고, markdown-it 파서는 다중 빈 줄을 paragraph
+ * 분리자 하나로 collapse 한다. 따라서 "first / (blank) / second" 입력이 저장·재로딩
+ * 후 "first / second" 로 줄어드는 회귀가 발생.
+ *
+ * 해법: 빈 paragraph 를 만나면 zero-width space (U+200B) 한 글자를 출력. 이 글자는
+ * 시각적으로 보이지 않지만 markdown-it 가 paragraph content 로 인식해 paragraph 노드
+ * 자체가 살아남는다. 재직렬화 시에도 같은 형태로 stable.
+ */
+const ZERO_WIDTH_SPACE = "​";
+
+export const ParagraphPreserveEmpty = Paragraph.extend({
+  addStorage() {
+    return {
+      markdown: {
+        serialize(state: SerializerState, node: ProseMirrorNode) {
+          if (node.childCount === 0) {
+            state.write(ZERO_WIDTH_SPACE);
+          } else {
+            state.renderInline(node);
+          }
+          state.closeBlock(node);
+        },
+        parse: {},
       },
     };
   },
@@ -128,7 +166,9 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
           bulletList: false,
           orderedList: false,
           listItem: false,
+          paragraph: false,
         }),
+        ParagraphPreserveEmpty,
         ListItem,
         BulletListWithShortcut,
         OrderedListWithShortcut,

@@ -3252,8 +3252,21 @@ textarea.info-input {
 .files-tree-row:hover { background: var(--color-surface); }
 .files-tree-row.active { background: var(--color-primary-soft); }
 .files-tree-row.dir { font-weight: 500; }
+.files-tree-caret-slot {
+  flex: 0 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
 .files-tree-caret { font-size: 10px; transition: transform 0.1s; color: var(--color-stone); }
 .files-tree-caret.open { transform: rotate(90deg); }
+.files-tree-ficon {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  color: var(--color-stone);
+}
+.files-tree-ficon.dir { color: var(--color-data-blue); }
 .files-tree-inline-input {
   font-size: 13px;
   padding: 1px 4px;
@@ -3284,6 +3297,8 @@ textarea.info-input {
 }
 .files-ctxmenu button:hover { background: var(--color-surface); }
 .files-ctxmenu button.danger { color: #b91c1c; }
+.files-ctxmenu button:disabled { color: var(--color-muted); cursor: default; }
+.files-ctxmenu button:disabled:hover { background: none; }
 
 .files-main { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
 .files-main-top {

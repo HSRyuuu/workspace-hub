@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { showConfirmToast } from "../../components/ui/ConfirmToast";
 import { showErrorToast } from "../../components/ui/Toast";
+import { FileIcon, FolderIcon } from "../../components/ui/icons";
 import { useOutsideClick } from "../../components/ui/useOutsideClick";
 import { fileOps, listDir } from "./fs";
 import type { TreeMutation, TreeNode } from "./types";
@@ -166,9 +167,14 @@ export function FileTree({ root, activePath, onOpenFile, onMutate }: FileTreePro
                 setCtxMenu({ x: e.clientX, y: e.clientY, node });
               }}
             >
-              {node.isDir && (
-                <span className={`files-tree-caret${expanded.has(node.path) ? " open" : ""}`}>▸</span>
-              )}
+              <span className="files-tree-caret-slot">
+                {node.isDir && (
+                  <span className={`files-tree-caret${expanded.has(node.path) ? " open" : ""}`}>▸</span>
+                )}
+              </span>
+              <span className={`files-tree-ficon${node.isDir ? " dir" : ""}`} aria-hidden>
+                {node.isDir ? <FolderIcon /> : <FileIcon />}
+              </span>
               {editing && editing.kind === "rename" && editing.node.path === node.path
                 ? renderInlineInput(node.name, editing)
                 : <span className="files-tree-name">{node.name}</span>}

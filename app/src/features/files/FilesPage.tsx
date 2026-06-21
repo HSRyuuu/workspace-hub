@@ -182,6 +182,25 @@ export default function FilesPage() {
     [activePath, saveNow],
   );
 
+  // 여러 탭을 한 번에 닫기 — 다른 탭/오른쪽 탭/모두 닫기
+  const closeTabs = useCallback(
+    async (paths: string[]) => {
+      const closeSet = new Set(paths);
+      for (const p of paths) {
+        await saveNow(p);
+        contentRef.current.delete(p);
+      }
+      setTabs((prev) => {
+        const next = prev.filter((t) => !closeSet.has(t.path));
+        if (activePath && closeSet.has(activePath)) {
+          setActivePath(next.length > 0 ? next[next.length - 1].path : null);
+        }
+        return next;
+      });
+    },
+    [activePath, saveNow],
+  );
+
   // 트리 CRUD 가 열린 탭에 미치는 영향 정리
   const handleMutation = useCallback(
     (m: TreeMutation) => {
@@ -268,6 +287,7 @@ export default function FilesPage() {
             activePath={activePath}
             onSelect={(p) => void selectTab(p)}
             onClose={(p) => void closeTab(p)}
+            onCloseMany={(paths) => void closeTabs(paths)}
           />
           {showPreviewToggle && (
             <div className="files-mode-toggle" role="tablist">

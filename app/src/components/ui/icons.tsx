@@ -91,6 +91,15 @@ export function FolderIcon({
   );
 }
 
+export function FileIcon({ size = 14 }: IconProps = {}) {
+  return (
+    <svg {...ICON_DEFAULTS} width={size} height={size} aria-hidden>
+      <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+      <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-5z" />
+    </svg>
+  );
+}
+
 export function PinIcon({ pinned, size = 14 }: { pinned: boolean } & IconProps) {
   return (
     <svg

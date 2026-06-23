@@ -58,7 +58,7 @@ const SECTIONS: { id: Section; label: string; enabled: boolean; Icon: () => JSX.
   { id: "calendar", label: "Calendar", enabled: true, Icon: CalendarIcon },
   { id: "memos", label: "Memo", enabled: true, Icon: MemoIcon },
   { id: "project", label: "Workspace", enabled: true, Icon: ProjectIcon },
-  { id: "files", label: "파일", enabled: true, Icon: FilesIcon },
+  { id: "files", label: "파일탐색기", enabled: true, Icon: FilesIcon },
 ];
 
 export default function App() {

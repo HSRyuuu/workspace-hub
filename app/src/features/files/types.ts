@@ -13,6 +13,12 @@ export interface TreeNode {
   isDir: boolean;
 }
 
+export interface OpenTab {
+  path: string;
+  name: string;
+  binary: boolean;
+}
+
 /** FileTree 가 CRUD 후 FilesPage 에 알리는 변경 — 열린 탭 정리에 사용. */
 export type TreeMutation =
   | { type: "delete"; path: string; isDir: boolean }

@@ -2,23 +2,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { showErrorToast } from "../../components/ui/Toast";
 import { filesFolderApi } from "./api";
-import { EditorTabs } from "./EditorTabs";
-import { FileEditor } from "./FileEditor";
-import { FileTree } from "./FileTree";
-import { FolderBar } from "./FolderBar";
+import { FileExplorerLayout } from "./FileExplorerLayout";
 import { fileOps } from "./fs";
 import { isMarkdown } from "./helpers";
-import { MarkdownPreview } from "./MarkdownPreview";
-import type { ExplorerFolder, TreeMutation, TreeNode } from "./types";
+import type { ExplorerFolder, OpenTab, TreeMutation, TreeNode } from "./types";
 
 const SAVE_DEBOUNCE_MS = 400;
-
-interface OpenTab {
-  path: string;
-  name: string;
-  /** UTF-8 디코딩 실패 → 에디터 대신 안내 표시. */
-  binary: boolean;
-}
 
 export default function FilesPage() {
   const [folders, setFolders] = useState<ExplorerFolder[]>([]);
@@ -144,8 +133,9 @@ export default function FilesPage() {
   const openFile = useCallback(
     async (node: TreeNode) => {
       if (activePath) await saveNow(activePath);
-      if (!tabs.some((t) => t.path === node.path)) {
-        let binary = false;
+      const existing = tabs.find((tab) => tab.path === node.path);
+      let binary = existing?.binary ?? false;
+      if (!existing) {
         try {
           const content = await fileOps.read(node.path);
           contentRef.current.set(node.path, content);
@@ -155,7 +145,7 @@ export default function FilesPage() {
         setTabs((prev) => [...prev, { path: node.path, name: node.name, binary }]);
       }
       setActivePath(node.path);
-      setMode("edit");
+      setMode(!binary && isMarkdown(node.name) ? "preview" : "edit");
     },
     [activePath, saveNow, tabs],
   );
@@ -163,10 +153,11 @@ export default function FilesPage() {
   const selectTab = useCallback(
     async (path: string) => {
       if (activePath && activePath !== path) await saveNow(activePath);
+      const next = tabs.find((tab) => tab.path === path);
       setActivePath(path);
-      setMode("edit");
+      setMode(next && !next.binary && isMarkdown(next.name) ? "preview" : "edit");
     },
-    [activePath, saveNow],
+    [activePath, saveNow, tabs],
   );
 
   const closeTab = useCallback(
@@ -262,57 +253,26 @@ export default function FilesPage() {
   const showPreviewToggle = activeTab !== null && !activeTab.binary && isMarkdown(activeTab.name);
 
   return (
-    <div className="files-layout">
-      <div className="files-side">
-        <FolderBar
-          current={current}
-          folders={folders}
-          onPickNewFolder={() => void pickNewFolder()}
-          onSelectFolder={(f) => void openFolder(f.path)}
-          onToggleFavorite={(f) => void toggleFavorite(f)}
-        />
-        {current && (
-          <FileTree
-            root={current.path}
-            activePath={activePath}
-            onOpenFile={(n) => void openFile(n)}
-            onMutate={handleMutation}
-          />
-        )}
-      </div>
-      <div className="files-main">
-        <div className="files-main-top">
-          <EditorTabs
-            tabs={tabs.map((t) => ({ path: t.path, name: t.name, dirty: dirtyPaths.has(t.path) }))}
-            activePath={activePath}
-            onSelect={(p) => void selectTab(p)}
-            onClose={(p) => void closeTab(p)}
-            onCloseMany={(paths) => void closeTabs(paths)}
-          />
-          {showPreviewToggle && (
-            <div className="files-mode-toggle" role="tablist">
-              <button type="button" className={mode === "edit" ? "active" : ""} onClick={() => setMode("edit")}>
-                Edit
-              </button>
-              <button type="button" className={mode === "preview" ? "active" : ""} onClick={() => setMode("preview")}>
-                Preview
-              </button>
-            </div>
-          )}
-        </div>
-        {!activeTab && <div className="files-empty">파일을 선택하세요</div>}
-        {activeTab?.binary && <div className="files-empty">바이너리 파일은 열 수 없습니다</div>}
-        {activeTab && !activeTab.binary && mode === "edit" && (
-          <FileEditor
-            path={activeTab.path}
-            initialContent={contentRef.current.get(activeTab.path) ?? ""}
-            onChange={(content) => scheduleSave(activeTab.path, content)}
-          />
-        )}
-        {activeTab && !activeTab.binary && mode === "preview" && (
-          <MarkdownPreview content={contentRef.current.get(activeTab.path) ?? ""} />
-        )}
-      </div>
-    </div>
+    <FileExplorerLayout
+      current={current}
+      folders={folders}
+      tabs={tabs}
+      activeTab={activeTab}
+      activePath={activePath}
+      dirtyPaths={dirtyPaths}
+      mode={mode}
+      showPreviewToggle={showPreviewToggle}
+      contentForActiveTab={activeTab ? contentRef.current.get(activeTab.path) ?? "" : ""}
+      onPickNewFolder={() => void pickNewFolder()}
+      onOpenFolder={(path) => void openFolder(path)}
+      onToggleFavorite={(folder) => void toggleFavorite(folder)}
+      onOpenFile={(node) => void openFile(node)}
+      onTreeMutation={handleMutation}
+      onSelectTab={(path) => void selectTab(path)}
+      onCloseTab={(path) => void closeTab(path)}
+      onCloseTabs={(paths) => void closeTabs(paths)}
+      onModeChange={setMode}
+      onContentChange={(content) => activeTab && scheduleSave(activeTab.path, content)}
+    />
   );
 }

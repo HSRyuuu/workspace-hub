@@ -1,10 +1,11 @@
 import { useRef, useState } from "react";
+import { FolderIcon, PinIcon } from "../../components/ui/icons";
 import { useOutsideClick } from "../../components/ui/useOutsideClick";
 import type { ExplorerFolder } from "./types";
 
 interface FolderBarProps {
   current: ExplorerFolder | null;
-  folders: ExplorerFolder[];
+  folders: readonly ExplorerFolder[];
   onPickNewFolder: () => void;
   onSelectFolder: (f: ExplorerFolder) => void;
   onToggleFavorite: (f: ExplorerFolder) => void;
@@ -31,11 +32,15 @@ export function FolderBar({
       <div className="files-folderbar-current" ref={ref}>
         <button
           type="button"
-          className="btn btn-ghost"
+          className="files-folder-trigger"
           onClick={() => setOpen((v) => !v)}
           title={current?.path ?? ""}
         >
-          {current ? baseName(current.path) : "폴더를 선택하세요"} ▾
+          <span className="files-folder-trigger-icon"><FolderIcon size={15} /></span>
+          <span className="files-folder-trigger-text">
+            <span className="files-folder-trigger-name">{current ? baseName(current.path) : "선택 안 됨"}</span>
+          </span>
+          <span className="files-folder-trigger-caret">▾</span>
         </button>
         {open && (
           <div className="files-folder-dropdown">
@@ -62,10 +67,10 @@ export function FolderBar({
           aria-label="즐겨찾기 토글"
           onClick={() => onToggleFavorite(current)}
         >
-          {current.is_favorite ? "★" : "☆"}
+          <PinIcon pinned={current.is_favorite} size={15} />
         </button>
       )}
-      <button type="button" className="btn btn-ghost" onClick={onPickNewFolder}>
+      <button type="button" className="files-folder-open" onClick={onPickNewFolder}>
         폴더 열기…
       </button>
     </div>
@@ -102,7 +107,7 @@ function FolderRow({
         aria-label="즐겨찾기 토글"
         onClick={() => onToggleFavorite(folder)}
       >
-        {folder.is_favorite ? "★" : "☆"}
+        <PinIcon pinned={folder.is_favorite} size={14} />
       </button>
     </div>
   );

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { showConfirmToast } from "../../components/ui/ConfirmToast";
 import { showErrorToast } from "../../components/ui/Toast";
-import { FileIcon, FolderIcon } from "../../components/ui/icons";
+import { FileIcon, FolderIcon, PlusIcon } from "../../components/ui/icons";
 import { useOutsideClick } from "../../components/ui/useOutsideClick";
 import { fileOps, listDir } from "./fs";
 import type { TreeMutation, TreeNode } from "./types";
@@ -189,12 +189,16 @@ export function FileTree({ root, activePath, onOpenFile, onMutate }: FileTreePro
   return (
     <div className="files-tree">
       <div className="files-tree-header">
-        <button type="button" className="btn btn-ghost btn--sm" onClick={() => startCreate("new-file", root)}>
-          + 파일
-        </button>
-        <button type="button" className="btn btn-ghost btn--sm" onClick={() => startCreate("new-dir", root)}>
-          + 폴더
-        </button>
+        <div className="files-tree-actions" aria-label="파일 트리 작업">
+          <button type="button" className="files-icon-btn" aria-label="새 파일" onClick={() => startCreate("new-file", root)}>
+            <PlusIcon size={13} />
+            <span>파일</span>
+          </button>
+          <button type="button" className="files-icon-btn" aria-label="새 폴더" onClick={() => startCreate("new-dir", root)}>
+            <PlusIcon size={13} />
+            <span>폴더</span>
+          </button>
+        </div>
       </div>
       <div className="files-tree-body">{renderNodes(root, 0)}</div>
       {ctxMenu && (

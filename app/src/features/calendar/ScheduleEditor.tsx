@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Button, ColorSwatch, DateField, TimeField, showConfirmToast } from "../../components/ui";
 import { TrashIcon } from "../../components/ui/icons";
 import { scheduleApi } from "./api";
-import { buildLocalIso, formatDateLocal, parseUtcIso } from "./dateUtils";
+import { buildLocalIso, formatDateLocal, parseUtcIso, toIsoDate } from "./dateUtils";
 import type { Schedule } from "./types";
 
 /** 새 일정 작성 모드(기존 = null) 또는 기존 일정 편집 모드 */
@@ -55,6 +55,40 @@ function parseHM(s: string): [number, number] {
   return [Number(m[1]), Number(m[2])];
 }
 
+function parseLocalDateTime(
+  date: string,
+  time: string,
+  allDay: boolean,
+  end: boolean,
+): Date | null {
+  const md = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  if (!md) return null;
+  const [, y, m, d] = md;
+  const [h, mi] = allDay ? (end ? [23, 59] : [0, 0]) : parseHM(time);
+  const value = new Date(Number(y), Number(m) - 1, Number(d), h, mi, 0, 0);
+  return Number.isNaN(value.getTime()) ? null : value;
+}
+
+function formatTime(d: Date): string {
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function syncEndAfterStartChange<T extends ReturnType<typeof defaultsFor>>(prev: T, next: T): T {
+  const prevStart = parseLocalDateTime(prev.startDate, prev.startTime, prev.allDay, false);
+  const prevEnd = parseLocalDateTime(prev.endDate, prev.endTime, prev.allDay, true);
+  const nextStart = parseLocalDateTime(next.startDate, next.startTime, next.allDay, false);
+  if (!prevStart || !prevEnd || !nextStart) return next;
+
+  const durationMs = prevEnd.getTime() - prevStart.getTime();
+  const nextEnd = new Date(nextStart.getTime() + (durationMs > 0 ? durationMs : 60 * 60 * 1000));
+
+  return {
+    ...next,
+    endDate: toIsoDate(nextEnd),
+    endTime: formatTime(nextEnd),
+  };
+}
+
 function buildIso(date: string, time: string, allDay: boolean, end: boolean): string {
   const md = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
   if (!md) return "";
@@ -71,11 +105,13 @@ export function ScheduleEditor({
   onCancel,
 }: ScheduleEditorProps) {
   const [state, setState] = useState(() => defaultsFor(existing, defaultDayIso));
+  const [endEdited, setEndEdited] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     setState(defaultsFor(existing, defaultDayIso));
+    setEndEdited(false);
     setError(null);
     // existing 의 id 가 같아도 다른 필드가 갱신되면(예: 저장 후 refresh) 폼이 stale 해지므로 updated_at 도 deps 에 포함.
   }, [existing?.id, existing?.updated_at, defaultDayIso]);
@@ -84,6 +120,18 @@ export function ScheduleEditor({
 
   function patchState<K extends keyof typeof state>(key: K, value: typeof state[K]) {
     setState((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function patchStart<K extends "startDate" | "startTime">(key: K, value: typeof state[K]) {
+    setState((prev) => {
+      const next = { ...prev, [key]: value };
+      return !isNew || endEdited ? next : syncEndAfterStartChange(prev, next);
+    });
+  }
+
+  function patchEnd<K extends "endDate" | "endTime">(key: K, value: typeof state[K]) {
+    setEndEdited(true);
+    patchState(key, value);
   }
 
   async function save() {
@@ -185,12 +233,12 @@ export function ScheduleEditor({
           <div className="cal-field-datetime">
             <DateField
               value={state.startDate}
-              onChange={(v) => patchState("startDate", v)}
+              onChange={(v) => patchStart("startDate", v)}
               ariaLabel="시작 날짜"
             />
             <TimeField
               value={state.startTime}
-              onChange={(v) => patchState("startTime", v)}
+              onChange={(v) => patchStart("startTime", v)}
               ariaLabel="시작 시간"
               disabled={state.allDay}
             />
@@ -201,12 +249,12 @@ export function ScheduleEditor({
           <div className="cal-field-datetime">
             <DateField
               value={state.endDate}
-              onChange={(v) => patchState("endDate", v)}
+              onChange={(v) => patchEnd("endDate", v)}
               ariaLabel="종료 날짜"
             />
             <TimeField
               value={state.endTime}
-              onChange={(v) => patchState("endTime", v)}
+              onChange={(v) => patchEnd("endTime", v)}
               ariaLabel="종료 시간"
               disabled={state.allDay}
             />

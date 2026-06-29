@@ -18,6 +18,39 @@ type RawBar =
 
 type WeekBar = RawBar & { slot: number };
 
+function isMultiDaySchedule(s: Schedule): boolean {
+  return s.start_at.slice(0, 10) !== s.end_at.slice(0, 10);
+}
+
+function compareRawBars(a: RawBar, b: RawBar): number {
+  if (a.startCol !== b.startCol) return a.startCol - b.startCol;
+
+  if (a.kind === "schedule" && b.kind === "schedule") {
+    const aMultiDay = isMultiDaySchedule(a.schedule);
+    const bMultiDay = isMultiDaySchedule(b.schedule);
+    if (aMultiDay && bMultiDay) {
+      const endCmp = b.schedule.end_at.localeCompare(a.schedule.end_at);
+      if (endCmp !== 0) return endCmp;
+    }
+
+    const startCmp = a.schedule.start_at.localeCompare(b.schedule.start_at);
+    if (startCmp !== 0) return startCmp;
+
+    if (aMultiDay || bMultiDay) {
+      const endCmp = b.schedule.end_at.localeCompare(a.schedule.end_at);
+      if (endCmp !== 0) return endCmp;
+    }
+
+    if (a.span !== b.span) return b.span - a.span;
+    return a.schedule.id - b.schedule.id;
+  }
+
+  if (a.span !== b.span) return b.span - a.span;
+  if (a.kind !== b.kind) return a.kind === "schedule" ? -1 : 1;
+  if (a.kind === "todo" && b.kind === "todo") return a.todo.id - b.todo.id;
+  return 0;
+}
+
 function chunk7(cells: WeekCell[]): WeekCell[][] {
   const out: WeekCell[][] = [];
   for (let i = 0; i < cells.length; i += 7) out.push(cells.slice(i, i + 7));
@@ -70,12 +103,8 @@ function buildWeekBars(
     const col = findTodoColInWeek(week, t);
     if (col != null) raw.push({ kind: "todo", todo: t, startCol: col, span: 1 });
   }
-  // 정렬: startCol asc → 긴 span 먼저 → schedule 우선
-  raw.sort((a, b) => {
-    if (a.startCol !== b.startCol) return a.startCol - b.startCol;
-    if (a.span !== b.span) return b.span - a.span;
-    return a.kind === "schedule" ? -1 : 1;
-  });
+  // 정렬: 주 내 위치 → schedule 시작시각 → multi-day 종료일 desc → 긴 span → schedule 우선
+  raw.sort(compareRawBars);
   const slotEnd: number[] = []; // slotEnd[i] = 그 슬롯의 마지막 bar의 (startCol + span)
   return raw.map((bar) => {
     let slot = 0;

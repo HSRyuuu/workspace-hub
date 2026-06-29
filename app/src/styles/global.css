@@ -1157,6 +1157,7 @@ button.chip {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
+  margin-bottom: var(--space-md);
 }
 
 .cal-cursor {

@@ -33,6 +33,15 @@
 
 > Reset 2026-05-18 — 적립한 lesson 이 실제로 적용되지 않은 채 디자인 churn 이 반복되어 비움. 다음 lesson 부터는 매 세션 시작에 반드시 훑고 적용한다.
 
+### 2026-06-29 — 캘린더 상단 컨트롤과 월 그리드 사이 여백 유지
+
+- **Trigger**: 캘린더 월 변경 버튼 영역과 월 그리드가 다시 붙어 보여, 이전에 고친 간격이 누락된 회귀 수정 요청.
+- **문제**: `.cal-toolbar` 다음에 `.cal-split` 이 바로 이어지는데 툴바 하단 spacing 규칙이 없어 월 그리드 border 가 버튼 영역에 붙어 보임.
+- **Rule**: 캘린더 상단 컨트롤을 수정할 때는 `.cal-toolbar` 아래 여백이 유지되는지 확인하고, 월 그리드의 top border 와 버튼 바닥이 붙지 않게 한다.
+- **적용 영역**: `app/src/styles/global.css`, `app/src/features/calendar/CalendarPage.tsx`, 캘린더 레이아웃 변경.
+- **반복 횟수**: 1
+- **승격 후보**: no
+
 ### 2026-05-18 — debounce save 는 selection 전환 진입점마다 명시적 flush 필요
 
 - **Trigger**: 메모 앱 재구성에서 selectedId 토글로 Editor mount/unmount 구조로 바꾼 직후, "새 메모 입력 → 뒤로가기 → 다시 그 메모 클릭" 시 입력 내용이 사라지는 회귀.

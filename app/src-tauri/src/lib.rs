@@ -639,6 +639,21 @@ fn open_application(path: String) -> Result<(), String> {
         .map_err(|e| format!("failed to open application `{path}`: {e}"))
 }
 
+/// macOS `open` 로 URL 을 기본 브라우저에서 연다.
+#[tauri::command]
+fn open_url(url: String) -> Result<(), String> {
+    let url = url.trim();
+    let lower = url.to_ascii_lowercase();
+    if !lower.starts_with("http://") && !lower.starts_with("https://") {
+        return Err(format!("unsupported url: {url}"));
+    }
+    Command::new("open")
+        .arg(url)
+        .spawn()
+        .map(|_| ())
+        .map_err(|e| format!("failed to open url `{url}`: {e}"))
+}
+
 pub fn run() {
     let conn = db::open().expect("failed to open workspace-hub database");
     tauri::Builder::default()
@@ -694,6 +709,7 @@ pub fn run() {
             files_folder_remove,
             open_in_finder,
             open_application,
+            open_url,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

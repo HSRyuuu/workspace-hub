@@ -1,6 +1,8 @@
 import { useEditor, EditorContent, Extension, type Editor } from "@tiptap/react";
 import { BubbleMenu } from "@tiptap/react/menus";
 import type { EditorView } from "@tiptap/pm/view";
+import { Decoration, DecorationSet } from "@tiptap/pm/view";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
 import type { Node as ProseMirrorNode, ResolvedPos, Slice } from "@tiptap/pm/model";
 import StarterKit from "@tiptap/starter-kit";
 import Paragraph from "@tiptap/extension-paragraph";
@@ -14,6 +16,7 @@ import { TableRow } from "@tiptap/extension-table-row";
 import { TableHeader } from "@tiptap/extension-table-header";
 import { TableCell } from "@tiptap/extension-table-cell";
 import Placeholder from "@tiptap/extension-placeholder";
+import { invoke } from "@tauri-apps/api/core";
 import { Markdown, type MarkdownStorage } from "tiptap-markdown";
 import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 
@@ -57,6 +60,63 @@ const PlainPasteShortcut = Extension.create({
 });
 
 /**
+ * code block 토글. 기본 toggleCodeBlock 은 setBlockType 을 선택된 블록마다 적용해
+ * 여러 줄(paragraph) 선택 시 줄마다 별도 code block 이 생긴다. 여러 textblock 이
+ * 걸쳐 선택된 경우엔 줄바꿈으로 이어붙인 단일 code block 으로 감싼다.
+ * (이미 code block 안이거나 단일 블록이면 기본 동작에 위임.)
+ */
+function toggleCodeBlockMerged(editor: Editor) {
+  if (editor.isActive("codeBlock")) {
+    editor.chain().focus().toggleCodeBlock().run();
+    return;
+  }
+  const { state } = editor;
+  const { from, to } = state.selection;
+  const lines: string[] = [];
+  let rangeFrom = Infinity;
+  let rangeTo = -Infinity;
+  state.doc.nodesBetween(from, to, (node, pos) => {
+    if (node.isTextblock) {
+      lines.push(node.textContent);
+      rangeFrom = Math.min(rangeFrom, pos);
+      rangeTo = Math.max(rangeTo, pos + node.nodeSize);
+      return false;
+    }
+    return true;
+  });
+  if (lines.length <= 1) {
+    editor.chain().focus().toggleCodeBlock().run();
+    return;
+  }
+  const text = lines.join("\n");
+  editor
+    .chain()
+    .focus()
+    .command(({ tr, dispatch }) => {
+      if (dispatch) {
+        const node = state.schema.nodes.codeBlock.create(null, state.schema.text(text));
+        tr.replaceRangeWith(rangeFrom, rangeTo, node);
+      }
+      return true;
+    })
+    .run();
+}
+
+/** code block 단축키(Mod-Alt-c)도 여러 줄 병합 동작을 쓰도록 기본 keymap 보다 우선 적용. */
+const CodeBlockMergeShortcut = Extension.create({
+  name: "codeBlockMergeShortcut",
+  priority: 1000,
+  addKeyboardShortcuts() {
+    return {
+      "Mod-Alt-c": () => {
+        toggleCodeBlockMerged(this.editor);
+        return true;
+      },
+    };
+  },
+});
+
+/**
  * 빈 paragraph 를 markdown round-trip 으로 보존하기 위한 paragraph override.
  *
  * 기본 직렬화기는 빈 paragraph 를 무시하고, markdown-it 파서는 다중 빈 줄을 paragraph
@@ -68,6 +128,80 @@ const PlainPasteShortcut = Extension.create({
  * 자체가 살아남는다. 재직렬화 시에도 같은 형태로 stable.
  */
 const ZERO_WIDTH_SPACE = "​";
+
+/** URL 끝에 붙은 구두점은 링크에서 제외 (문장 끝 마침표·괄호 등). */
+const URL_TRAILING_PUNCT = /[)\]}.,;:!?]+$/;
+
+function normalizeExternalUrl(raw: string) {
+  let url = raw.trim().replace(URL_TRAILING_PUNCT, "");
+  if (/^www\./i.test(url)) url = `https://${url}`;
+  if (!/^https?:\/\//i.test(url)) return null;
+  return url;
+}
+
+/**
+ * 한 텍스트 안의 외부 URL 들을 찾아 visible 구간(start/end)과 resolve 된 href 를 돌려준다.
+ * 클릭 hit-test(urlAtTextOffset)와 하이라이트(buildUrlDecorations)가 같은 출처를 쓰게 해
+ * "파란 밑줄 범위 == 클릭 가능 범위 == 열리는 URL" 이 코드상 항상 일치하도록 한다.
+ */
+function findUrls(text: string): { start: number; end: number; href: string }[] {
+  const pattern = /\b(?:https?:\/\/|www\.)[^\s<>"']+/gi;
+  const found: { start: number; end: number; href: string }[] = [];
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(text)) !== null) {
+    const href = normalizeExternalUrl(match[0]);
+    if (!href) continue;
+    const visible = match[0].replace(URL_TRAILING_PUNCT, "");
+    found.push({ start: match.index, end: match.index + visible.length, href });
+  }
+  return found;
+}
+
+function urlAtTextOffset(text: string, offset: number): string | null {
+  const hit = findUrls(text).find((u) => offset >= u.start && offset <= u.end);
+  return hit ? hit.href : null;
+}
+
+/**
+ * 본문 텍스트에서 외부 URL 구간을 찾아 .md-link inline 데코레이션으로 표시.
+ * 링크는 별도 노드/마크가 아니라 plain text 라 시각 표시가 없으므로, findUrls 가 고른
+ * 구간에 파란 링크 스타일을 입힌다. code block 내부는 제외.
+ */
+function buildUrlDecorations(doc: ProseMirrorNode): DecorationSet {
+  const decorations: Decoration[] = [];
+  doc.descendants((node, pos) => {
+    if (node.type.spec.code) return false;
+    if (!node.isTextblock) return true;
+    for (const u of findUrls(node.textContent)) {
+      decorations.push(Decoration.inline(pos + 1 + u.start, pos + 1 + u.end, { class: "md-link" }));
+    }
+    return false;
+  });
+  return DecorationSet.create(doc, decorations);
+}
+
+const urlDecorationKey = new PluginKey("urlDecoration");
+
+/** URL 구간에 .md-link 데코레이션을 적용하는 plugin 을 제공하는 익스텐션. */
+const UrlHighlighter = Extension.create({
+  name: "urlHighlighter",
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: urlDecorationKey,
+        state: {
+          init: (_config, state) => buildUrlDecorations(state.doc),
+          apply: (tr, deco) => (tr.docChanged ? buildUrlDecorations(tr.doc) : deco),
+        },
+        props: {
+          decorations(state) {
+            return urlDecorationKey.getState(state);
+          },
+        },
+      }),
+    ];
+  },
+});
 
 export const ParagraphPreserveEmpty = Paragraph.extend({
   addStorage() {
@@ -133,7 +267,7 @@ const TaskListWithShortcut = TaskList.extend({
 
 /**
  * TipTap 기반 WYSIWYG markdown 에디터. 활성 노드: H1~H6, paragraph, bullet/ordered/task list,
- * code block, marks: bold/italic/code (총 13종). 직렬화는 tiptap-markdown.
+ * code block, marks: bold/italic/strike/code (총 14종). 직렬화는 tiptap-markdown.
  *
  * 제목은 포함하지 않으며, 본문 + 툴바 + 선택적 saveIndicator 슬롯만 제공한다.
  */
@@ -159,7 +293,6 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
         StarterKit.configure({
           heading: { levels: [1, 2, 3, 4, 5, 6] },
           blockquote: false,
-          strike: false,
           link: false,
           underline: false,
           bulletList: false,
@@ -193,6 +326,8 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
           transformCopiedText: true,
         }),
         PlainPasteShortcut,
+        CodeBlockMergeShortcut,
+        UrlHighlighter,
       ],
       content: initialMarkdown,
       editable: !readOnly,
@@ -245,6 +380,19 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
           });
           return handled;
         },
+        handleClick: (view, pos, event) => {
+          if (!event.metaKey) return false;
+          const $pos = view.state.doc.resolve(pos);
+          const parent = $pos.parent;
+          if (!parent.isTextblock) return false;
+          const url = urlAtTextOffset(parent.textContent, $pos.parentOffset);
+          if (!url) return false;
+          event.preventDefault();
+          void invoke<void>("open_url", { url }).catch((error) => {
+            console.error("failed to open url", error);
+          });
+          return true;
+        },
       },
     });
 
@@ -253,6 +401,25 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
       if (!editor) return;
       editor.setEditable(!readOnly);
     }, [editor, readOnly]);
+
+    // Cmd/Ctrl 을 누르고 있는 동안에만 링크 위에서 pointer 커서로 바꿔 "지금 누르면 열린다"
+    // 를 알린다. (열기는 Cmd+클릭이라 평소엔 캐럿 편집을 방해하지 않도록 text 커서 유지.)
+    useEffect(() => {
+      if (!editor) return;
+      const dom = editor.view.dom as HTMLElement;
+      const sync = (e: KeyboardEvent) => {
+        dom.classList.toggle("cmd-pressed", e.metaKey || e.ctrlKey);
+      };
+      const clear = () => dom.classList.remove("cmd-pressed");
+      document.addEventListener("keydown", sync);
+      document.addEventListener("keyup", sync);
+      window.addEventListener("blur", clear);
+      return () => {
+        document.removeEventListener("keydown", sync);
+        document.removeEventListener("keyup", sync);
+        window.removeEventListener("blur", clear);
+      };
+    }, [editor]);
 
     useEffect(() => {
       if (!editor) return;
@@ -276,7 +443,7 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
     const toggleBullet = () => editor.chain().focus().toggleBulletList().run();
     const toggleOrdered = () => editor.chain().focus().toggleOrderedList().run();
     const toggleTask = () => editor.chain().focus().toggleTaskList().run();
-    const toggleCodeBlock = () => editor.chain().focus().toggleCodeBlock().run();
+    const toggleCodeBlock = () => toggleCodeBlockMerged(editor);
     const insertTable = () =>
       editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run();
 
@@ -326,6 +493,14 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
           </button>
           <button
             type="button"
+            className={editor.isActive("strike") ? "active" : ""}
+            onClick={() => editor.chain().focus().toggleStrike().run()}
+            title="Strikethrough"
+          >
+            <s>S</s>
+          </button>
+          <button
+            type="button"
             className={editor.isActive("code") ? "active" : ""}
             onClick={() => editor.chain().focus().toggleCode().run()}
             title="Inline code (⌘E)"
@@ -351,11 +526,11 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
           </button>
           <button
             type="button"
-            className={editor.isActive("taskList") ? "active" : ""}
+            className={editor.isActive("taskList") ? "markdown-toolbar-task active" : "markdown-toolbar-task"}
             onClick={toggleTask}
             title="Task list (⌘⌥9)"
           >
-            ☐
+            ☑
           </button>
           <button
             type="button"

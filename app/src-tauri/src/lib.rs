@@ -628,6 +628,18 @@ fn open_in_finder(path: String) -> Result<(), String> {
         .map_err(|e| format!("failed to open `{path}`: {e}"))
 }
 
+/// macOS `open -R` 로 Finder 에서 해당 항목을 선택한 채 띄운다(reveal).
+/// 파일이면 상위 폴더를 열어 그 파일을 하이라이트, 폴더면 상위에서 그 폴더를 선택한다.
+#[tauri::command]
+fn reveal_in_finder(path: String) -> Result<(), String> {
+    Command::new("open")
+        .arg("-R")
+        .arg(&path)
+        .spawn()
+        .map(|_| ())
+        .map_err(|e| format!("failed to reveal `{path}`: {e}"))
+}
+
 /// macOS `open` 로 .app 번들을 실행한다.
 /// .app 디렉터리든 그 안의 실행 바이너리 경로든 `open` 이 모두 처리한다.
 #[tauri::command]
@@ -708,6 +720,7 @@ pub fn run() {
             files_folder_set_favorite,
             files_folder_remove,
             open_in_finder,
+            reveal_in_finder,
             open_application,
             open_url,
         ])

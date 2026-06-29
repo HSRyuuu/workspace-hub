@@ -16,3 +16,9 @@ export const filesFolderApi = {
   remove: (id: number): Promise<void> =>
     invoke<void>("files_folder_remove", { id }),
 };
+
+export const filesShellApi = {
+  /** Finder 에서 해당 파일/폴더를 선택한 채 띄운다(`open -R`). */
+  revealInFinder: (path: string): Promise<void> =>
+    invoke<void>("reveal_in_finder", { path }),
+};

@@ -19,6 +19,12 @@ export interface OpenTab {
   binary: boolean;
 }
 
+/** "트리에서 보기" 요청 — 같은 경로 재요청도 구분하려고 nonce 를 함께 보낸다. */
+export interface RevealRequest {
+  path: string;
+  nonce: number;
+}
+
 /** FileTree 가 CRUD 후 FilesPage 에 알리는 변경 — 열린 탭 정리에 사용. */
 export type TreeMutation =
   | { type: "delete"; path: string; isDir: boolean }

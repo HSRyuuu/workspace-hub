@@ -3,7 +3,7 @@ import { FileEditor } from "./FileEditor";
 import { FileTree } from "./FileTree";
 import { FolderBar } from "./FolderBar";
 import { MarkdownPreview } from "./MarkdownPreview";
-import type { ExplorerFolder, OpenTab, TreeMutation, TreeNode } from "./types";
+import type { ExplorerFolder, OpenTab, RevealRequest, TreeMutation, TreeNode } from "./types";
 
 interface FileExplorerLayoutProps {
   readonly current: ExplorerFolder | null;
@@ -11,11 +11,13 @@ interface FileExplorerLayoutProps {
   readonly tabs: readonly OpenTab[];
   readonly activeTab: OpenTab | null;
   readonly activePath: string | null;
+  readonly revealRequest: RevealRequest | null;
   readonly dirtyPaths: ReadonlySet<string>;
   readonly mode: "edit" | "preview";
   readonly showPreviewToggle: boolean;
   readonly contentForActiveTab: string;
   readonly onPickNewFolder: () => void;
+  readonly onOpenPastedFile: (path: string) => Promise<boolean>;
   readonly onOpenFolder: (path: string) => void;
   readonly onToggleFavorite: (folder: ExplorerFolder) => void;
   readonly onOpenFile: (node: TreeNode) => void;
@@ -23,6 +25,7 @@ interface FileExplorerLayoutProps {
   readonly onSelectTab: (path: string) => void;
   readonly onCloseTab: (path: string) => void;
   readonly onCloseTabs: (paths: string[]) => void;
+  readonly onRevealInTree: (path: string) => void;
   readonly onModeChange: (mode: "edit" | "preview") => void;
   readonly onContentChange: (content: string) => void;
 }
@@ -33,11 +36,13 @@ export function FileExplorerLayout({
   tabs,
   activeTab,
   activePath,
+  revealRequest,
   dirtyPaths,
   mode,
   showPreviewToggle,
   contentForActiveTab,
   onPickNewFolder,
+  onOpenPastedFile,
   onOpenFolder,
   onToggleFavorite,
   onOpenFile,
@@ -45,6 +50,7 @@ export function FileExplorerLayout({
   onSelectTab,
   onCloseTab,
   onCloseTabs,
+  onRevealInTree,
   onModeChange,
   onContentChange,
 }: FileExplorerLayoutProps) {
@@ -55,6 +61,7 @@ export function FileExplorerLayout({
           current={current}
           folders={folders}
           onPickNewFolder={onPickNewFolder}
+          onOpenPastedFile={onOpenPastedFile}
           onSelectFolder={(folder) => onOpenFolder(folder.path)}
           onToggleFavorite={onToggleFavorite}
         />
@@ -62,6 +69,7 @@ export function FileExplorerLayout({
           <FileTree
             root={current.path}
             activePath={activePath}
+            revealRequest={revealRequest}
             onOpenFile={onOpenFile}
             onMutate={onTreeMutation}
           />
@@ -81,6 +89,7 @@ export function FileExplorerLayout({
             onSelect={onSelectTab}
             onClose={onCloseTab}
             onCloseMany={onCloseTabs}
+            onRevealInTree={onRevealInTree}
           />
           {showPreviewToggle && (
             <div className="files-mode-toggle" role="tablist">

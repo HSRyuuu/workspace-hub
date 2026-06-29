@@ -39,12 +39,16 @@ export function EditorTabs({ tabs, activePath, onSelect, onClose, onCloseMany, o
     if (paths.length > 0) onCloseMany(paths);
   };
 
-  const copyToClipboard = (text: string, okMsg: string) => {
+  const copyToClipboard = (text: string) => {
     setMenu(null);
     void (async () => {
       try {
         await navigator.clipboard.writeText(text);
-        showHintToast(okMsg);
+        showHintToast(
+          <>
+            <code className="toast-code">{text}</code> 복사 완료
+          </>,
+        );
       } catch {
         showErrorToast("클립보드 복사에 실패했습니다.");
       }
@@ -107,11 +111,11 @@ export function EditorTabs({ tabs, activePath, onSelect, onClose, onCloseMany, o
           <button type="button" onClick={() => runMenu([menu.path])}>
             닫기
           </button>
-          <button type="button" onClick={() => copyToClipboard(menu.path, "경로를 복사했습니다.")}>
+          <button type="button" onClick={() => copyToClipboard(menu.path)}>
             경로 복사
           </button>
           {menuTab && (
-            <button type="button" onClick={() => copyToClipboard(menuTab.name, "이름을 복사했습니다.")}>
+            <button type="button" onClick={() => copyToClipboard(menuTab.name)}>
               이름 복사
             </button>
           )}

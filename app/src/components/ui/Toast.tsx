@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react";
+import { useSyncExternalStore, type ReactNode } from "react";
 import { useConfirmToast } from "./ConfirmToast";
 
 type ToastKind = "error" | "hint";
@@ -6,7 +6,7 @@ type HintPosition = "right" | "center";
 
 interface ToastState {
   kind: ToastKind;
-  message: string;
+  message: ReactNode;
   retry?: () => void;
   position?: HintPosition;
 }
@@ -42,7 +42,7 @@ function _clearHintTimer() {
 }
 
 /** ConfirmToast 표시 중이면 큐에 저장, 아니면 즉시 표시. */
-export function showErrorToast(message: string, retry?: () => void) {
+export function showErrorToast(message: ReactNode, retry?: () => void) {
   _clearHintTimer();
   _state = { kind: "error", message, retry };
   _queue = null;
@@ -50,7 +50,7 @@ export function showErrorToast(message: string, retry?: () => void) {
 }
 
 /** 정보성 힌트 토스트. 5초 후 자동 dismiss. position="center" 면 ConfirmToast 자리에 표시. */
-export function showHintToast(message: string, position: HintPosition = "right") {
+export function showHintToast(message: ReactNode, position: HintPosition = "right") {
   _clearHintTimer();
   _state = { kind: "hint", message, position };
   _queue = null;

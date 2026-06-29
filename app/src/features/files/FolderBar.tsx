@@ -1,12 +1,14 @@
 import { useRef, useState } from "react";
 import { ChevronIcon, FolderIcon, PinIcon } from "../../components/ui/icons";
 import { useOutsideClick } from "../../components/ui/useOutsideClick";
+import { extractPastedFilePath } from "./helpers";
 import type { ExplorerFolder } from "./types";
 
 interface FolderBarProps {
   current: ExplorerFolder | null;
   folders: readonly ExplorerFolder[];
   onPickNewFolder: () => void;
+  onOpenPastedFile: (path: string) => Promise<boolean>;
   onSelectFolder: (f: ExplorerFolder) => void;
   onToggleFavorite: (f: ExplorerFolder) => void;
 }
@@ -17,15 +19,25 @@ export function FolderBar({
   current,
   folders,
   onPickNewFolder,
+  onOpenPastedFile,
   onSelectFolder,
   onToggleFavorite,
 }: FolderBarProps) {
   const [open, setOpen] = useState(false);
+  const [filePathInput, setFilePathInput] = useState("");
   const ref = useRef<HTMLDivElement | null>(null);
   useOutsideClick(ref, open, () => setOpen(false));
 
   const favorites = folders.filter((f) => f.is_favorite);
   const recents = folders.filter((f) => !f.is_favorite);
+  const normalizedFilePath = extractPastedFilePath(filePathInput);
+
+  const submitFilePath = async () => {
+    if (!normalizedFilePath) return;
+    setFilePathInput(normalizedFilePath);
+    const opened = await onOpenPastedFile(normalizedFilePath);
+    if (opened) setFilePathInput("");
+  };
 
   return (
     <div className="files-folderbar">
@@ -75,6 +87,31 @@ export function FolderBar({
       <button type="button" className="files-folder-open" onClick={onPickNewFolder}>
         폴더 열기…
       </button>
+      <div className="files-file-open">
+        <input
+          className="files-file-open-input"
+          value={filePathInput}
+          placeholder="파일 경로 붙여넣기"
+          aria-label="열 파일 경로"
+          onChange={(e) => setFilePathInput(e.currentTarget.value)}
+          onPaste={(e) => {
+            e.preventDefault();
+            setFilePathInput(extractPastedFilePath(e.clipboardData.getData("text")));
+          }}
+          onBlur={() => setFilePathInput((value) => extractPastedFilePath(value))}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") void submitFilePath();
+          }}
+        />
+        <button
+          type="button"
+          className="files-file-open-button"
+          disabled={!normalizedFilePath}
+          onClick={submitFilePath}
+        >
+          열기
+        </button>
+      </div>
     </div>
   );
 }

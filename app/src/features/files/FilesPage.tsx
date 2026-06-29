@@ -4,8 +4,8 @@ import { showErrorToast } from "../../components/ui/Toast";
 import { filesFolderApi } from "./api";
 import { FileExplorerLayout } from "./FileExplorerLayout";
 import { fileOps } from "./fs";
-import { isMarkdown } from "./helpers";
-import type { ExplorerFolder, OpenTab, TreeMutation, TreeNode } from "./types";
+import { extractPastedFilePath, isMarkdown } from "./helpers";
+import type { ExplorerFolder, OpenTab, RevealRequest, TreeMutation, TreeNode } from "./types";
 
 const SAVE_DEBOUNCE_MS = 400;
 
@@ -16,6 +16,8 @@ export default function FilesPage() {
   const [activePath, setActivePath] = useState<string | null>(null);
   const [mode, setMode] = useState<"edit" | "preview">("edit");
   const [dirtyPaths, setDirtyPaths] = useState<Set<string>>(new Set());
+  /** 탭 "트리에서 보기" 요청 — nonce 로 같은 경로 재요청도 트리거. */
+  const [revealRequest, setRevealRequest] = useState<RevealRequest | null>(null);
   /** path → 최신 내용. 에디터 onChange 가 갱신하는 단일 진실(렌더와 무관하므로 ref). */
   const contentRef = useRef<Map<string, string>>(new Map());
   const saveTimerRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
@@ -91,8 +93,10 @@ export default function FilesPage() {
         saveTimerRef.current.clear();
         contentRef.current.clear();
         await refreshFolders();
+        return true;
       } catch (e) {
         showErrorToast(`폴더를 열지 못했습니다: ${e}`);
+        return false;
       }
     },
     [flushAll, refreshFolders],
@@ -192,6 +196,53 @@ export default function FilesPage() {
     [activePath, saveNow],
   );
 
+  const revealInTree = useCallback((path: string) => {
+    setRevealRequest((prev) => ({ path, nonce: (prev?.nonce ?? 0) + 1 }));
+  }, []);
+
+  const openPastedFile = useCallback(
+    async (rawPath: string) => {
+      const path = extractPastedFilePath(rawPath);
+      const slash = path.lastIndexOf("/");
+      if (slash <= 0 || slash === path.length - 1) {
+        showErrorToast("열 파일 경로를 확인해주세요.");
+        return false;
+      }
+
+      const folderPath = path.slice(0, slash);
+      const name = path.slice(slash + 1);
+      flushAll();
+      try {
+        const folder = await filesFolderApi.touch(folderPath);
+        let binary = false;
+
+        for (const [, timer] of saveTimerRef.current) clearTimeout(timer);
+        saveTimerRef.current.clear();
+        contentRef.current.clear();
+
+        try {
+          const content = await fileOps.read(path);
+          contentRef.current.set(path, content);
+        } catch {
+          binary = true;
+        }
+
+        setCurrent(folder);
+        setTabs([{ path, name, binary }]);
+        setActivePath(path);
+        setMode(!binary && isMarkdown(name) ? "preview" : "edit");
+        setDirtyPaths(new Set());
+        await refreshFolders();
+        revealInTree(path);
+        return true;
+      } catch (e) {
+        showErrorToast(`파일을 열지 못했습니다: ${e}`);
+        return false;
+      }
+    },
+    [flushAll, refreshFolders, revealInTree],
+  );
+
   // 트리 CRUD 가 열린 탭에 미치는 영향 정리
   const handleMutation = useCallback(
     (m: TreeMutation) => {
@@ -259,11 +310,13 @@ export default function FilesPage() {
       tabs={tabs}
       activeTab={activeTab}
       activePath={activePath}
+      revealRequest={revealRequest}
       dirtyPaths={dirtyPaths}
       mode={mode}
       showPreviewToggle={showPreviewToggle}
       contentForActiveTab={activeTab ? contentRef.current.get(activeTab.path) ?? "" : ""}
       onPickNewFolder={() => void pickNewFolder()}
+      onOpenPastedFile={openPastedFile}
       onOpenFolder={(path) => void openFolder(path)}
       onToggleFavorite={(folder) => void toggleFavorite(folder)}
       onOpenFile={(node) => void openFile(node)}
@@ -271,6 +324,7 @@ export default function FilesPage() {
       onSelectTab={(path) => void selectTab(path)}
       onCloseTab={(path) => void closeTab(path)}
       onCloseTabs={(paths) => void closeTabs(paths)}
+      onRevealInTree={revealInTree}
       onModeChange={setMode}
       onContentChange={(content) => activeTab && scheduleSave(activeTab.path, content)}
     />

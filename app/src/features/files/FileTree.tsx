@@ -153,12 +153,16 @@ export function FileTree({ root, activePath, revealRequest, onOpenFile, onMutate
     });
   };
 
-  const copyToClipboard = (text: string, okMsg: string) => {
+  const copyToClipboard = (text: string) => {
     setCtxMenu(null);
     void (async () => {
       try {
         await navigator.clipboard.writeText(text);
-        showHintToast(okMsg);
+        showHintToast(
+          <>
+            <code className="toast-code">{text}</code> 복사 완료
+          </>,
+        );
       } catch {
         showErrorToast("클립보드 복사에 실패했습니다.");
       }
@@ -280,8 +284,8 @@ export function FileTree({ root, activePath, revealRequest, onOpenFile, onMutate
           >
             이름 변경
           </button>
-          <button type="button" onClick={() => copyToClipboard(ctxMenu.node.path, "경로를 복사했습니다.")}>경로 복사</button>
-          <button type="button" onClick={() => copyToClipboard(ctxMenu.node.name, "이름을 복사했습니다.")}>이름 복사</button>
+          <button type="button" onClick={() => copyToClipboard(ctxMenu.node.path)}>경로 복사</button>
+          <button type="button" onClick={() => copyToClipboard(ctxMenu.node.name)}>이름 복사</button>
           <button type="button" onClick={() => revealInFinder(ctxMenu.node.path)}>Finder에서 보기</button>
           <button type="button" className="danger" onClick={() => requestDelete(ctxMenu.node)}>삭제</button>
         </div>

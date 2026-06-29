@@ -53,6 +53,18 @@ export function isMarkdown(name: string): boolean {
   return languageForFile(name) === "markdown";
 }
 
+export function extractPastedFilePath(input: string): string {
+  const compact = input.trim().replace(/\s+/g, "");
+  const start = compact.indexOf("/");
+  if (start < 0) return "";
+
+  return compact
+    .slice(start)
+    .replace(/^[`"'“”‘’]+/, "")
+    .replace(/[.!?。．]+(?:입니다|이에요|예요|임)[.!?。．]*$/u, "")
+    .replace(/[.,;:!?。．"'`”’)\]}]+$/u, "");
+}
+
 export function shouldWrapEditorLines(name: string): boolean {
   return isMarkdown(name);
 }

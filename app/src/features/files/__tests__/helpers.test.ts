@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { extOf, isHiddenInTree, isMarkdown, languageForFile, shouldWrapEditorLines } from "../helpers";
+import {
+  extOf,
+  extractPastedFilePath,
+  isHiddenInTree,
+  isMarkdown,
+  languageForFile,
+  shouldWrapEditorLines,
+} from "../helpers";
 
 describe("extOf", () => {
   it("returns lowercase extension", () => {
@@ -61,5 +68,21 @@ describe("isHiddenInTree", () => {
 describe("shouldWrapEditorLines", () => {
   it("keeps jsonl records on their physical line", () => {
     expect(shouldWrapEditorLines("audit.jsonl")).toBe(false);
+  });
+});
+
+describe("extractPastedFilePath", () => {
+  it("trims outer whitespace, removes spacing, and drops Korean trailing text", () => {
+    expect(
+      extractPastedFilePath("   /Users/happyhsryu/dev/personal/harness-as-usual/test.java.  입니다. "),
+    ).toBe("/Users/happyhsryu/dev/personal/harness-as-usual/test.java");
+  });
+
+  it("extracts an absolute path embedded in text", () => {
+    expect(extractPastedFilePath("파일: '/tmp/work/note.md',")).toBe("/tmp/work/note.md");
+  });
+
+  it("returns empty string when no absolute path exists", () => {
+    expect(extractPastedFilePath("test.java 입니다")).toBe("");
   });
 });

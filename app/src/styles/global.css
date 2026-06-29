@@ -2507,12 +2507,25 @@ body.resize-cursor * {
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-2);
   z-index: var(--z-toast);
-  max-width: min(420px, calc(100vw - var(--space-xl)));
+  max-width: min(640px, calc(100vw - var(--space-xl)));
 }
 
 .error-toast-message {
   margin: 0;
   font-size: var(--fs-body);
+}
+
+/* 토스트 본문에 끼워 넣는 경로/이름 등 코드 조각 강조. */
+.error-toast-message .toast-code {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.14);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.92em;
+  word-break: break-all;
+  /* 줄바꿈돼도 줄마다 배경·패딩·라운드가 이어지게 한다. */
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 .error-toast-actions {
@@ -3228,6 +3241,8 @@ textarea.info-input {
 }
 .files-folder-trigger:focus-visible,
 .files-folder-open:focus-visible,
+.files-file-open-input:focus-visible,
+.files-file-open-button:focus-visible,
 .files-icon-btn:focus-visible,
 .files-fav-toggle:focus-visible,
 .files-tab:focus-visible,
@@ -3339,6 +3354,53 @@ textarea.info-input {
   border-color: var(--color-hairline-strong);
   background: var(--color-surface);
 }
+.files-file-open {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 58px;
+  gap: 6px;
+  width: 100%;
+}
+.files-file-open-input {
+  min-width: 0;
+  height: 30px;
+  padding: 0 9px;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-size: var(--fs-sm);
+}
+.files-file-open-input::placeholder {
+  color: var(--color-muted);
+}
+.files-file-open-input:hover {
+  border-color: var(--color-hairline-strong);
+}
+.files-file-open-button {
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-md);
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.files-file-open-button:hover {
+  border-color: var(--color-hairline-strong);
+  background: var(--color-surface);
+}
+.files-file-open-button:disabled {
+  color: var(--color-muted);
+  cursor: default;
+}
+.files-file-open-button:disabled:hover {
+  border-color: var(--color-hairline);
+  background: var(--color-canvas);
+}
 
 .files-tree { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .files-tree-header {
@@ -3384,6 +3446,12 @@ textarea.info-input {
 .files-tree-row:hover { background: var(--color-surface); }
 .files-tree-row.active { background: var(--color-primary-soft); color: var(--color-ink-deep); }
 .files-tree-row.dir { font-weight: 500; }
+/* "트리에서 보기" 강조 — 1.2초 후 자연스럽게 사라진다. */
+.files-tree-row.revealed { animation: files-tree-reveal 1.2s ease-out; }
+@keyframes files-tree-reveal {
+  0%, 40% { background: var(--color-primary-soft); box-shadow: inset 2px 0 0 var(--color-primary); }
+  100% { background: transparent; box-shadow: none; }
+}
 .files-tree-caret-slot {
   flex: 0 0 18px;
   width: 18px;

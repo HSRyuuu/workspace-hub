@@ -9,7 +9,7 @@ import { javascript } from "@codemirror/lang-javascript";
 import { json } from "@codemirror/lang-json";
 import { markdown } from "@codemirror/lang-markdown";
 import { python } from "@codemirror/lang-python";
-import { languageForFile, type LanguageId } from "./helpers";
+import { languageForFile, shouldWrapEditorLines, type LanguageId } from "./helpers";
 
 function languageExtension(id: LanguageId | null): Extension {
   switch (id) {
@@ -50,12 +50,13 @@ export function FileEditor({ path, initialContent, onChange }: FileEditorProps) 
   useEffect(() => {
     if (!hostRef.current) return;
     const name = path.split("/").pop() ?? "";
+    const wrapExtension = shouldWrapEditorLines(name) ? [EditorView.lineWrapping] : [];
     const state = EditorState.create({
       doc: initialContent,
       extensions: [
         basicSetup,
         languageExtension(languageForFile(name)),
-        EditorView.lineWrapping,
+        ...wrapExtension,
         EditorView.updateListener.of((u) => {
           if (u.docChanged) onChangeRef.current(u.state.doc.toString());
         }),

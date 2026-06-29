@@ -159,7 +159,6 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
         StarterKit.configure({
           heading: { levels: [1, 2, 3, 4, 5, 6] },
           blockquote: false,
-          horizontalRule: false,
           strike: false,
           link: false,
           underline: false,
@@ -364,12 +363,12 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
             onClick={toggleCodeBlock}
             title="Code block (```)"
           >
-            {"{}"}
+            {"</>"}
           </button>
           <button
             ref={tableButtonRef}
             type="button"
-            className={editor.isActive("table") ? "active" : ""}
+            className={editor.isActive("table") ? "markdown-toolbar-table active" : "markdown-toolbar-table"}
             onClick={insertTable}
             title="표 삽입 (3×3)"
           >

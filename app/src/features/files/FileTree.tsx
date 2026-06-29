@@ -1,14 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { showConfirmToast } from "../../components/ui/ConfirmToast";
-import { showErrorToast } from "../../components/ui/Toast";
+import { showErrorToast, showHintToast } from "../../components/ui/Toast";
 import { ChevronIcon, FileIcon, FolderIcon, PlusIcon } from "../../components/ui/icons";
 import { useOutsideClick } from "../../components/ui/useOutsideClick";
+import { filesShellApi } from "./api";
 import { fileOps, listDir } from "./fs";
-import type { TreeMutation, TreeNode } from "./types";
+import type { RevealRequest, TreeMutation, TreeNode } from "./types";
 
 interface FileTreeProps {
   root: string;
   activePath: string | null;
+  /** 탭 등 외부에서 "트리에서 보기" 요청 — 조상 폴더를 펼치고 스크롤·강조한다. */
+  revealRequest: RevealRequest | null;
   onOpenFile: (node: TreeNode) => void;
   onMutate: (m: TreeMutation) => void;
 }
@@ -20,12 +23,15 @@ type Editing =
   | { kind: "new-file" | "new-dir"; dirPath: string }
   | null;
 
-export function FileTree({ root, activePath, onOpenFile, onMutate }: FileTreeProps) {
+export function FileTree({ root, activePath, revealRequest, onOpenFile, onMutate }: FileTreeProps) {
   const [childrenByDir, setChildrenByDir] = useState<Map<string, TreeNode[]>>(new Map());
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [ctxMenu, setCtxMenu] = useState<CtxMenu>(null);
   const [editing, setEditing] = useState<Editing>(null);
+  /** "트리에서 보기" 로 강조 중인 경로 — 잠시 후 해제. */
+  const [revealed, setRevealed] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
+  const bodyRef = useRef<HTMLDivElement | null>(null);
   // Enter → blur 이중 commit 방지: commitEditing 진행 중이면 두 번째 호출을 무시
   const committingRef = useRef(false);
   useOutsideClick(menuRef, ctxMenu !== null, () => setCtxMenu(null));
@@ -47,6 +53,38 @@ export function FileTree({ root, activePath, onOpenFile, onMutate }: FileTreePro
     setCtxMenu(null);
     void loadDir(root);
   }, [root, loadDir]);
+
+  // "트리에서 보기" 요청 — 대상의 조상 폴더를 모두 펼치고 로드한 뒤 강조.
+  useEffect(() => {
+    if (!revealRequest) return;
+    const target = revealRequest.path;
+    if (target !== root && !target.startsWith(`${root}/`)) return;
+    void (async () => {
+      const rel = target.slice(root.length + 1);
+      const parts = rel ? rel.split("/") : [];
+      let acc = root;
+      const ancestors: string[] = [];
+      for (let i = 0; i < parts.length - 1; i++) {
+        acc = `${acc}/${parts[i]}`;
+        ancestors.push(acc);
+      }
+      for (const dir of ancestors) await loadDir(dir);
+      setExpanded((prev) => new Set([...prev, ...ancestors]));
+      setRevealed(target);
+    })();
+  }, [revealRequest, root, loadDir]);
+
+  // 대상 row 가 렌더되면(조상 펼침·로드 완료) 가운데로 스크롤하고 1.2초 뒤 강조 해제.
+  useEffect(() => {
+    if (!revealed) return;
+    const el = bodyRef.current?.querySelector<HTMLElement>(
+      `[data-path="${CSS.escape(revealed)}"]`,
+    );
+    if (!el) return;
+    el.scrollIntoView({ block: "center" });
+    const t = setTimeout(() => setRevealed(null), 1200);
+    return () => clearTimeout(t);
+  }, [revealed, childrenByDir, expanded]);
 
   const toggleDir = (node: TreeNode) => {
     setExpanded((prev) => {
@@ -115,6 +153,25 @@ export function FileTree({ root, activePath, onOpenFile, onMutate }: FileTreePro
     });
   };
 
+  const copyToClipboard = (text: string, okMsg: string) => {
+    setCtxMenu(null);
+    void (async () => {
+      try {
+        await navigator.clipboard.writeText(text);
+        showHintToast(okMsg);
+      } catch {
+        showErrorToast("클립보드 복사에 실패했습니다.");
+      }
+    })();
+  };
+
+  const revealInFinder = (path: string) => {
+    setCtxMenu(null);
+    void filesShellApi
+      .revealInFinder(path)
+      .catch((e) => showErrorToast(`Finder 에서 열지 못했습니다: ${e}`));
+  };
+
   const startCreate = (kind: "new-file" | "new-dir", dirPath: string) => {
     committingRef.current = false;
     setCtxMenu(null);
@@ -158,8 +215,10 @@ export function FileTree({ root, activePath, onOpenFile, onMutate }: FileTreePro
               className={[
                 "files-tree-row",
                 node.path === activePath ? "active" : "",
+                node.path === revealed ? "revealed" : "",
                 node.isDir ? "dir" : "file",
               ].filter(Boolean).join(" ")}
+              data-path={node.path}
               style={{ paddingLeft: 8 + depth * 14 }}
               onClick={() => (node.isDir ? toggleDir(node) : onOpenFile(node))}
               onContextMenu={(e) => {
@@ -202,7 +261,7 @@ export function FileTree({ root, activePath, onOpenFile, onMutate }: FileTreePro
           </button>
         </div>
       </div>
-      <div className="files-tree-body">{renderNodes(root, 0)}</div>
+      <div className="files-tree-body" ref={bodyRef}>{renderNodes(root, 0)}</div>
       {ctxMenu && (
         <div ref={menuRef} className="files-ctxmenu" style={{ top: ctxMenu.y, left: ctxMenu.x }}>
           {ctxMenu.node.isDir && (
@@ -221,6 +280,9 @@ export function FileTree({ root, activePath, onOpenFile, onMutate }: FileTreePro
           >
             이름 변경
           </button>
+          <button type="button" onClick={() => copyToClipboard(ctxMenu.node.path, "경로를 복사했습니다.")}>경로 복사</button>
+          <button type="button" onClick={() => copyToClipboard(ctxMenu.node.name, "이름을 복사했습니다.")}>이름 복사</button>
+          <button type="button" onClick={() => revealInFinder(ctxMenu.node.path)}>Finder에서 보기</button>
           <button type="button" className="danger" onClick={() => requestDelete(ctxMenu.node)}>삭제</button>
         </div>
       )}

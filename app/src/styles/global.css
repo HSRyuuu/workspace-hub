@@ -2139,6 +2139,10 @@ button.chip {
   font-weight: 600;
   border-color: transparent;
 }
+.markdown-editor-toolbar button.markdown-toolbar-table {
+  font-size: 16px;
+  line-height: 1;
+}
 .markdown-toolbar-sep {
   width: 1px;
   background: var(--color-hairline);
@@ -2208,6 +2212,11 @@ button.chip {
 }
 .markdown-editor p {
   margin: 0 0 0.4em;
+}
+.markdown-editor hr {
+  border: none;
+  border-top: 1px solid var(--color-hairline);
+  margin: 1em 0;
 }
 .markdown-editor code {
   background: var(--color-surface-soft);
@@ -3503,14 +3512,17 @@ textarea.info-input {
 .files-md-preview {
   flex: 1;
   min-height: 0;
+  /* 뷰어는 가로 스크롤 없이 세로로만 — 표/코드는 폭에 맞춰 줄바꿈한다. */
+  overflow-x: hidden;
   overflow-y: auto;
   padding: var(--space-xl) var(--space-xxl) calc(var(--space-xxl) + var(--space-xl));
   background: var(--color-canvas);
 }
 .files-md-preview > .markdown-editor-shell {
-  max-width: 72ch;
+  min-width: 100%;
 }
 .files-md-preview .markdown-editor {
+  min-width: 100%;
   color: var(--color-charcoal);
   font-size: var(--fs-h3);
   line-height: 1.64;
@@ -3546,6 +3558,14 @@ textarea.info-input {
 .files-md-preview .markdown-editor .ProseMirror > :first-child {
   margin-top: 0;
 }
+.files-md-preview .markdown-editor hr {
+  margin: var(--space-lg) 0;
+}
+/* hr 뒤 요소(특히 heading)의 큰 위쪽 마진이 병합되어 구분선 위아래 간격이
+   비대칭이 되는 것을 막는다. */
+.files-md-preview .markdown-editor hr + * {
+  margin-top: 0;
+}
 .files-md-preview .markdown-editor p {
   margin: 0 0 var(--space-sm);
   text-wrap: pretty;
@@ -3561,6 +3581,9 @@ textarea.info-input {
   padding-left: 0.15em;
 }
 .files-md-preview .markdown-editor pre {
+  /* 긴 코드 줄도 가로 스크롤 없이 줄바꿈. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
   margin: var(--space-md) 0;
   padding: var(--space-md);
   border: 1px solid var(--color-hairline);
@@ -3568,16 +3591,24 @@ textarea.info-input {
   line-height: 1.56;
 }
 .files-md-preview .markdown-editor table {
+  /* fixed 레이아웃 + width:100% 로 셀 내용이 폭에 맞춰 줄바꿈되게 한다. */
+  table-layout: fixed;
+  width: 100%;
   margin: var(--space-md) 0;
+}
+.files-md-preview .markdown-editor table td,
+.files-md-preview .markdown-editor table th {
+  overflow-wrap: anywhere;
 }
 .files-md-preview .markdown-editor .tableWrapper {
   margin: var(--space-md) 0;
   padding: 0;
+  /* 폭에 맞춰 줄바꿈하므로 내부 가로 스크롤도 필요 없다. */
+  overflow: hidden;
 }
 .files-frontmatter {
   display: grid;
   gap: 1px;
-  max-width: 72ch;
   margin: 0 0 var(--space-xxl);
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-md);

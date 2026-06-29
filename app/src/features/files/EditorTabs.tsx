@@ -1,5 +1,7 @@
 import { useRef, useState } from "react";
+import { showErrorToast, showHintToast } from "../../components/ui/Toast";
 import { useOutsideClick } from "../../components/ui/useOutsideClick";
+import { filesShellApi } from "./api";
 
 interface TabItem {
   path: string;
@@ -14,11 +16,13 @@ interface EditorTabsProps {
   onClose: (path: string) => void;
   /** 여러 탭을 한 번에 닫는다 — 다른 탭/오른쪽 탭/모두 닫기에 사용. */
   onCloseMany: (paths: string[]) => void;
+  /** 해당 파일을 왼쪽 파일 트리에서 펼쳐 보여준다. */
+  onRevealInTree: (path: string) => void;
 }
 
 type TabMenu = { x: number; y: number; path: string } | null;
 
-export function EditorTabs({ tabs, activePath, onSelect, onClose, onCloseMany }: EditorTabsProps) {
+export function EditorTabs({ tabs, activePath, onSelect, onClose, onCloseMany, onRevealInTree }: EditorTabsProps) {
   const [menu, setMenu] = useState<TabMenu>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   useOutsideClick(menuRef, menu !== null, () => setMenu(null));
@@ -26,12 +30,37 @@ export function EditorTabs({ tabs, activePath, onSelect, onClose, onCloseMany }:
   if (tabs.length === 0) return null;
 
   const menuIdx = menu ? tabs.findIndex((t) => t.path === menu.path) : -1;
+  const menuTab = menuIdx >= 0 ? tabs[menuIdx] : null;
   const hasOthers = tabs.length > 1;
   const hasRight = menuIdx >= 0 && menuIdx < tabs.length - 1;
 
   const runMenu = (paths: string[]) => {
     setMenu(null);
     if (paths.length > 0) onCloseMany(paths);
+  };
+
+  const copyToClipboard = (text: string, okMsg: string) => {
+    setMenu(null);
+    void (async () => {
+      try {
+        await navigator.clipboard.writeText(text);
+        showHintToast(okMsg);
+      } catch {
+        showErrorToast("클립보드 복사에 실패했습니다.");
+      }
+    })();
+  };
+
+  const revealInFinder = (path: string) => {
+    setMenu(null);
+    void filesShellApi
+      .revealInFinder(path)
+      .catch((e) => showErrorToast(`Finder 에서 열지 못했습니다: ${e}`));
+  };
+
+  const revealInTree = (path: string) => {
+    setMenu(null);
+    onRevealInTree(path);
   };
 
   return (
@@ -77,6 +106,20 @@ export function EditorTabs({ tabs, activePath, onSelect, onClose, onCloseMany }:
         <div ref={menuRef} className="files-ctxmenu" style={{ top: menu.y, left: menu.x }}>
           <button type="button" onClick={() => runMenu([menu.path])}>
             닫기
+          </button>
+          <button type="button" onClick={() => copyToClipboard(menu.path, "경로를 복사했습니다.")}>
+            경로 복사
+          </button>
+          {menuTab && (
+            <button type="button" onClick={() => copyToClipboard(menuTab.name, "이름을 복사했습니다.")}>
+              이름 복사
+            </button>
+          )}
+          <button type="button" onClick={() => revealInFinder(menu.path)}>
+            Finder에서 보기
+          </button>
+          <button type="button" onClick={() => revealInTree(menu.path)}>
+            트리에서 보기
           </button>
           <button
             type="button"

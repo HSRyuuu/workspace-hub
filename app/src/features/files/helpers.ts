@@ -53,6 +53,10 @@ export function isMarkdown(name: string): boolean {
   return languageForFile(name) === "markdown";
 }
 
+export function shouldWrapEditorLines(name: string): boolean {
+  return isMarkdown(name);
+}
+
 export function isHiddenInTree(name: string): boolean {
   if (name === ".DS_Store") return true;
   return BINARY_EXTENSIONS.has(extOf(name));

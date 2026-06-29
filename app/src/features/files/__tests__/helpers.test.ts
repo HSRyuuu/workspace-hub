@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extOf, isHiddenInTree, isMarkdown, languageForFile } from "../helpers";
+import { extOf, isHiddenInTree, isMarkdown, languageForFile, shouldWrapEditorLines } from "../helpers";
 
 describe("extOf", () => {
   it("returns lowercase extension", () => {
@@ -55,5 +55,11 @@ describe("isHiddenInTree", () => {
     expect(isHiddenInTree("Dockerfile")).toBe(false);
     expect(isHiddenInTree("read.me.md")).toBe(false);
     expect(isHiddenInTree("script.sh")).toBe(false);
+  });
+});
+
+describe("shouldWrapEditorLines", () => {
+  it("keeps jsonl records on their physical line", () => {
+    expect(shouldWrapEditorLines("audit.jsonl")).toBe(false);
   });
 });

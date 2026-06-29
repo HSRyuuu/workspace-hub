@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { showConfirmToast } from "../../components/ui/ConfirmToast";
 import { showErrorToast } from "../../components/ui/Toast";
-import { FileIcon, FolderIcon, PlusIcon } from "../../components/ui/icons";
+import { ChevronIcon, FileIcon, FolderIcon, PlusIcon } from "../../components/ui/icons";
 import { useOutsideClick } from "../../components/ui/useOutsideClick";
 import { fileOps, listDir } from "./fs";
 import type { TreeMutation, TreeNode } from "./types";
@@ -169,7 +169,9 @@ export function FileTree({ root, activePath, onOpenFile, onMutate }: FileTreePro
             >
               <span className="files-tree-caret-slot">
                 {node.isDir && (
-                  <span className={`files-tree-caret${expanded.has(node.path) ? " open" : ""}`}>▸</span>
+                  <span className="files-tree-caret" aria-hidden>
+                    <ChevronIcon rotation={expanded.has(node.path) ? 90 : 0} size={15} />
+                  </span>
                 )}
               </span>
               <span className={`files-tree-ficon${node.isDir ? " dir" : ""}`} aria-hidden>

@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { FolderIcon, PinIcon } from "../../components/ui/icons";
+import { ChevronIcon, FolderIcon, PinIcon } from "../../components/ui/icons";
 import { useOutsideClick } from "../../components/ui/useOutsideClick";
 import type { ExplorerFolder } from "./types";
 
@@ -40,7 +40,9 @@ export function FolderBar({
           <span className="files-folder-trigger-text">
             <span className="files-folder-trigger-name">{current ? baseName(current.path) : "선택 안 됨"}</span>
           </span>
-          <span className="files-folder-trigger-caret">▾</span>
+          <span className="files-folder-trigger-caret" aria-hidden>
+            <ChevronIcon rotation={open ? 0 : 90} size={16} />
+          </span>
         </button>
         {open && (
           <div className="files-folder-dropdown">

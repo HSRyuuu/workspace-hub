@@ -3,11 +3,17 @@
  * `rotation` 은 도(degree) — caller 가 0 (right) / 90 (down) / -90 (up) / 180 (left)
  * 등으로 base 방향을 정한다. 트랜지션은 120ms ease.
  */
-export function ChevronIcon({ rotation = 0 }: { rotation?: number }) {
+export function ChevronIcon({
+  rotation = 0,
+  size = 12,
+}: {
+  rotation?: number;
+  size?: number;
+}) {
   return (
     <svg
-      width="12"
-      height="12"
+      width={size}
+      height={size}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"

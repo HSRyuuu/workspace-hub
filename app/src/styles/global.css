@@ -3231,9 +3231,12 @@ textarea.info-input {
   white-space: nowrap;
 }
 .files-folder-trigger-caret {
+  flex: 0 0 auto;
   margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   color: var(--color-stone);
-  font-size: 10px;
 }
 .files-folder-dropdown {
   position: absolute;
@@ -3371,12 +3374,8 @@ textarea.info-input {
   justify-content: center;
   width: 18px;
   height: 18px;
-  font-size: 15px;
-  line-height: 18px;
-  transition: transform 0.12s ease;
   color: var(--color-stone);
 }
-.files-tree-caret.open { transform: rotate(90deg); }
 .files-tree-ficon {
   flex: 0 0 auto;
   display: inline-flex;

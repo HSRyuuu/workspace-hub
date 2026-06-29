@@ -8,7 +8,7 @@ import MemoActions from "./MemoActions";
 import MemoList from "./MemoList";
 import { MemoProjectChips } from "./MemoProjectChips";
 import { firstLineAsTitle } from "./markdown";
-import type { Memo, MemoFolder, MemoListScope } from "./types";
+import type { Memo, MemoFolder, MemoListScope, UpdateMemoPatch } from "./types";
 import { useSaveIndicator } from "./useSaveIndicator";
 
 const DEBOUNCE_MS = 500;
@@ -36,6 +36,9 @@ export default function MemoPage() {
   const [draftBody, setDraftBody] = useState("");
   const draftMemoIdRef = useRef<number | null>(null);
   const saveTimerRef = useRef<number | null>(null);
+  const pendingPatchRef = useRef<UpdateMemoPatch | null>(null);
+  const titleDirtyRef = useRef(false);
+  const bodyDirtyRef = useRef(false);
   // draftTitle / draftBody 를 ref 로도 들고 있어 effect 와 callback 의 deps 에서
   // 빼고 typing 마다 일어나는 closure 재생성·effect 재실행을 회피.
   const draftTitleRef = useRef("");
@@ -91,11 +94,11 @@ export default function MemoPage() {
     if (draftMemoIdRef.current === null) return;
     clearTimer(saveTimerRef);
     const id = draftMemoIdRef.current;
+    const patch = pendingPatchRef.current;
+    pendingPatchRef.current = null;
+    if (patch === null) return;
     try {
-      await memoApi.update(id, {
-        title: draftTitleRef.current,
-        body: draftBodyRef.current,
-      });
+      await memoApi.update(id, patch);
       saveIndicator.markSaved();
       await refreshMemos();
     } catch (e) {
@@ -110,6 +113,9 @@ export default function MemoPage() {
       setDraftTitle("");
       setDraftBody("");
       draftMemoIdRef.current = null;
+      pendingPatchRef.current = null;
+      titleDirtyRef.current = false;
+      bodyDirtyRef.current = false;
       saveIndicator.reset();
       return;
     }
@@ -118,19 +124,29 @@ export default function MemoPage() {
     if (draftMemoIdRef.current === m.id) return;
     flushPendingSave();
     draftMemoIdRef.current = m.id;
+    pendingPatchRef.current = null;
+    titleDirtyRef.current = false;
+    bodyDirtyRef.current = false;
     saveIndicator.reset();
     setDraftTitle(m.title);
     setDraftBody(m.body);
   }, [selectedId, memos, flushPendingSave, saveIndicator]);
 
   const scheduleSave = useCallback(
-    (targetId: number, title: string, body: string) => {
+    (targetId: number, patch: UpdateMemoPatch) => {
       clearTimer(saveTimerRef);
+      pendingPatchRef.current = {
+        ...(pendingPatchRef.current ?? {}),
+        ...patch,
+      };
       saveIndicator.markSaving();
       saveTimerRef.current = window.setTimeout(async () => {
         saveTimerRef.current = null;
+        const nextPatch = pendingPatchRef.current;
+        pendingPatchRef.current = null;
+        if (nextPatch === null) return;
         try {
-          await memoApi.update(targetId, { title, body });
+          await memoApi.update(targetId, nextPatch);
           saveIndicator.markSaved();
           await refreshMemos();
         } catch (e) {
@@ -145,18 +161,38 @@ export default function MemoPage() {
     (next: string) => {
       setDraftTitle(next);
       if (selectedId === null) return;
-      scheduleSave(selectedId, next, draftBodyRef.current);
+      if (draftMemoIdRef.current !== selectedId) return;
+      const current = memos.find((m) => m.id === selectedId);
+      if (
+        current &&
+        current.title === next &&
+        (!bodyDirtyRef.current || current.body === draftBodyRef.current)
+      ) return;
+      titleDirtyRef.current = true;
+      const patch: UpdateMemoPatch = { title: next };
+      if (bodyDirtyRef.current) patch.body = draftBodyRef.current;
+      scheduleSave(selectedId, patch);
     },
-    [selectedId, scheduleSave],
+    [selectedId, memos, scheduleSave],
   );
 
   const handleBodyChange = useCallback(
     (md: string) => {
       setDraftBody(md);
       if (selectedId === null) return;
-      scheduleSave(selectedId, draftTitleRef.current, md);
+      if (draftMemoIdRef.current !== selectedId) return;
+      const current = memos.find((m) => m.id === selectedId);
+      if (
+        current &&
+        current.body === md &&
+        (!titleDirtyRef.current || current.title === draftTitleRef.current)
+      ) return;
+      bodyDirtyRef.current = true;
+      const patch: UpdateMemoPatch = { body: md };
+      if (titleDirtyRef.current) patch.title = draftTitleRef.current;
+      scheduleSave(selectedId, patch);
     },
-    [selectedId, scheduleSave],
+    [selectedId, memos, scheduleSave],
   );
 
   // 현재 메모를 떠나기 직전 처리. 제목·본문이 모두 빈 텍스트면 메모를 아예 제거
@@ -169,6 +205,7 @@ export default function MemoPage() {
     setSelectedId(null);
     if (draftTitleRef.current.trim() === "" && draftBodyRef.current.trim() === "") {
       clearTimer(saveTimerRef);
+      pendingPatchRef.current = null;
       try {
         await memoApi.delete(id);
         await memoApi.purge(id);
@@ -387,10 +424,12 @@ export default function MemoPage() {
     return () => {
       if (saveTimerRef.current !== null && draftMemoIdRef.current !== null) {
         const id = draftMemoIdRef.current;
-        const title = draftTitleRef.current;
-        const body = draftBodyRef.current;
-        void memoApi.update(id, { title, body });
+        const patch = pendingPatchRef.current;
+        if (patch !== null) {
+          void memoApi.update(id, patch);
+        }
       }
+      pendingPatchRef.current = null;
       clearTimer(saveTimerRef);
     };
   }, []);

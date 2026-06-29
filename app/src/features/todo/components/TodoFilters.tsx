@@ -3,7 +3,7 @@ import type { SelectOption, TabItem } from "../../../components/ui";
 import type { Priority } from "../types";
 
 export type DueRange = "all" | "today" | "last-week" | "this-month" | "overdue";
-export type TodoTab = "all" | "open" | "done";
+export type TodoTab = "open" | "overdue" | "done" | "all";
 
 export interface Filters {
   query: string;
@@ -24,9 +24,10 @@ const PRIORITY_LABELS: Record<Priority, string> = {
 };
 
 const STATUS_TABS: TabItem<TodoTab>[] = [
-  { value: "all", label: "전체" },
   { value: "open", label: "열림" },
+  { value: "overdue", label: "마감" },
   { value: "done", label: "완료" },
+  { value: "all", label: "전체" },
 ];
 
 const DUE_OPTIONS: SelectOption<DueRange>[] = [

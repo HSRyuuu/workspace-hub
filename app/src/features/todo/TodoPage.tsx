@@ -51,6 +51,11 @@ function applyDueRangeFilter(todos: Todo[], dueRange: Filters["dueRange"]): Todo
   });
 }
 
+function isOpenOverdue(todo: Todo): boolean {
+  if (todo.status !== "open" || !todo.due_at) return false;
+  return new Date(todo.due_at).getTime() < Date.now();
+}
+
 export default function TodoPage() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -58,7 +63,7 @@ export default function TodoPage() {
     query: "",
     priorities: new Set<Priority>(),
     dueRange: "all",
-    tab: "all",
+    tab: "open",
   });
   const [loading, setLoading] = useState(false);
 
@@ -106,7 +111,9 @@ export default function TodoPage() {
   // ── 필터링 ─────────────────────────────────────────────────────────────────
   const filteredTodos = useMemo(() => {
     let result = todos;
-    if (filters.tab !== "all") {
+    if (filters.tab === "overdue") {
+      result = result.filter(isOpenOverdue);
+    } else if (filters.tab !== "all") {
       result = result.filter((t) => t.status === filters.tab);
     }
     if (filters.query.trim()) {
@@ -132,7 +139,7 @@ export default function TodoPage() {
         query: "",
         priorities: new Set<Priority>(),
         dueRange: "all",
-        tab: "all",
+        tab: "open",
       });
       setSelectedId(newTodo.id);
       setTimeout(() => descriptionRef.current?.focus(), 0);

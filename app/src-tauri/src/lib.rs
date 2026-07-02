@@ -81,6 +81,19 @@ fn todo_list(state: tauri::State<DbState>, status: Option<String>) -> Result<Vec
 }
 
 #[tauri::command]
+fn todo_list_calendar_range(
+    state: tauri::State<DbState>,
+    from: String,
+    to: String,
+    completed_from: String,
+    completed_to: String,
+) -> Result<Vec<Todo>, String> {
+    let conn = state.0.lock().map_err(lock_err)?;
+    repo::todo::list_calendar_range(&conn, &from, &to, &completed_from, &completed_to)
+        .map_err(core_err)
+}
+
+#[tauri::command]
 fn todo_add(state: tauri::State<DbState>, input: serde_json::Value) -> Result<Todo, String> {
     let title = input
         .get("title")
@@ -713,6 +726,7 @@ pub fn run() {
         .manage(DbState(Mutex::new(conn)))
         .invoke_handler(tauri::generate_handler![
             todo_list,
+            todo_list_calendar_range,
             todo_add,
             todo_update,
             todo_complete,

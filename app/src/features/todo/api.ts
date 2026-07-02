@@ -5,6 +5,19 @@ export const todoApi = {
   list: (status: "all" | "open" | "done" = "all"): Promise<Todo[]> =>
     invoke<Todo[]>("todo_list", { status }),
 
+  listCalendarRange: (
+    from: string,
+    to: string,
+    completedFrom: string,
+    completedTo: string,
+  ): Promise<Todo[]> =>
+    invoke<Todo[]>("todo_list_calendar_range", {
+      from,
+      to,
+      completedFrom,
+      completedTo,
+    }),
+
   add: (input: NewTodoInput): Promise<Todo> =>
     invoke<Todo>("todo_add", { input }),
 

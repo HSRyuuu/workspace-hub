@@ -6,7 +6,7 @@ import { MonthGrid } from "./MonthGrid";
 import { ScheduleEditor } from "./ScheduleEditor";
 import { TodoDetailPanel } from "./TodoDetailPanel";
 import { scheduleApi } from "./api";
-import { monthFetchRange, shiftMonth } from "./dateUtils";
+import { monthFetchRange, shiftMonth, utcRangeForLocalDateRange } from "./dateUtils";
 import type { Schedule } from "./types";
 
 type Selection =
@@ -34,9 +34,15 @@ export default function CalendarPage({ onNavigateToTodo }: CalendarPageProps) {
     setLoading(true);
     try {
       const range = monthFetchRange(cursor.year, cursor.month);
+      const completedRange = utcRangeForLocalDateRange(range.from, range.to);
       const [s, t] = await Promise.all([
         scheduleApi.listRange(range.from, range.to),
-        todoApi.list("all"),
+        todoApi.listCalendarRange(
+          range.from,
+          range.to,
+          completedRange.completedFrom,
+          completedRange.completedTo,
+        ),
       ]);
       setSchedules(s);
       setTodos(t);

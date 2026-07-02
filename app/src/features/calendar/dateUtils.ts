@@ -71,6 +71,21 @@ export function monthFetchRange(
   return { from: toIsoDate(gridStart), to: toIsoDate(next) };
 }
 
+export function utcRangeForLocalDateRange(from: string, to: string): {
+  completedFrom: string;
+  completedTo: string;
+} {
+  const fromDate = fromIsoDate(from);
+  const toDate = fromIsoDate(to);
+  if (!fromDate || !toDate) {
+    throw new Error(`invalid local date range: ${from}..${to}`);
+  }
+  return {
+    completedFrom: localDateTimeToUtcIso(fromDate),
+    completedTo: localDateTimeToUtcIso(toDate),
+  };
+}
+
 export function formatTimeLocal(utcIso: string): string {
   const d = parseUtcIso(utcIso);
   return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
@@ -92,13 +107,26 @@ export function scheduleOverlapsDay(s: { start_at: string; end_at: string }, day
   return start < nextDay && end >= day;
 }
 
-/** TODO 는 마감일이 있으면 마감일, 없으면 생성일의 로컬 날짜에 표시한다. */
-export function todoCalendarDate(todo: { due_date: string | null; created_at: string }): string {
-  return todo.due_date ?? formatDateLocal(todo.created_at);
+/** TODO 는 완료일 → 마감일 → 시작일 우선순위로 캘린더에 표시한다. */
+export function todoCalendarDate(todo: {
+  status: string;
+  completed_at: string | null;
+  due_date: string | null;
+  start_date: string;
+}): string {
+  if (todo.status === "done" && todo.completed_at) {
+    return formatDateLocal(todo.completed_at);
+  }
+  return todo.due_date ?? todo.start_date;
 }
 
 export function todoFallsOnDay(
-  todo: { due_date: string | null; created_at: string },
+  todo: {
+    status: string;
+    completed_at: string | null;
+    due_date: string | null;
+    start_date: string;
+  },
   dayIso: string,
 ): boolean {
   return todoCalendarDate(todo) === dayIso;

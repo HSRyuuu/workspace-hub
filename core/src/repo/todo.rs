@@ -116,6 +116,65 @@ pub fn list(conn: &Connection, status_filter: Option<TodoStatus>) -> Result<Vec<
     Ok(result)
 }
 
+pub fn list_calendar_range(
+    conn: &Connection,
+    from: &str,
+    to: &str,
+    completed_from: &str,
+    completed_to: &str,
+) -> Result<Vec<Todo>, CoreError> {
+    let from = normalize_iso_date_only(Some(from))?
+        .ok_or_else(|| CoreError::InvalidInput("from is required".into()))?;
+    let to = normalize_iso_date_only(Some(to))?
+        .ok_or_else(|| CoreError::InvalidInput("to is required".into()))?;
+    if from >= to {
+        return Err(CoreError::InvalidInput("from must be before to".into()));
+    }
+    if chrono::DateTime::parse_from_rfc3339(completed_from).is_err() {
+        return Err(CoreError::Parse(format!(
+            "expected RFC3339 completed_from, got: {completed_from}"
+        )));
+    }
+    if chrono::DateTime::parse_from_rfc3339(completed_to).is_err() {
+        return Err(CoreError::Parse(format!(
+            "expected RFC3339 completed_to, got: {completed_to}"
+        )));
+    }
+    if completed_from >= completed_to {
+        return Err(CoreError::InvalidInput(
+            "completed_from must be before completed_to".into(),
+        ));
+    }
+
+    let sql = format!(
+        "SELECT {SELECT_COLUMNS}
+         FROM todo
+         WHERE id IN (
+             SELECT id FROM todo WHERE start_date >= ?1 AND start_date < ?2
+             UNION
+             SELECT id FROM todo WHERE due_date >= ?1 AND due_date < ?2
+             UNION
+             SELECT id FROM todo WHERE completed_at >= ?3 AND completed_at < ?4
+         )
+         ORDER BY
+             CASE
+                 WHEN status = 'done' AND completed_at IS NOT NULL THEN completed_at
+                 WHEN due_date IS NOT NULL THEN due_date
+                 ELSE start_date
+             END ASC,
+             due_time ASC,
+             CASE priority WHEN 'high' THEN 0 WHEN 'mid' THEN 1 ELSE 2 END ASC,
+             id DESC"
+    );
+    let mut stmt = conn.prepare(&sql)?;
+    let rows = stmt.query_map(params![from, to, completed_from, completed_to], map_row)?;
+    let mut result = Vec::new();
+    for r in rows {
+        result.push(r?);
+    }
+    Ok(result)
+}
+
 pub fn update(conn: &Connection, id: i64, patch: &TodoPatch) -> Result<Todo, CoreError> {
     let now = now_iso();
 

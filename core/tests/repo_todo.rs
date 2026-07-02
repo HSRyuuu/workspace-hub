@@ -126,6 +126,64 @@ fn list_filters_by_status() {
 }
 
 #[test]
+fn list_calendar_range_returns_month_candidates_once() {
+    let (_dir, conn) = fresh_conn();
+
+    let mut start_only = mk("start-only");
+    start_only.start_date = Some("2026-05-03".into());
+    let start_only = repo::create(&conn, &start_only).unwrap();
+
+    let mut due_only = mk("due-only");
+    due_only.start_date = Some("2026-04-01".into());
+    due_only.due_date = Some("2026-05-20".into());
+    let due_only = repo::create(&conn, &due_only).unwrap();
+
+    let mut completed_only = mk("completed-only");
+    completed_only.start_date = Some("2026-04-01".into());
+    completed_only.due_date = Some("2026-06-01".into());
+    let completed_only = repo::create(&conn, &completed_only).unwrap();
+    conn.execute(
+        "UPDATE todo
+         SET status = 'done', completed_at = '2026-05-10T12:00:00Z'
+         WHERE id = ?1",
+        [completed_only.id],
+    )
+    .unwrap();
+
+    let mut duplicate_candidate = mk("duplicate-candidate");
+    duplicate_candidate.start_date = Some("2026-05-01".into());
+    duplicate_candidate.due_date = Some("2026-05-02".into());
+    let duplicate_candidate = repo::create(&conn, &duplicate_candidate).unwrap();
+
+    let mut outside = mk("outside");
+    outside.start_date = Some("2026-04-01".into());
+    outside.due_date = Some("2026-06-01".into());
+    let _outside = repo::create(&conn, &outside).unwrap();
+
+    let todos = repo::list_calendar_range(
+        &conn,
+        "2026-05-01",
+        "2026-06-01",
+        "2026-05-01T00:00:00Z",
+        "2026-06-01T00:00:00Z",
+    )
+    .unwrap();
+    let ids: Vec<i64> = todos.iter().map(|t| t.id).collect();
+
+    assert!(ids.contains(&start_only.id));
+    assert!(ids.contains(&due_only.id));
+    assert!(ids.contains(&completed_only.id));
+    assert!(ids.contains(&duplicate_candidate.id));
+    assert_eq!(
+        ids.iter()
+            .filter(|id| **id == duplicate_candidate.id)
+            .count(),
+        1
+    );
+    assert_eq!(ids.len(), 4);
+}
+
+#[test]
 fn delete_then_get_returns_not_found() {
     let (_dir, conn) = fresh_conn();
     let t = repo::create(&conn, &mk("doomed")).unwrap();

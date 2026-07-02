@@ -6,7 +6,7 @@
 
 ## 빌드·실행
 
-_빌드 절차는 `BUILD_AND_RUN.md` 참조._
+_빌드 절차는 `GUIDE_BUILD_AND_RUN.md` 참조._
 
 ## 데이터 위치
 

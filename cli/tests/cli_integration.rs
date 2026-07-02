@@ -39,16 +39,90 @@ fn version_human_outputs_human_text() {
 #[test]
 fn todo_add_emits_json_with_normalized_due() {
     let dir = TempDir::new().unwrap();
-    cli(dir.path())
+    let out = cli(dir.path())
         .args([
-            "todo", "add", "--title", "intg test", "--priority", "high", "--due", "2026-05-20",
+            "todo",
+            "add",
+            "--title",
+            "intg test",
+            "--priority",
+            "high",
+            "--due",
+            "2026-05-20",
+            "--due-time",
+            "09:30",
         ])
         .assert()
         .success()
-        .stdout(contains("\"title\": \"intg test\""))
-        .stdout(contains("\"priority\": \"high\""))
-        .stdout(contains("\"due_at\": \"2026-05-20T00:00:00Z\""))
-        .stdout(contains("\"status\": \"open\""));
+        .get_output()
+        .stdout
+        .clone();
+    let v: serde_json::Value = serde_json::from_slice(&out).unwrap();
+    assert_eq!(v["title"], "intg test");
+    assert_eq!(v["priority"], "high");
+    assert_eq!(v["due_date"], "2026-05-20");
+    assert_eq!(v["due_time"], 570);
+    assert_eq!(v["status"], "open");
+    assert!(v["start_date"].as_str().is_some());
+    assert!(v.get("due_at").is_none());
+}
+
+#[test]
+fn todo_add_emits_json_with_default_dates() {
+    let dir = TempDir::new().unwrap();
+    let out = cli(dir.path())
+        .args(["todo", "add", "--title", "default dates"])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let v: serde_json::Value = serde_json::from_slice(&out).unwrap();
+    assert_eq!(v["title"], "default dates");
+    assert!(v["start_date"].as_str().is_some());
+    assert!(v["due_date"].is_null());
+    assert_eq!(v["due_time"], 0);
+    assert!(v["completed_at"].is_null());
+}
+
+#[test]
+fn todo_add_invalid_due_time_exits_with_user_error_code_1() {
+    let dir = TempDir::new().unwrap();
+    cli(dir.path())
+        .args([
+            "todo",
+            "add",
+            "--title",
+            "x",
+            "--due",
+            "2026-05-20",
+            "--due-time",
+            "24:00",
+        ])
+        .assert()
+        .code(1)
+        .stderr(contains("due_time"));
+}
+
+#[test]
+fn todo_human_output_shows_due_date_and_time() {
+    let dir = TempDir::new().unwrap();
+    cli(dir.path())
+        .args([
+            "--human",
+            "todo",
+            "add",
+            "--title",
+            "human",
+            "--due",
+            "2026-05-20",
+            "--due-time",
+            "09:30",
+        ])
+        .assert()
+        .success()
+        .stdout(contains("human"))
+        .stdout(contains("due=2026-05-20 09:30"));
 }
 
 #[test]
@@ -105,12 +179,14 @@ fn todo_complete_then_uncomplete_round_trip() {
         .args(["todo", "complete", &id])
         .assert()
         .success()
-        .stdout(contains("\"status\": \"done\""));
+        .stdout(contains("\"status\": \"done\""))
+        .stdout(predicates::str::contains("\"completed_at\": null").not());
     cli(dir.path())
         .args(["todo", "uncomplete", &id])
         .assert()
         .success()
-        .stdout(contains("\"status\": \"open\""));
+        .stdout(contains("\"status\": \"open\""))
+        .stdout(contains("\"completed_at\": null"));
 }
 
 #[test]

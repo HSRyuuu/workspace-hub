@@ -34,7 +34,11 @@ pub fn print_todo_human(todo: &Todo) {
         Priority::Mid => "보통",
         Priority::High => "높음",
     };
-    let due = todo.due_at.as_deref().unwrap_or("-");
+    let due = todo
+        .due_date
+        .as_deref()
+        .map(|date| format!("{date} {:02}:{:02}", todo.due_time / 60, todo.due_time % 60))
+        .unwrap_or_else(|| "-".into());
     let ws = todo
         .workspace_id
         .map(|i| i.to_string())

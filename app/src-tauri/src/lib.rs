@@ -87,14 +87,37 @@ fn todo_add(state: tauri::State<DbState>, input: serde_json::Value) -> Result<To
         .and_then(|v| v.as_str())
         .ok_or_else(|| "title is required".to_string())?
         .to_string();
-    let description = input.get("description").and_then(|v| v.as_str()).map(String::from);
-    let due_at = input.get("due").and_then(|v| v.as_str()).map(String::from);
+    let description = input
+        .get("description")
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let start_date = input
+        .get("start_date")
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let due_date = input
+        .get("due_date")
+        .or_else(|| input.get("due"))
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let due_time = input.get("due_time").and_then(|v| v.as_i64());
     let priority = parse_priority(
-        input.get("priority").and_then(|v| v.as_str()).unwrap_or("mid"),
+        input
+            .get("priority")
+            .and_then(|v| v.as_str())
+            .unwrap_or("mid"),
     )?;
     let workspace_id = input.get("workspace_id").and_then(|v| v.as_i64());
 
-    let new = NewTodo { workspace_id, title, description, due_at, priority };
+    let new = NewTodo {
+        workspace_id,
+        title,
+        description,
+        start_date,
+        due_date,
+        due_time,
+        priority,
+    };
     let conn = state.0.lock().map_err(lock_err)?;
     repo::todo::create(&conn, &new).map_err(core_err)
 }
@@ -105,9 +128,17 @@ fn todo_update(
     id: i64,
     patch: serde_json::Value,
 ) -> Result<Todo, String> {
-    let title = patch.get("title").and_then(|v| v.as_str()).map(String::from);
+    let title = patch
+        .get("title")
+        .and_then(|v| v.as_str())
+        .map(String::from);
     let description = nullable_string_patch(patch.get("description"));
-    let due_at = nullable_string_patch(patch.get("due"));
+    let start_date = patch
+        .get("start_date")
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let due_date = nullable_string_patch(patch.get("due_date").or_else(|| patch.get("due")));
+    let due_time = patch.get("due_time").and_then(|v| v.as_i64());
     let priority = match patch.get("priority").and_then(|v| v.as_str()) {
         Some(s) => Some(parse_priority(s)?),
         None => None,
@@ -117,7 +148,15 @@ fn todo_update(
         None => None,
     };
 
-    let tp = TodoPatch { title, description, due_at, priority, status };
+    let tp = TodoPatch {
+        title,
+        description,
+        start_date,
+        due_date,
+        due_time,
+        priority,
+        status,
+    };
     let conn = state.0.lock().map_err(lock_err)?;
     repo::todo::update(&conn, id, &tp).map_err(core_err)
 }

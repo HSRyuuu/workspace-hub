@@ -53,3 +53,4 @@ yarn-error.log*
 # OMC / Claude 에이전트 런타임 — 전체 비커밋 (세션·캐시·로그·내부 기획 메모 포함)
 .omc/
 app/.omc/
+.as-usual/

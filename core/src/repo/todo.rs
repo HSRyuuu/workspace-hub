@@ -2,7 +2,7 @@ use rusqlite::{params, Connection, Row};
 
 use crate::error::CoreError;
 use crate::models::todo::{NewTodo, Priority, Todo, TodoStatus};
-use crate::repo::{normalize_iso_date, now_iso};
+use crate::repo::{normalize_iso_date_only, now_iso, validate_due_time_minutes};
 
 fn map_row(row: &Row<'_>) -> rusqlite::Result<Todo> {
     let status_str: String = row.get("status")?;
@@ -24,7 +24,9 @@ fn map_row(row: &Row<'_>) -> rusqlite::Result<Todo> {
         workspace_id: row.get("workspace_id")?,
         title: row.get("title")?,
         description: row.get("description")?,
-        due_at: row.get("due_at")?,
+        start_date: row.get("start_date")?,
+        due_date: row.get("due_date")?,
+        due_time: row.get("due_time")?,
         priority: row.get("priority")?,
         status,
         completed_at: row.get("completed_at")?,
@@ -34,14 +36,16 @@ fn map_row(row: &Row<'_>) -> rusqlite::Result<Todo> {
 }
 
 const SELECT_COLUMNS: &str =
-    "id, workspace_id, title, description, due_at, priority, status, completed_at, created_at, updated_at";
+    "id, workspace_id, title, description, start_date, due_date, due_time, priority, status, completed_at, created_at, updated_at";
 
 /// `None` = 미지정(보존), `Some(None)` = NULL 클리어, `Some(Some(v))` = 값 설정.
 /// CLI 레이어가 빈 문자열을 `Some(None)` 으로 변환한다 (schedule_update 와 동일 패턴).
 pub struct TodoPatch {
     pub title: Option<String>,
     pub description: Option<Option<String>>,
-    pub due_at: Option<Option<String>>,
+    pub start_date: Option<String>,
+    pub due_date: Option<Option<String>>,
+    pub due_time: Option<i64>,
     pub priority: Option<Priority>,
     pub status: Option<TodoStatus>,
 }
@@ -50,20 +54,28 @@ pub fn create(conn: &Connection, input: &NewTodo) -> Result<Todo, CoreError> {
     if input.title.trim().is_empty() {
         return Err(CoreError::InvalidInput("title is required".into()));
     }
-    // due_at 은 core 레이어에서 한 번 더 검증한다 — 호출자가 CLI 든 (향후) Tauri 직접 호출이든
-    // 동일한 보장을 갖도록.
-    let due_at = normalize_iso_date(input.due_at.as_deref())?;
-
     let now = now_iso();
+    let start_date = normalize_iso_date_only(input.start_date.as_deref())?
+        .unwrap_or_else(|| now[..10].to_string());
+    let due_date = normalize_iso_date_only(input.due_date.as_deref())?;
+    let input_due_time = validate_due_time_minutes(input.due_time.unwrap_or(0))?;
+    let due_time = if due_date.is_some() {
+        input_due_time
+    } else {
+        0
+    };
+
     conn.execute(
         "INSERT INTO todo
-            (workspace_id, title, description, due_at, priority, status, created_at, updated_at)
-         VALUES (?1, ?2, ?3, ?4, ?5, 'open', ?6, ?6)",
+            (workspace_id, title, description, start_date, due_date, due_time, priority, status, created_at, updated_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'open', ?8, ?8)",
         params![
             input.workspace_id,
             input.title.trim(),
             input.description,
-            due_at,
+            start_date,
+            due_date,
+            due_time,
             input.priority,
             now,
         ],
@@ -76,16 +88,14 @@ pub fn get(conn: &Connection, id: i64) -> Result<Todo, CoreError> {
     let sql = format!("SELECT {SELECT_COLUMNS} FROM todo WHERE id = ?1");
     conn.query_row(&sql, params![id], map_row)
         .map_err(|e| match e {
-            rusqlite::Error::QueryReturnedNoRows => {
-                CoreError::NotFound(format!("todo id={id}"))
-            }
+            rusqlite::Error::QueryReturnedNoRows => CoreError::NotFound(format!("todo id={id}")),
             other => CoreError::Sqlite(other),
         })
 }
 
 pub fn list(conn: &Connection, status_filter: Option<TodoStatus>) -> Result<Vec<Todo>, CoreError> {
     let order = "ORDER BY (status = 'open') DESC, \
-                          CASE WHEN due_at IS NULL THEN 1 ELSE 0 END, due_at ASC, \
+                          CASE WHEN due_date IS NULL THEN 1 ELSE 0 END, due_date ASC, due_time ASC, \
                           CASE priority WHEN 'high' THEN 0 WHEN 'mid' THEN 1 ELSE 2 END ASC, \
                           id DESC";
     let (sql, params): (String, Vec<Box<dyn rusqlite::ToSql>>) = match status_filter {
@@ -93,10 +103,7 @@ pub fn list(conn: &Connection, status_filter: Option<TodoStatus>) -> Result<Vec<
             format!("SELECT {SELECT_COLUMNS} FROM todo WHERE status = ?1 {order}"),
             vec![Box::new(s.as_str().to_string())],
         ),
-        None => (
-            format!("SELECT {SELECT_COLUMNS} FROM todo {order}"),
-            vec![],
-        ),
+        None => (format!("SELECT {SELECT_COLUMNS} FROM todo {order}"), vec![]),
     };
 
     let mut stmt = conn.prepare(&sql)?;
@@ -135,9 +142,24 @@ pub fn update(conn: &Connection, id: i64, patch: &TodoPatch) -> Result<Todo, Cor
         None => {}
     }
 
-    if let Some(raw) = &patch.due_at {
-        let normalized = normalize_iso_date(raw.as_deref())?;
-        push!("due_at", normalized);
+    if let Some(raw) = &patch.start_date {
+        let normalized = normalize_iso_date_only(Some(raw.as_str()))?
+            .ok_or_else(|| CoreError::InvalidInput("start_date is required".into()))?;
+        push!("start_date", normalized);
+    }
+
+    if let Some(raw) = &patch.due_date {
+        let normalized = normalize_iso_date_only(raw.as_deref())?;
+        if normalized.is_none() {
+            push!("due_date", Option::<String>::None);
+            push!("due_time", 0_i64);
+        } else {
+            push!("due_date", normalized);
+        }
+    }
+
+    if let Some(due_time) = patch.due_time {
+        push!("due_time", validate_due_time_minutes(due_time)?);
     }
 
     if let Some(priority) = patch.priority {

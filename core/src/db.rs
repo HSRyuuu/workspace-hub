@@ -18,6 +18,7 @@ const MIGRATIONS: &[(u32, &str)] = &[
     (6, include_str!("../migrations/V006__add_project_application.sql")),
     (7, include_str!("../migrations/V007__add_memo_project.sql")),
     (8, include_str!("../migrations/V008__add_file_explorer.sql")),
+    (9, include_str!("../migrations/V009__todo_date_policy.sql")),
 ];
 
 /// MIGRATIONS 배열의 마지막 버전. 테스트가 매직 넘버 대신 이 상수를 참조하면 새 마이그레이션

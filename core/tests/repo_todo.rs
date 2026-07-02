@@ -7,8 +7,8 @@
 use rusqlite::Connection;
 use tempfile::TempDir;
 use workspace_hub_core::models::todo::{NewTodo, Priority, TodoStatus};
-use workspace_hub_core::repo::{normalize_iso_date, todo as repo};
 use workspace_hub_core::repo::todo::TodoPatch;
+use workspace_hub_core::repo::{normalize_iso_date, todo as repo};
 use workspace_hub_core::{db, CoreError};
 
 fn fresh_conn() -> (TempDir, Connection) {
@@ -23,7 +23,9 @@ fn mk(title: &str) -> NewTodo {
         workspace_id: None,
         title: title.into(),
         description: None,
-        due_at: None,
+        start_date: None,
+        due_date: None,
+        due_time: None,
         priority: Priority::Mid,
     }
 }
@@ -35,6 +37,10 @@ fn create_then_get_roundtrip() {
     assert!(created.id > 0);
     assert_eq!(created.title, "hello");
     assert_eq!(created.status, TodoStatus::Open);
+    assert_eq!(created.start_date, &created.created_at[..10]);
+    assert!(created.due_date.is_none());
+    assert_eq!(created.due_time, 0);
+    assert!(created.completed_at.is_none());
 
     let fetched = repo::get(&conn, created.id).unwrap();
     assert_eq!(fetched.id, created.id);
@@ -49,30 +55,42 @@ fn create_rejects_empty_title() {
 }
 
 #[test]
-fn create_validates_due_at() {
+fn create_validates_due_date() {
     let (_dir, conn) = fresh_conn();
     let mut bad = mk("bad-due");
-    bad.due_at = Some("not-a-date".into());
+    bad.due_date = Some("not-a-date".into());
     let err = repo::create(&conn, &bad).unwrap_err();
     assert!(matches!(err, CoreError::Parse(_)), "got {err:?}");
 }
 
 #[test]
-fn create_normalizes_due_short_date_to_iso() {
+fn create_stores_due_short_date_as_date_only() {
     let (_dir, conn) = fresh_conn();
     let mut input = mk("with-due");
-    input.due_at = Some("2026-05-20".into());
+    input.due_date = Some("2026-05-20".into());
+    input.due_time = Some(90);
     let todo = repo::create(&conn, &input).unwrap();
-    assert_eq!(todo.due_at.as_deref(), Some("2026-05-20T00:00:00Z"));
+    assert_eq!(todo.due_date.as_deref(), Some("2026-05-20"));
+    assert_eq!(todo.due_time, 90);
 }
 
 #[test]
-fn create_accepts_rfc3339_due_unchanged() {
+fn create_discards_rfc3339_due_time() {
     let (_dir, conn) = fresh_conn();
     let mut input = mk("rfc3339-due");
-    input.due_at = Some("2026-05-20T13:30:00Z".into());
+    input.due_date = Some("2026-05-20T13:30:00Z".into());
     let todo = repo::create(&conn, &input).unwrap();
-    assert_eq!(todo.due_at.as_deref(), Some("2026-05-20T13:30:00Z"));
+    assert_eq!(todo.due_date.as_deref(), Some("2026-05-20"));
+    assert_eq!(todo.due_time, 0);
+}
+
+#[test]
+fn create_validates_due_time_range() {
+    let (_dir, conn) = fresh_conn();
+    let mut input = mk("bad-due-time");
+    input.due_time = Some(1440);
+    let err = repo::create(&conn, &input).unwrap_err();
+    assert!(matches!(err, CoreError::InvalidInput(_)), "got {err:?}");
 }
 
 #[test]
@@ -189,7 +207,9 @@ fn update_single_field_patch() {
         &TodoPatch {
             title: None,
             description: None,
-            due_at: None,
+            start_date: None,
+            due_date: None,
+            due_time: None,
             priority: Some(Priority::High),
             status: None,
         },
@@ -214,7 +234,9 @@ fn update_null_clear() {
         &TodoPatch {
             title: None,
             description: Some(None), // NULL 클리어
-            due_at: None,
+            start_date: None,
+            due_date: None,
+            due_time: None,
             priority: None,
             status: None,
         },
@@ -229,7 +251,8 @@ fn update_unspecified_fields_preserved() {
     let (_dir, conn) = fresh_conn();
     let mut input = mk("keep-me");
     input.description = Some("keep".into());
-    input.due_at = Some("2026-06-01".into());
+    input.due_date = Some("2026-06-01".into());
+    input.due_time = Some(600);
     input.priority = Priority::High;
     let t = repo::create(&conn, &input).unwrap();
 
@@ -240,7 +263,9 @@ fn update_unspecified_fields_preserved() {
         &TodoPatch {
             title: Some("renamed".into()),
             description: None,
-            due_at: None,
+            start_date: None,
+            due_date: None,
+            due_time: None,
             priority: None,
             status: None,
         },
@@ -249,8 +274,36 @@ fn update_unspecified_fields_preserved() {
 
     assert_eq!(patched.title, "renamed");
     assert_eq!(patched.description.as_deref(), Some("keep"));
-    assert_eq!(patched.due_at.as_deref(), Some("2026-06-01T00:00:00Z"));
+    assert_eq!(patched.due_date.as_deref(), Some("2026-06-01"));
+    assert_eq!(patched.due_time, 600);
     assert_eq!(patched.priority, Priority::High);
+}
+
+#[test]
+fn update_due_date_clear_resets_due_time() {
+    let (_dir, conn) = fresh_conn();
+    let mut input = mk("clear-due");
+    input.due_date = Some("2026-06-01".into());
+    input.due_time = Some(600);
+    let t = repo::create(&conn, &input).unwrap();
+
+    let patched = repo::update(
+        &conn,
+        t.id,
+        &TodoPatch {
+            title: None,
+            description: None,
+            start_date: None,
+            due_date: Some(None),
+            due_time: None,
+            priority: None,
+            status: None,
+        },
+    )
+    .unwrap();
+
+    assert!(patched.due_date.is_none());
+    assert_eq!(patched.due_time, 0);
 }
 
 #[test]
@@ -266,7 +319,9 @@ fn update_status_syncs_completed_at() {
         &TodoPatch {
             title: None,
             description: None,
-            due_at: None,
+            start_date: None,
+            due_date: None,
+            due_time: None,
             priority: None,
             status: Some(TodoStatus::Done),
         },
@@ -282,7 +337,9 @@ fn update_status_syncs_completed_at() {
         &TodoPatch {
             title: None,
             description: None,
-            due_at: None,
+            start_date: None,
+            due_date: None,
+            due_time: None,
             priority: None,
             status: Some(TodoStatus::Open),
         },
@@ -290,4 +347,57 @@ fn update_status_syncs_completed_at() {
     .unwrap();
     assert_eq!(reopened.status, TodoStatus::Open);
     assert!(reopened.completed_at.is_none());
+}
+
+#[test]
+fn migrates_existing_due_at_to_due_date_and_due_time() {
+    let dir = TempDir::new().unwrap();
+    let path = dir.path().join("legacy.sqlite");
+    {
+        let conn = Connection::open(&path).unwrap();
+        conn.execute_batch(
+            "
+            CREATE TABLE schema_version (version INTEGER PRIMARY KEY);
+            INSERT INTO schema_version (version) VALUES (8);
+            CREATE TABLE workspace (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                color TEXT NOT NULL DEFAULT '#3F3393',
+                icon TEXT,
+                sort_order INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+            CREATE TABLE todo (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                workspace_id INTEGER REFERENCES workspace(id) ON DELETE SET NULL,
+                title TEXT NOT NULL,
+                description TEXT,
+                due_at TEXT,
+                priority TEXT NOT NULL DEFAULT 'mid' CHECK (priority IN ('low','mid','high')),
+                status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open','done')),
+                completed_at TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            );
+            INSERT INTO todo (id, workspace_id, title, description, due_at, priority, status, completed_at, created_at, updated_at)
+            VALUES
+                (1, NULL, 'with datetime', NULL, '2026-05-20T13:30:00Z', 'mid', 'open', NULL, '2026-05-01T09:10:00Z', '2026-05-01T09:10:00Z'),
+                (2, NULL, 'without due', NULL, NULL, 'high', 'done', '2026-05-03T01:02:03Z', '2026-05-02T11:12:00Z', '2026-05-03T01:02:03Z');
+            ",
+        )
+        .unwrap();
+    }
+
+    let conn = db::open_at(&path).unwrap();
+    let one = repo::get(&conn, 1).unwrap();
+    assert_eq!(one.start_date, "2026-05-01");
+    assert_eq!(one.due_date.as_deref(), Some("2026-05-20"));
+    assert_eq!(one.due_time, 0);
+
+    let two = repo::get(&conn, 2).unwrap();
+    assert_eq!(two.start_date, "2026-05-02");
+    assert!(two.due_date.is_none());
+    assert_eq!(two.due_time, 0);
+    assert_eq!(two.completed_at.as_deref(), Some("2026-05-03T01:02:03Z"));
 }

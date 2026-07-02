@@ -80,7 +80,9 @@ pub struct Todo {
     pub workspace_id: Option<i64>,
     pub title: String,
     pub description: Option<String>,
-    pub due_at: Option<String>,
+    pub start_date: String,
+    pub due_date: Option<String>,
+    pub due_time: i64,
     pub priority: Priority,
     pub status: TodoStatus,
     pub completed_at: Option<String>,
@@ -93,7 +95,8 @@ pub struct NewTodo {
     pub workspace_id: Option<i64>,
     pub title: String,
     pub description: Option<String>,
-    pub due_at: Option<String>,
+    pub start_date: Option<String>,
+    pub due_date: Option<String>,
+    pub due_time: Option<i64>,
     pub priority: Priority,
 }
-

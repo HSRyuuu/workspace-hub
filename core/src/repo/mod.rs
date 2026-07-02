@@ -55,3 +55,34 @@ pub fn normalize_iso_date(input: Option<&str>) -> Result<Option<String>, crate::
         )))
     }
 }
+
+/// `YYYY-MM-DD` 날짜 컬럼 입력값을 검증·정규화한다.
+/// RFC3339 DateTime 이 들어오면 요구사항에 맞춰 날짜 부분만 보존한다.
+pub fn normalize_iso_date_only(input: Option<&str>) -> Result<Option<String>, crate::CoreError> {
+    let Some(raw) = input else { return Ok(None) };
+    let s = raw.trim();
+    if s.is_empty() {
+        return Ok(None);
+    }
+    let date = if s.len() >= 10 { &s[..10] } else { s };
+    if date.len() == 10 && date.chars().nth(4) == Some('-') && date.chars().nth(7) == Some('-') {
+        match chrono::NaiveDate::parse_from_str(date, "%Y-%m-%d") {
+            Ok(_) => Ok(Some(date.to_string())),
+            Err(_) => Err(crate::CoreError::Parse(format!("invalid date: {date}"))),
+        }
+    } else {
+        Err(crate::CoreError::Parse(format!(
+            "expected YYYY-MM-DD or RFC3339, got: {s}"
+        )))
+    }
+}
+
+pub fn validate_due_time_minutes(value: i64) -> Result<i64, crate::CoreError> {
+    if (0..=1439).contains(&value) {
+        Ok(value)
+    } else {
+        Err(crate::CoreError::InvalidInput(
+            "due_time must be between 0 and 1439".into(),
+        ))
+    }
+}

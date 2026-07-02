@@ -7,7 +7,8 @@
 ## 사전 조건
 
 - Rust (cargo, rustc)
-- Node.js + pnpm
+- Node.js 22.13+ (`nvm use` 권장)
+- pnpm 11.9+
 - macOS
 
 ## CLI 빌드·실행

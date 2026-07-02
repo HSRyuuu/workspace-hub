@@ -34,15 +34,14 @@ function TrashIcon() {
 }
 
 function formatDueShort(due: string | null): string {
-  if (!due) return "";
-  const d = new Date(due);
-  if (Number.isNaN(d.getTime())) return due;
-  return d.toISOString().slice(0, 10);
+  return due ?? "";
 }
 
-function isDueOverdue(due: string | null, status: string): boolean {
+function isDueOverdue(due: string | null, dueTime: number, status: string): boolean {
   if (!due || status === "done") return false;
-  return new Date(due).getTime() < Date.now();
+  const h = Math.floor(dueTime / 60);
+  const m = dueTime % 60;
+  return new Date(`${due}T${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:00`).getTime() < Date.now();
 }
 
 export function TodoList({ todos, selectedId, onSelect, onToggle, onDelete, focusId }: TodoListProps) {
@@ -54,8 +53,8 @@ export function TodoList({ todos, selectedId, onSelect, onToggle, onDelete, focu
     <div className="todo-list">
       {todos.map((t) => {
         const isDone = t.status === "done";
-        const dueLabel = formatDueShort(t.due_at);
-        const overdue = isDueOverdue(t.due_at, t.status);
+        const dueLabel = formatDueShort(t.due_date);
+        const overdue = isDueOverdue(t.due_date, t.due_time, t.status);
         const isSelected = t.id === selectedId;
         const isFocused = t.id === focusId;
 

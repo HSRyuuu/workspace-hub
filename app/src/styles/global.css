@@ -645,6 +645,10 @@ button.chip {
   gap: var(--space-md);
 }
 
+.detail-meta-row--audit {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .detail-label {
   font-size: var(--fs-xs);
   font-weight: 600;
@@ -1537,6 +1541,12 @@ button.chip {
 .cal-todo-meta dd {
   margin: 0;
   color: var(--color-ink);
+}
+
+.cal-todo-priority {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .cal-todo-desc {

@@ -12,7 +12,7 @@ import type { Filters } from "./components/TodoFilters";
 import type { Priority, Todo, TodoPatch } from "./types";
 
 function isToday(dateStr: string): boolean {
-  const d = new Date(dateStr);
+  const d = new Date(`${dateStr}T00:00:00`);
   const now = new Date();
   return (
     d.getFullYear() === now.getFullYear() &&
@@ -22,7 +22,7 @@ function isToday(dateStr: string): boolean {
 }
 
 function isLastWeek(dateStr: string): boolean {
-  const d = new Date(dateStr).getTime();
+  const d = new Date(`${dateStr}T00:00:00`).getTime();
   const now = new Date();
   const thisWeekStart = new Date(now);
   thisWeekStart.setHours(0, 0, 0, 0);
@@ -33,7 +33,7 @@ function isLastWeek(dateStr: string): boolean {
 }
 
 function isThisMonth(dateStr: string): boolean {
-  const d = new Date(dateStr);
+  const d = new Date(`${dateStr}T00:00:00`);
   const now = new Date();
   return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
 }
@@ -42,21 +42,31 @@ function applyDueRangeFilter(todos: Todo[], dueRange: Filters["dueRange"]): Todo
   if (dueRange === "all") return todos;
   const now = Date.now();
   return todos.filter((t) => {
-    if (!t.due_at) return false;
-    if (dueRange === "today") return isToday(t.due_at);
-    if (dueRange === "last-week") return isLastWeek(t.due_at);
-    if (dueRange === "this-month") return isThisMonth(t.due_at);
-    if (dueRange === "overdue") return new Date(t.due_at).getTime() < now && t.status === "open";
+    if (!t.due_date) return false;
+    if (dueRange === "today") return isToday(t.due_date);
+    if (dueRange === "last-week") return isLastWeek(t.due_date);
+    if (dueRange === "this-month") return isThisMonth(t.due_date);
+    if (dueRange === "overdue") return dueDateTime(t).getTime() < now && t.status === "open";
     return true;
   });
 }
 
-function isOpenOverdue(todo: Todo): boolean {
-  if (todo.status !== "open" || !todo.due_at) return false;
-  return new Date(todo.due_at).getTime() < Date.now();
+function dueDateTime(todo: Todo): Date {
+  const h = Math.floor(todo.due_time / 60);
+  const m = todo.due_time % 60;
+  return new Date(`${todo.due_date}T${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:00`);
 }
 
-export default function TodoPage() {
+function isOpenOverdue(todo: Todo): boolean {
+  if (todo.status !== "open" || !todo.due_date) return false;
+  return dueDateTime(todo).getTime() < Date.now();
+}
+
+interface TodoPageProps {
+  selectedTodoId?: number | null;
+}
+
+export default function TodoPage({ selectedTodoId = null }: TodoPageProps) {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [filters, setFilters] = useState<Filters>({
@@ -69,6 +79,7 @@ export default function TodoPage() {
 
   const descriptionRef = useRef<MarkdownEditorHandle>(null);
   const snapshotsRef = useRef(new Map<number, Todo>());
+  const appliedNavigationRef = useRef<number | null>(null);
 
   // 초기 로드 (새로고침 핸들러 없음 — 인라인 즉시 저장이 stale 방지)
   useEffect(() => {
@@ -82,6 +93,19 @@ export default function TodoPage() {
       .catch((e: unknown) => showErrorToast(String(e)))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    if (!selectedTodoId || appliedNavigationRef.current === selectedTodoId) return;
+    if (!todos.some((t) => t.id === selectedTodoId)) return;
+    appliedNavigationRef.current = selectedTodoId;
+    setSelectedId(selectedTodoId);
+    setFilters({
+      query: "",
+      priorities: new Set<Priority>(),
+      dueRange: "all",
+      tab: "all",
+    });
+  }, [selectedTodoId, todos]);
 
   // ── useDebouncedUpdate ──────────────────────────────────────────────────────
   const onApply = useCallback((updated: Todo) => {

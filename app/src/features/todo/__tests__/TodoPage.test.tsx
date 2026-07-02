@@ -26,7 +26,9 @@ function makeTodo(overrides: Partial<Todo> = {}): Todo {
     workspace_id: null,
     title: "Open todo",
     description: null,
-    due_at: null,
+    start_date: "2026-06-29",
+    due_date: null,
+    due_time: 0,
     priority: "mid",
     status: "open",
     completed_at: null,
@@ -45,19 +47,19 @@ describe("TodoPage filters", () => {
           makeTodo({
             id: 2,
             title: "Overdue open todo",
-            due_at: "2000-01-01T00:00:00Z",
+            due_date: "2000-01-01",
           }),
           makeTodo({
             id: 3,
             title: "Overdue done todo",
-            due_at: "2000-01-01T00:00:00Z",
+            due_date: "2000-01-01",
             status: "done",
             completed_at: "2000-01-01T01:00:00Z",
           }),
           makeTodo({
             id: 4,
             title: "Future open todo",
-            due_at: "2999-01-01T00:00:00Z",
+            due_date: "2999-01-01",
           }),
         ]);
       }

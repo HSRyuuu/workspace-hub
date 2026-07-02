@@ -9,7 +9,9 @@ export interface Todo {
   workspace_id: number | null;
   title: string;
   description: string | null;
-  due_at: string | null;
+  start_date: string;
+  due_date: string | null;
+  due_time: number;
   priority: Priority;
   status: TodoStatus;
   completed_at: string | null;
@@ -20,7 +22,9 @@ export interface Todo {
 export interface NewTodoInput {
   title: string;
   description?: string | null;
-  due?: string | null;
+  start_date?: string | null;
+  due_date?: string | null;
+  due_time?: number | null;
   priority?: Priority;
   workspace_id?: number | null;
 }
@@ -32,7 +36,9 @@ export interface NewTodoInput {
 export interface TodoPatch {
   title?: string;
   description?: string | null;
-  due?: string | null;
+  start_date?: string;
+  due_date?: string | null;
+  due_time?: number;
   priority?: Priority;
   status?: TodoStatus;
 }

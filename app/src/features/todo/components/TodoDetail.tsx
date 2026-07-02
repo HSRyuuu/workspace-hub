@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { DateField, MarkdownEditor, PriorityDot, Select } from "../../../components/ui";
+import { DateField, MarkdownEditor, PriorityDot, Select, TimeField } from "../../../components/ui";
 import type { MarkdownEditorHandle, SelectOption } from "../../../components/ui";
 import type { Priority, Todo, TodoPatch } from "../types";
 
@@ -51,6 +51,27 @@ export function TodoDetail({ todo, descriptionRef, onPatch }: TodoDetailProps) {
     onPatch(todo.id, { priority }, false); // immediate
   };
 
+  const minutesToTime = (minutes: number) => {
+    const safe = Math.max(0, Math.min(1439, minutes));
+    return `${String(Math.floor(safe / 60)).padStart(2, "0")}:${String(safe % 60).padStart(2, "0")}`;
+  };
+
+  const timeToMinutes = (value: string) => {
+    const [h, m] = value.split(":").map(Number);
+    return h * 60 + m;
+  };
+
+  const formatDateTime = (value: string | null) => {
+    if (!value) return "-";
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return value;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+      d.getDate(),
+    ).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(
+      d.getMinutes(),
+    ).padStart(2, "0")}`;
+  };
+
   const createdDate = todo.created_at.slice(0, 10);
 
   return (
@@ -66,29 +87,57 @@ export function TodoDetail({ todo, descriptionRef, onPatch }: TodoDetailProps) {
         />
       </div>
 
+      <div className="detail-field">
+        <label className="detail-label">우선순위</label>
+        <Select<Priority>
+          value={todo.priority}
+          options={PRIORITY_OPTIONS}
+          onChange={handlePriorityChange}
+          ariaLabel="우선순위"
+        />
+      </div>
+
       <div className="detail-meta-row">
         <div className="detail-field">
-          <label className="detail-label">우선순위</label>
-          <Select<Priority>
-            value={todo.priority}
-            options={PRIORITY_OPTIONS}
-            onChange={handlePriorityChange}
-            ariaLabel="우선순위"
+          <label className="detail-label">시작일</label>
+          <DateField
+            value={todo.start_date}
+            onChange={(val) => {
+              if (val) onPatch(todo.id, { start_date: val }, false);
+            }}
+            placeholder="시작일"
+            ariaLabel="시작일"
           />
         </div>
-
         <div className="detail-field">
           <label className="detail-label">마감일</label>
           <DateField
-            value={todo.due_at ? todo.due_at.slice(0, 10) : ""}
-            onChange={(val) => onPatch(todo.id, { due: val || null }, false)}
+            value={todo.due_date ?? ""}
+            onChange={(val) =>
+              onPatch(todo.id, { due_date: val || null, due_time: val ? todo.due_time : 0 }, false)
+            }
             ariaLabel="마감일"
           />
         </div>
+        <div className="detail-field">
+          <label className="detail-label">마감 시간</label>
+          <TimeField
+            value={minutesToTime(todo.due_time)}
+            onChange={(val) => onPatch(todo.id, { due_time: timeToMinutes(val) }, false)}
+            ariaLabel="마감 시간"
+            disabled={!todo.due_date}
+          />
+        </div>
+      </div>
 
+      <div className="detail-meta-row detail-meta-row--audit">
         <div className="detail-field">
           <label className="detail-label">생성일</label>
           <span className="detail-value">{createdDate}</span>
+        </div>
+        <div className="detail-field">
+          <label className="detail-label">완료일</label>
+          <span className="detail-value">{formatDateTime(todo.completed_at)}</span>
         </div>
       </div>
 

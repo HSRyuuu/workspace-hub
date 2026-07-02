@@ -123,22 +123,22 @@ describe("MonthGrid schedule ordering", () => {
 });
 
 describe("MonthGrid todo display date", () => {
-  it("shows todos without due_date on their created date", () => {
+  it("shows todos without due_date on their start date", () => {
     const { container } = renderMonthGrid([], [
-      makeTodo({ id: 1, title: "Created only", created_at: "2026-05-03T00:00:00Z" }),
+      makeTodo({ id: 1, title: "Start only", start_date: "2026-05-03" }),
     ]);
 
     const bar = container.querySelector<HTMLButtonElement>(".cal-bar.todo");
-    expect(bar?.title).toBe("Created only");
+    expect(bar?.title).toBe("Start only");
     expect(bar?.style.left).toBe("0%");
   });
 
-  it("uses due_date instead of created date when both exist", () => {
+  it("uses due_date instead of start date when both exist", () => {
     const { container } = renderMonthGrid([], [
       makeTodo({
         id: 1,
         title: "Due wins",
-        created_at: "2026-05-03T00:00:00Z",
+        start_date: "2026-05-03",
         due_date: "2026-05-20",
       }),
     ]);
@@ -146,5 +146,22 @@ describe("MonthGrid todo display date", () => {
     const bar = container.querySelector<HTMLButtonElement>(".cal-bar.todo");
     expect(bar?.title).toBe("Due wins");
     expect(bar?.style.left).toBe("42.857142857142854%");
+  });
+
+  it("uses completed date for done todos", () => {
+    const { container } = renderMonthGrid([], [
+      makeTodo({
+        id: 1,
+        title: "Done wins",
+        start_date: "2026-05-03",
+        due_date: "2026-05-20",
+        status: "done",
+        completed_at: "2026-05-10T00:00:00Z",
+      }),
+    ]);
+
+    const bar = container.querySelector<HTMLButtonElement>(".cal-bar.todo");
+    expect(bar?.title).toBe("Done wins");
+    expect(bar?.style.left).toBe("0%");
   });
 });

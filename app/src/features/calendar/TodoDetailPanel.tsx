@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { Button } from "../../components/ui";
+import { Button, PriorityDot } from "../../components/ui";
 import { todoApi } from "../todo/api";
 import type { Todo } from "../todo/types";
-import { formatDateLocal, formatTimeLocal } from "./dateUtils";
 
 interface TodoDetailPanelProps {
   todo: Todo;
@@ -42,8 +41,7 @@ export function TodoDetailPanel({
     }
   }
 
-  const due = todo.due_at;
-  const dueLabel = due ? `${formatDateLocal(due)} ${formatTimeLocal(due)}` : "—";
+  const dueLabel = todo.due_date ?? "—";
 
   return (
     <div className="cal-editor">
@@ -64,8 +62,15 @@ export function TodoDetailPanel({
           <dt>상태</dt>
           <dd>{todo.status === "done" ? "완료" : "열림"}</dd>
           <dt>우선순위</dt>
-          <dd>{PRIORITY_LABEL[todo.priority] ?? todo.priority}</dd>
-          <dt>마감</dt>
+          <dd>
+            <span className="cal-todo-priority">
+              <PriorityDot priority={todo.priority} />
+              {PRIORITY_LABEL[todo.priority] ?? todo.priority}
+            </span>
+          </dd>
+          <dt>시작일</dt>
+          <dd>{todo.start_date}</dd>
+          <dt>마감일</dt>
           <dd>{dueLabel}</dd>
         </dl>
         {todo.description && (

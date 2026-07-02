@@ -63,6 +63,7 @@ const SECTIONS: { id: Section; label: string; enabled: boolean; Icon: () => JSX.
 
 export default function App() {
   const [section, setSection] = useState<Section>("todo");
+  const [selectedTodoId, setSelectedTodoId] = useState<number | null>(null);
 
   return (
     <div className="app-shell">
@@ -91,8 +92,15 @@ export default function App() {
         ))}
       </aside>
       <main className={`main${section === "memos" || section === "project" || section === "files" ? " main--flush" : ""}`}>
-        {section === "todo" && <TodoPage />}
-        {section === "calendar" && <CalendarPage onNavigateToTodo={() => setSection("todo")} />}
+        {section === "todo" && <TodoPage selectedTodoId={selectedTodoId} />}
+        {section === "calendar" && (
+          <CalendarPage
+            onNavigateToTodo={(id) => {
+              setSelectedTodoId(id);
+              setSection("todo");
+            }}
+          />
+        )}
         {section === "memos" && <MemoPage />}
         {section === "project" && <ProjectPage />}
         {section === "files" && <FilesPage />}

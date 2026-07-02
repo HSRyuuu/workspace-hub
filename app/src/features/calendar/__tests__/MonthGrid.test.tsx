@@ -1,5 +1,6 @@
 import { render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import type { Todo } from "../../todo/types";
 import type { Schedule } from "../types";
 import { MonthGrid } from "../MonthGrid";
 
@@ -23,13 +24,31 @@ function makeSchedule(
   };
 }
 
-function renderMonthGrid(schedules: Schedule[]) {
+function makeTodo(overrides: Partial<Todo>): Todo {
+  return {
+    id: 1,
+    workspace_id: null,
+    title: "Todo",
+    description: null,
+    start_date: "2026-05-01",
+    due_date: null,
+    due_time: 0,
+    priority: "mid",
+    status: "open",
+    completed_at: null,
+    created_at: "2026-05-03T00:00:00Z",
+    updated_at: "2026-05-03T00:00:00Z",
+    ...overrides,
+  };
+}
+
+function renderMonthGrid(schedules: Schedule[], todos: Todo[] = []) {
   return render(
     <MonthGrid
       year={2026}
       month={5}
       schedules={schedules}
-      todos={[]}
+      todos={todos}
       selected={null}
       onSelectSchedule={vi.fn()}
       onSelectTodo={vi.fn()}
@@ -100,5 +119,32 @@ describe("MonthGrid schedule ordering", () => {
     const { container } = renderMonthGrid([startsEarlierEndsEarlier, startsLaterEndsLater]);
 
     expect(scheduleTitles(container).slice(0, 2)).toEqual(["ends later", "starts earlier"]);
+  });
+});
+
+describe("MonthGrid todo display date", () => {
+  it("shows todos without due_date on their created date", () => {
+    const { container } = renderMonthGrid([], [
+      makeTodo({ id: 1, title: "Created only", created_at: "2026-05-03T00:00:00Z" }),
+    ]);
+
+    const bar = container.querySelector<HTMLButtonElement>(".cal-bar.todo");
+    expect(bar?.title).toBe("Created only");
+    expect(bar?.style.left).toBe("0%");
+  });
+
+  it("uses due_date instead of created date when both exist", () => {
+    const { container } = renderMonthGrid([], [
+      makeTodo({
+        id: 1,
+        title: "Due wins",
+        created_at: "2026-05-03T00:00:00Z",
+        due_date: "2026-05-20",
+      }),
+    ]);
+
+    const bar = container.querySelector<HTMLButtonElement>(".cal-bar.todo");
+    expect(bar?.title).toBe("Due wins");
+    expect(bar?.style.left).toBe("42.857142857142854%");
   });
 });

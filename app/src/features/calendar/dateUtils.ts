@@ -92,9 +92,16 @@ export function scheduleOverlapsDay(s: { start_at: string; end_at: string }, day
   return start < nextDay && end >= day;
 }
 
-/** TODO due_at(UTC ISO) 이 이 날짜와 같은 로컬 day 인지. */
-export function todoFallsOnDay(dueIso: string, dayIso: string): boolean {
-  return formatDateLocal(dueIso) === dayIso;
+/** TODO 는 마감일이 있으면 마감일, 없으면 생성일의 로컬 날짜에 표시한다. */
+export function todoCalendarDate(todo: { due_date: string | null; created_at: string }): string {
+  return todo.due_date ?? formatDateLocal(todo.created_at);
+}
+
+export function todoFallsOnDay(
+  todo: { due_date: string | null; created_at: string },
+  dayIso: string,
+): boolean {
+  return todoCalendarDate(todo) === dayIso;
 }
 
 export function shiftMonth(year: number, month1to12: number, delta: number): {

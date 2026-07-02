@@ -73,9 +73,8 @@ function findScheduleSpanInWeek(
 }
 
 function findTodoColInWeek(week: WeekCell[], t: Todo): number | null {
-  if (!t.due_at) return null;
   for (let ci = 0; ci < 7; ci++) {
-    if (todoFallsOnDay(t.due_at, week[ci].iso)) return ci;
+    if (todoFallsOnDay(t, week[ci].iso)) return ci;
   }
   return null;
 }

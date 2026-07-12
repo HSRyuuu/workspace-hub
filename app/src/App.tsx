@@ -6,8 +6,9 @@ import CalendarPage from "./features/calendar/CalendarPage";
 import MemoPage from "./features/memo/MemoPage";
 import ProjectPage from "./features/project/ProjectPage";
 import FilesPage from "./features/files/FilesPage";
+import TodayPage from "./features/today/TodayPage";
 
-type Section = "todo" | "calendar" | "memos" | "project" | "files";
+type Section = "today" | "todo" | "calendar" | "memos" | "project" | "files";
 
 const ICON_SIZE = 18;
 const iconProps = {
@@ -21,6 +22,12 @@ const iconProps = {
   strokeLinejoin: "round" as const,
 };
 
+const TodayIcon = () => (
+  <svg {...iconProps} aria-hidden>
+    <circle cx="12" cy="12" r="3.5" />
+    <path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M19.1 4.9l-1.8 1.8M6.7 17.3l-1.8 1.8" />
+  </svg>
+);
 const TodoIcon = () => (
   <svg {...iconProps} aria-hidden>
     <rect x="4" y="4" width="16" height="16" rx="3" />
@@ -54,6 +61,7 @@ const FilesIcon = () => (
 );
 
 const SECTIONS: { id: Section; label: string; enabled: boolean; Icon: () => JSX.Element }[] = [
+  { id: "today", label: "Today", enabled: true, Icon: TodayIcon },
   { id: "todo", label: "TODO", enabled: true, Icon: TodoIcon },
   { id: "calendar", label: "Calendar", enabled: true, Icon: CalendarIcon },
   { id: "memos", label: "Memo", enabled: true, Icon: MemoIcon },
@@ -62,8 +70,9 @@ const SECTIONS: { id: Section; label: string; enabled: boolean; Icon: () => JSX.
 ];
 
 export default function App() {
-  const [section, setSection] = useState<Section>("todo");
+  const [section, setSection] = useState<Section>("today");
   const [selectedTodoId, setSelectedTodoId] = useState<number | null>(null);
+  const [selectedMemoId, setSelectedMemoId] = useState<number | null>(null);
 
   return (
     <div className="app-shell">
@@ -98,6 +107,18 @@ export default function App() {
       <main
         className={`main${section === "memos" || section === "project" || section === "files" ? " main--flush" : ""}`}
       >
+        {section === "today" && (
+          <TodayPage
+            onNavigateToTodo={(id) => {
+              setSelectedTodoId(id);
+              setSection("todo");
+            }}
+            onNavigateToMemo={(id) => {
+              setSelectedMemoId(id);
+              setSection("memos");
+            }}
+          />
+        )}
         {section === "todo" && <TodoPage selectedTodoId={selectedTodoId} />}
         {section === "calendar" && (
           <CalendarPage
@@ -107,7 +128,7 @@ export default function App() {
             }}
           />
         )}
-        {section === "memos" && <MemoPage />}
+        {section === "memos" && <MemoPage selectedMemoId={selectedMemoId} />}
         {section === "project" && <ProjectPage />}
         {section === "files" && <FilesPage />}
       </main>

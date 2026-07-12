@@ -13,6 +13,10 @@ import { useSaveIndicator } from "./useSaveIndicator";
 
 const DEBOUNCE_MS = 500;
 
+interface MemoPageProps {
+  selectedMemoId?: number | null;
+}
+
 function clearTimer(ref: MutableRefObject<number | null>) {
   if (ref.current !== null) {
     window.clearTimeout(ref.current);
@@ -20,13 +24,14 @@ function clearTimer(ref: MutableRefObject<number | null>) {
   }
 }
 
-export default function MemoPage() {
+export default function MemoPage({ selectedMemoId = null }: MemoPageProps) {
   const [folders, setFolders] = useState<MemoFolder[]>([]);
   const [memos, setMemos] = useState<Memo[]>([]);
   const [trashCount, setTrashCount] = useState(0);
   const [scope, setScope] = useState<MemoListScope>("active");
   const [folderId, setFolderId] = useState<number | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const appliedNavigationRef = useRef<number | null>(null);
   const [draggedMemo, setDraggedMemo] = useState<{
     id: number;
     folderId: number | null;
@@ -85,6 +90,15 @@ export default function MemoPage() {
   useEffect(() => {
     refreshMemos();
   }, [refreshMemos]);
+
+  useEffect(() => {
+    if (selectedMemoId === null || appliedNavigationRef.current === selectedMemoId) return;
+    if (!memos.some((memo) => memo.id === selectedMemoId)) return;
+    appliedNavigationRef.current = selectedMemoId;
+    setScope("active");
+    setFolderId(null);
+    setSelectedId(selectedMemoId);
+  }, [selectedMemoId, memos]);
 
   // pending debounce 저장이 있으면 즉시 flush. selectedId 가 null 로 가기 직전
   // 모든 진입점에서 호출 — timer fire 전에 같은 메모를 다시 열 때 옛 m.body 가

@@ -15,7 +15,7 @@
     "tauri": "tauri",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src",
+    "lint": "eslint src --max-warnings 0",
     "format": "prettier --write src",
     "format:check": "prettier --check src"
   },

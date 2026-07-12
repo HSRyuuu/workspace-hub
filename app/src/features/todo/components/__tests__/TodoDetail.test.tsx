@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { forwardRef, useImperativeHandle } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { TodoDetail } from "../TodoDetail";
@@ -34,33 +34,21 @@ function makeTodo(overrides: Partial<Todo> = {}): Todo {
 
 describe("TodoDetail", () => {
   it("shows start, due, due time, created, and completed fields", () => {
-    render(
-      <TodoDetail
-        todo={makeTodo()}
-        descriptionRef={{ current: null }}
-        onPatch={vi.fn()}
-      />,
-    );
+    render(<TodoDetail todo={makeTodo()} descriptionRef={{ current: null }} onPatch={vi.fn()} />);
 
     expect(screen.getByLabelText("시작일")).toHaveTextContent("2026-07-02");
     expect(screen.getByLabelText("마감일")).toHaveTextContent("2026-07-05");
     expect(screen.getByLabelText("마감 시간")).toHaveTextContent("09:30");
-    expect(screen.getByText("2026-07-02")).toBeInTheDocument();
+    expect(screen.getByText("생성일").closest(".detail-field")).toHaveTextContent("2026-07-02");
     expect(screen.getByText(/2026-07-03/)).toBeInTheDocument();
   });
 
   it("patches due_time as minutes from the time selector", () => {
     const onPatch = vi.fn();
-    render(
-      <TodoDetail
-        todo={makeTodo()}
-        descriptionRef={{ current: null }}
-        onPatch={onPatch}
-      />,
-    );
+    render(<TodoDetail todo={makeTodo()} descriptionRef={{ current: null }} onPatch={onPatch} />);
 
     fireEvent.click(screen.getByLabelText("마감 시간"));
-    fireEvent.click(screen.getByText("10"));
+    fireEvent.click(within(screen.getByLabelText("시")).getByText("10"));
 
     expect(onPatch).toHaveBeenCalledWith(1, { due_time: 630 }, false);
   });

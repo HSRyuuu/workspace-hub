@@ -1,16 +1,12 @@
 //! memo / memo-folder CLI 통합 테스트.
 //! 데이터 격리: `WORKSPACE_HUB_DATA_DIR` 로 임시 디렉터리 주입.
 
-use assert_cmd::Command;
 use predicates::prelude::*;
 use predicates::str::contains;
 use tempfile::TempDir;
 
-fn cli(data_dir: &std::path::Path) -> Command {
-    let mut cmd = Command::cargo_bin("workspace-hub").expect("workspace-hub binary");
-    cmd.env("WORKSPACE_HUB_DATA_DIR", data_dir);
-    cmd
-}
+mod common;
+use common::cli;
 
 fn add_folder(dir: &std::path::Path, name: &str) -> i64 {
     let out = cli(dir)
@@ -38,7 +34,25 @@ fn add_memo(dir: &std::path::Path, title: &str, body: &str, folder: Option<i64>)
         args.push(f.to_string());
     }
     let refs: Vec<&str> = args.iter().map(String::as_str).collect();
-    let out = cli(dir).args(refs).assert().success().get_output().stdout.clone();
+    let out = cli(dir)
+        .args(refs)
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let v: serde_json::Value = serde_json::from_slice(&out).unwrap();
+    v["id"].as_i64().unwrap()
+}
+
+fn add_project(dir: &std::path::Path, title: &str) -> i64 {
+    let out = cli(dir)
+        .args(["project", "add", "--title", title])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
     let v: serde_json::Value = serde_json::from_slice(&out).unwrap();
     v["id"].as_i64().unwrap()
 }
@@ -151,7 +165,10 @@ fn memo_empty_trash_clears_only_trashed() {
     let dir = TempDir::new().unwrap();
     let a = add_memo(dir.path(), "a", "", None);
     let _b = add_memo(dir.path(), "b", "", None);
-    cli(dir.path()).args(["memo", "delete", &a.to_string()]).assert().success();
+    cli(dir.path())
+        .args(["memo", "delete", &a.to_string()])
+        .assert()
+        .success();
 
     cli(dir.path())
         .args(["memo", "empty-trash"])
@@ -193,7 +210,12 @@ fn memo_folder_move_under_descendant_exits_1() {
     // B under A
     cli(dir.path())
         .args([
-            "memo-folder", "add", "--name", "B", "--parent", &a.to_string(),
+            "memo-folder",
+            "add",
+            "--name",
+            "B",
+            "--parent",
+            &a.to_string(),
         ])
         .assert()
         .success()
@@ -208,10 +230,7 @@ fn memo_folder_move_under_descendant_exits_1() {
         .stdout
         .clone();
     let folders: Vec<serde_json::Value> = serde_json::from_slice(&b_out).unwrap();
-    let b_id = folders
-        .iter()
-        .find(|f| f["name"] == "B")
-        .unwrap()["id"]
+    let b_id = folders.iter().find(|f| f["name"] == "B").unwrap()["id"]
         .as_i64()
         .unwrap();
 
@@ -249,4 +268,110 @@ fn memo_update_can_pin_and_move_to_folder() {
         .success()
         .stdout(contains("\"pinned\": true"))
         .stdout(contains(&format!("\"folder_id\": {folder}")));
+}
+
+#[test]
+fn memo_project_link_then_unlink_updates_list() {
+    let dir = TempDir::new().unwrap();
+    let memo_id = add_memo(dir.path(), "linked memo", "", None);
+    let _filler_project = add_project(dir.path(), "filler project");
+    let project_id = add_project(dir.path(), "linked project");
+    assert_ne!(memo_id, project_id);
+
+    cli(dir.path())
+        .args([
+            "memo",
+            "project",
+            "link",
+            &memo_id.to_string(),
+            &project_id.to_string(),
+        ])
+        .assert()
+        .success();
+
+    let list = cli(dir.path())
+        .args(["memo", "project", "list", &memo_id.to_string()])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let projects: Vec<serde_json::Value> = serde_json::from_slice(&list).unwrap();
+    assert_eq!(projects.len(), 1);
+    assert_eq!(projects[0]["id"], project_id);
+
+    cli(dir.path())
+        .args([
+            "memo",
+            "project",
+            "unlink",
+            &memo_id.to_string(),
+            &project_id.to_string(),
+        ])
+        .assert()
+        .success();
+
+    cli(dir.path())
+        .args(["memo", "project", "list", &memo_id.to_string()])
+        .assert()
+        .success()
+        .stdout(contains("[]"));
+}
+
+#[test]
+fn memo_project_duplicate_link_is_idempotent() {
+    let dir = TempDir::new().unwrap();
+    let memo_id = add_memo(dir.path(), "memo", "", None);
+    let _filler_project = add_project(dir.path(), "filler project");
+    let project_id = add_project(dir.path(), "project");
+    assert_ne!(memo_id, project_id);
+    let expected_project_id = project_id;
+    let memo_id = memo_id.to_string();
+    let project_id = project_id.to_string();
+
+    for _ in 0..2 {
+        cli(dir.path())
+            .args(["memo", "project", "link", &memo_id, &project_id])
+            .assert()
+            .success();
+    }
+
+    let list = cli(dir.path())
+        .args(["memo", "project", "list", &memo_id])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let projects: Vec<serde_json::Value> = serde_json::from_slice(&list).unwrap();
+    assert_eq!(projects.len(), 1);
+    assert_eq!(projects[0]["id"], expected_project_id);
+}
+
+#[test]
+fn memo_folder_reorder_changes_list_order() {
+    let dir = TempDir::new().unwrap();
+    let first = add_folder(dir.path(), "first");
+    let second = add_folder(dir.path(), "second");
+    let third = add_folder(dir.path(), "third");
+    let order = format!("{third},{first},{second}");
+
+    cli(dir.path())
+        .args(["memo-folder", "reorder", "--order", &order])
+        .assert()
+        .success();
+
+    let list = cli(dir.path())
+        .args(["memo-folder", "list"])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let folders: Vec<serde_json::Value> = serde_json::from_slice(&list).unwrap();
+    let ids: Vec<i64> = folders
+        .iter()
+        .map(|folder| folder["id"].as_i64().unwrap())
+        .collect();
+    assert_eq!(ids, vec![third, first, second]);
 }

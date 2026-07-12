@@ -4,16 +4,12 @@
 //! env 로 주입한다. 따라서 사용자 머신의 `~/.workspace-hub/` 데이터에는 절대 영향을 주지 않는다.
 //! `assert_cmd::Command` 가 부모 환경을 상속하므로, env override 만으로 충분히 격리된다.
 
-use assert_cmd::Command;
 use predicates::prelude::*;
 use predicates::str::contains;
 use tempfile::TempDir;
 
-fn cli(data_dir: &std::path::Path) -> Command {
-    let mut cmd = Command::cargo_bin("workspace-hub").expect("workspace-hub binary");
-    cmd.env("WORKSPACE_HUB_DATA_DIR", data_dir);
-    cmd
-}
+mod common;
+use common::cli;
 
 #[test]
 fn version_outputs_json_with_core_and_cli_fields() {

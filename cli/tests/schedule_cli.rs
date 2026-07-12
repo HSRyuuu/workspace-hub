@@ -2,16 +2,12 @@
 //!
 //! 데이터 격리: 각 테스트가 `WORKSPACE_HUB_DATA_DIR` 로 임시 디렉터리를 주입한다.
 
-use assert_cmd::Command;
 use predicates::prelude::*;
 use predicates::str::contains;
 use tempfile::TempDir;
 
-fn cli(data_dir: &std::path::Path) -> Command {
-    let mut cmd = Command::cargo_bin("workspace-hub").expect("workspace-hub binary");
-    cmd.env("WORKSPACE_HUB_DATA_DIR", data_dir);
-    cmd
-}
+mod common;
+use common::cli;
 
 #[test]
 fn schedule_add_emits_json() {
@@ -40,7 +36,14 @@ fn schedule_add_invalid_dates_exit_1_user_error() {
     let dir = TempDir::new().unwrap();
     cli(dir.path())
         .args([
-            "schedule", "add", "--title", "x", "--start", "garbage", "--end", "2026-05-20",
+            "schedule",
+            "add",
+            "--title",
+            "x",
+            "--start",
+            "garbage",
+            "--end",
+            "2026-05-20",
         ])
         .assert()
         .code(1)
@@ -98,7 +101,12 @@ fn schedule_list_range_filters_results() {
 
     cli(dir.path())
         .args([
-            "schedule", "list", "--from", "2026-05-01", "--to", "2026-06-01",
+            "schedule",
+            "list",
+            "--from",
+            "2026-05-01",
+            "--to",
+            "2026-06-01",
         ])
         .assert()
         .success()

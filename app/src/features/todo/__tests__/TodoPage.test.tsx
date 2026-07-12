@@ -24,6 +24,7 @@ function makeTodo(overrides: Partial<Todo> = {}): Todo {
   return {
     id: 1,
     workspace_id: null,
+    project_id: null,
     title: "Open todo",
     description: null,
     start_date: "2026-06-29",
@@ -61,8 +62,15 @@ describe("TodoPage filters", () => {
             title: "Future open todo",
             due_date: "2999-01-01",
           }),
+          makeTodo({
+            id: 5,
+            title: "Held overdue todo",
+            due_date: "2000-01-01",
+            status: "hold" as Todo["status"],
+          }),
         ]);
       }
+      if (command === "project_list") return Promise.resolve([]);
       return Promise.resolve(undefined);
     });
   });
@@ -77,10 +85,23 @@ describe("TodoPage filters", () => {
 
     expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual([
       "열림",
+      "보류",
       "마감",
       "완료",
       "전체",
     ]);
+  });
+
+  it("shows held todos in open with a badge and isolates them in the hold tab", async () => {
+    render(<TodoPage />);
+    await screen.findByText("Held overdue todo");
+
+    expect(screen.getByText("Held overdue todo").closest(".todo-row")).toHaveTextContent("보류");
+
+    fireEvent.click(screen.getByRole("tab", { name: "보류" }));
+
+    expect(screen.getByText("Held overdue todo")).toBeInTheDocument();
+    expect(screen.queryByText("Open todo")).not.toBeInTheDocument();
   });
 
   it("filters overdue todos to open items with past due dates", async () => {
@@ -95,5 +116,6 @@ describe("TodoPage filters", () => {
     expect(screen.queryByText("Open todo")).not.toBeInTheDocument();
     expect(screen.queryByText("Overdue done todo")).not.toBeInTheDocument();
     expect(screen.queryByText("Future open todo")).not.toBeInTheDocument();
+    expect(screen.queryByText("Held overdue todo")).not.toBeInTheDocument();
   });
 });

@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { DateField, MarkdownEditor, PriorityDot, Select, TimeField } from "../../../components/ui";
 import type { MarkdownEditorHandle, SelectOption } from "../../../components/ui";
-import type { Priority, Todo, TodoPatch } from "../types";
+import type { Priority, Todo, TodoPatch, TodoStatus } from "../types";
+import { projectApi } from "../../project/api";
+import type { Project } from "../../project/types";
 
 interface TodoDetailProps {
   todo: Todo | null;
@@ -15,8 +17,15 @@ const PRIORITY_OPTIONS: SelectOption<Priority>[] = [
   { value: "high", label: "높음", leading: <PriorityDot priority="high" /> },
 ];
 
+const STATUS_OPTIONS: SelectOption<TodoStatus>[] = [
+  { value: "open", label: "열림" },
+  { value: "hold", label: "보류" },
+  { value: "done", label: "완료" },
+];
+
 export function TodoDetail({ todo, descriptionRef, onPatch }: TodoDetailProps) {
   const [localTitle, setLocalTitle] = useState("");
+  const [projects, setProjects] = useState<Project[]>([]);
   const titleRef = useRef<HTMLInputElement>(null);
 
   // todo ID 변경 시 로컬 제목 리셋 (description 은 MarkdownEditor 가 resetKey 로 처리)
@@ -24,6 +33,21 @@ export function TodoDetail({ todo, descriptionRef, onPatch }: TodoDetailProps) {
     if (!todo) return;
     setLocalTitle(todo.title);
   }, [todo?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    projectApi
+      .list()
+      .then(setProjects)
+      .catch(() => setProjects([]));
+  }, []);
+
+  const projectOptions = useMemo<SelectOption<number>[]>(
+    () => [
+      { value: 0, label: "연결 없음" },
+      ...projects.map((project) => ({ value: project.id, label: project.title })),
+    ],
+    [projects],
+  );
 
   if (!todo) {
     return (
@@ -97,6 +121,28 @@ export function TodoDetail({ todo, descriptionRef, onPatch }: TodoDetailProps) {
           options={PRIORITY_OPTIONS}
           onChange={handlePriorityChange}
           ariaLabel="우선순위"
+        />
+      </div>
+
+      <div className="detail-field">
+        <label className="detail-label">상태</label>
+        <Select<TodoStatus>
+          value={todo.status}
+          options={STATUS_OPTIONS}
+          onChange={(status) => onPatch(todo.id, { status }, false)}
+          ariaLabel="상태"
+        />
+      </div>
+
+      <div className="detail-field">
+        <label className="detail-label">프로젝트</label>
+        <Select<number>
+          value={todo.project_id ?? 0}
+          options={projectOptions}
+          onChange={(projectId) =>
+            onPatch(todo.id, { project_id: projectId === 0 ? null : projectId }, false)
+          }
+          ariaLabel="프로젝트"
         />
       </div>
 

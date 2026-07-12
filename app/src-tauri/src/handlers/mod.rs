@@ -2,6 +2,7 @@ use serde::Serialize;
 use workspace_hub_core::models::todo::{Priority, TodoStatus};
 use workspace_hub_core::CoreError;
 
+pub(crate) mod capture;
 pub(crate) mod dashboard;
 pub(crate) mod files;
 pub(crate) mod memo;
@@ -40,6 +41,14 @@ pub(super) fn nullable_string_patch(v: Option<&serde_json::Value>) -> Option<Opt
             Some(s) => Some(Some(s.to_string())),
             None => None,
         },
+    }
+}
+
+pub(super) fn nullable_i64_patch(v: Option<&serde_json::Value>) -> Option<Option<i64>> {
+    match v {
+        None => None,
+        Some(value) if value.is_null() => Some(None),
+        Some(value) => value.as_i64().map(Some),
     }
 }
 
@@ -108,6 +117,7 @@ mod tests {
     #[test]
     fn parse_status_accepts_known_values() {
         assert_eq!(parse_status("open"), Ok(TodoStatus::Open));
+        assert_eq!(parse_status("hold"), Ok(TodoStatus::Hold));
         assert_eq!(parse_status("done"), Ok(TodoStatus::Done));
     }
 

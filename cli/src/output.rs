@@ -43,8 +43,12 @@ pub fn print_todo_human(todo: &Todo) {
         .workspace_id
         .map(|i| i.to_string())
         .unwrap_or_else(|| "-".into());
+    let project = todo
+        .project_id
+        .map(|id| id.to_string())
+        .unwrap_or_else(|| "-".into());
     println!(
-        "#{id}  [{status}]  {prio}  due={due}  ws={ws}  {title}",
+        "#{id}  [{status}]  {prio}  due={due}  ws={ws}  project={project}  {title}",
         id = todo.id,
         title = todo.title,
     );

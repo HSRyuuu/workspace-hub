@@ -1,12 +1,13 @@
 import type { Priority } from "../../components/ui/PriorityDot";
 
-export type TodoStatus = "open" | "done";
+export type TodoStatus = "open" | "hold" | "done";
 // 단일 진실 원천: components/ui/PriorityDot. todo 도메인에서도 재내보내기 — 기존 import 호환.
 export type { Priority };
 
 export interface Todo {
   id: number;
   workspace_id: number | null;
+  project_id: number | null;
   title: string;
   description: string | null;
   start_date: string;
@@ -27,6 +28,7 @@ export interface NewTodoInput {
   due_time?: number | null;
   priority?: Priority;
   workspace_id?: number | null;
+  project_id?: number | null;
 }
 
 /**
@@ -41,4 +43,5 @@ export interface TodoPatch {
   due_time?: number;
   priority?: Priority;
   status?: TodoStatus;
+  project_id?: number | null;
 }

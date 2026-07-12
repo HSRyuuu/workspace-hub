@@ -2,7 +2,10 @@ use workspace_hub_core::models::todo::{NewTodo, Todo};
 use workspace_hub_core::repo;
 use workspace_hub_core::repo::todo::TodoPatch;
 
-use super::{core_err, lock_err, nullable_string_patch, parse_priority, parse_status, DeletedAck};
+use super::{
+    core_err, lock_err, nullable_i64_patch, nullable_string_patch, parse_priority, parse_status,
+    DeletedAck,
+};
 use crate::DbState;
 
 #[tauri::command]
@@ -29,6 +32,15 @@ pub(crate) fn todo_list_calendar_range(
     let conn = state.0.lock().map_err(lock_err)?;
     repo::todo::list_calendar_range(&conn, &from, &to, &completed_from, &completed_to)
         .map_err(core_err)
+}
+
+#[tauri::command]
+pub(crate) fn todo_list_by_project(
+    state: tauri::State<DbState>,
+    project_id: i64,
+) -> Result<Vec<Todo>, String> {
+    let conn = state.0.lock().map_err(lock_err)?;
+    repo::todo::list_by_project(&conn, project_id).map_err(core_err)
 }
 
 #[tauri::command]
@@ -62,9 +74,11 @@ pub(crate) fn todo_add(
             .unwrap_or("mid"),
     )?;
     let workspace_id = input.get("workspace_id").and_then(|v| v.as_i64());
+    let project_id = input.get("project_id").and_then(|v| v.as_i64());
 
     let new = NewTodo {
         workspace_id,
+        project_id,
         title,
         description,
         start_date,
@@ -101,6 +115,7 @@ pub(crate) fn todo_update(
         Some(s) => Some(parse_status(s)?),
         None => None,
     };
+    let project_id = nullable_i64_patch(patch.get("project_id"));
 
     let tp = TodoPatch {
         title,
@@ -110,6 +125,7 @@ pub(crate) fn todo_update(
         due_time,
         priority,
         status,
+        project_id,
     };
     let conn = state.0.lock().map_err(lock_err)?;
     repo::todo::update(&conn, id, &tp).map_err(core_err)

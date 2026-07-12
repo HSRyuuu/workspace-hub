@@ -1,8 +1,14 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { forwardRef, useImperativeHandle } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TodoDetail } from "../TodoDetail";
 import type { Todo } from "../../types";
+
+const projectListMock = vi.hoisted(() => vi.fn());
+
+vi.mock("../../../project/api", () => ({
+  projectApi: { list: projectListMock },
+}));
 
 vi.mock("../../../../components/ui/MarkdownEditor", () => ({
   MarkdownEditor: forwardRef(function MarkdownEditorMock(
@@ -18,6 +24,7 @@ function makeTodo(overrides: Partial<Todo> = {}): Todo {
   return {
     id: 1,
     workspace_id: null,
+    project_id: null,
     title: "Write migration",
     description: "memo",
     start_date: "2026-07-02",
@@ -33,6 +40,22 @@ function makeTodo(overrides: Partial<Todo> = {}): Todo {
 }
 
 describe("TodoDetail", () => {
+  beforeEach(() => {
+    projectListMock.mockReturnValue(new Promise(() => {}));
+  });
+
+  const resolveProjects = () =>
+    projectListMock.mockResolvedValue([
+      {
+        id: 7,
+        title: "Workspace Hub",
+        description: null,
+        color: "#111111",
+        sort_order: 0,
+        created_at: "2026-07-01T00:00:00Z",
+        updated_at: "2026-07-01T00:00:00Z",
+      },
+    ]);
   it("shows start, due, due time, created, and completed fields", () => {
     render(<TodoDetail todo={makeTodo()} descriptionRef={{ current: null }} onPatch={vi.fn()} />);
 
@@ -63,5 +86,29 @@ describe("TodoDetail", () => {
     );
 
     expect(screen.getByLabelText("마감 시간")).toBeDisabled();
+  });
+
+  it("patches hold status immediately", () => {
+    const onPatch = vi.fn();
+    render(<TodoDetail todo={makeTodo()} descriptionRef={{ current: null }} onPatch={onPatch} />);
+
+    fireEvent.click(screen.getByLabelText("상태"));
+    fireEvent.click(screen.getByRole("option", { name: "보류" }));
+
+    expect(onPatch).toHaveBeenCalledWith(1, { status: "hold" }, false);
+  });
+
+  it("patches and clears the linked project", async () => {
+    resolveProjects();
+    const onPatch = vi.fn();
+    render(<TodoDetail todo={makeTodo()} descriptionRef={{ current: null }} onPatch={onPatch} />);
+
+    fireEvent.click(await screen.findByLabelText("프로젝트"));
+    fireEvent.click(screen.getByRole("option", { name: "Workspace Hub" }));
+    expect(onPatch).toHaveBeenCalledWith(1, { project_id: 7 }, false);
+
+    fireEvent.click(screen.getByLabelText("프로젝트"));
+    fireEvent.click(screen.getByRole("option", { name: "연결 없음" }));
+    expect(onPatch).toHaveBeenCalledWith(1, { project_id: null }, false);
   });
 });

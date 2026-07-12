@@ -12,6 +12,7 @@ function todo(overrides: Partial<Todo>): Todo {
   return {
     id: 1,
     workspace_id: null,
+    project_id: null,
     title: "Todo",
     description: null,
     start_date: "2026-07-01",
@@ -111,9 +112,7 @@ describe("TodayPage", () => {
   it("routes todo and memo clicks and opens folders without touching history", async () => {
     const onNavigateToTodo = vi.fn();
     const onNavigateToMemo = vi.fn();
-    render(
-      <TodayPage onNavigateToTodo={onNavigateToTodo} onNavigateToMemo={onNavigateToMemo} />,
-    );
+    render(<TodayPage onNavigateToTodo={onNavigateToTodo} onNavigateToMemo={onNavigateToMemo} />);
     await flushPromises();
     screen.getByText("Past due");
 

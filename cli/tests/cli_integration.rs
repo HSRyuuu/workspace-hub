@@ -259,6 +259,34 @@ fn todo_list_filter_status_open_then_done() {
 }
 
 #[test]
+fn todo_update_and_list_support_hold_status() {
+    let dir = TempDir::new().unwrap();
+    let added = cli(dir.path())
+        .args(["todo", "add", "--title", "held from cli"])
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    let id = serde_json::from_slice::<serde_json::Value>(&added).unwrap()["id"]
+        .as_i64()
+        .unwrap()
+        .to_string();
+
+    cli(dir.path())
+        .args(["todo", "update", &id, "--status", "hold"])
+        .assert()
+        .success()
+        .stdout(contains("\"status\": \"hold\""));
+
+    cli(dir.path())
+        .args(["todo", "list", "--status", "hold"])
+        .assert()
+        .success()
+        .stdout(contains("held from cli"));
+}
+
+#[test]
 fn data_dir_is_isolated_per_test() {
     // 다른 TempDir 두 개가 서로의 todo 를 보지 못해야 한다 — 격리 보증의 메타-테스트
     let a = TempDir::new().unwrap();

@@ -2,7 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import type { NewTodoInput, Todo, TodoPatch } from "./types";
 
 export const todoApi = {
-  list: (status: "all" | "open" | "done" = "all"): Promise<Todo[]> =>
+  list: (status: "all" | "open" | "hold" | "done" = "all"): Promise<Todo[]> =>
     invoke<Todo[]>("todo_list", { status }),
 
   listCalendarRange: (
@@ -17,6 +17,9 @@ export const todoApi = {
       completedFrom,
       completedTo,
     }),
+
+  listByProject: (projectId: number): Promise<Todo[]> =>
+    invoke<Todo[]>("todo_list_by_project", { projectId }),
 
   add: (input: NewTodoInput): Promise<Todo> => invoke<Todo>("todo_add", { input }),
 

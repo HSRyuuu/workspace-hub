@@ -92,6 +92,12 @@ export function TodoList({
               aria-label={isDone ? "완료 해제" : "완료"}
             />
             <span className="todo-title">{t.title}</span>
+            {t.status === "hold" && (
+              <span className="ws-chip">
+                <span className="ws-chip-dot" style={{ background: "var(--color-warning)" }} />
+                보류
+              </span>
+            )}
             <span className={`todo-due ${overdue ? "overdue" : ""}`}>{dueLabel}</span>
             <PriorityDot priority={t.priority} />
             <Button

@@ -6,6 +6,7 @@ import type { Memo } from "../memo/types";
 import { memoDisplayTitle } from "../memo/markdown";
 import { projectApi } from "./api";
 import { ProjectMemosSection } from "./ProjectMemosSection";
+import { ProjectTodosSection } from "./ProjectTodosSection";
 import type { Project, ProjectApplication, ProjectDirectory } from "./types";
 
 function formatDate(iso: string): string {
@@ -562,6 +563,7 @@ export default function ProjectPage() {
               </ul>
             </section>
 
+            <ProjectTodosSection projectId={selected.id} />
             {/* 관련 메모 — 목록 ↔ 인라인 상세 모드는 ProjectMemosSection 내부 state. */}
             <ProjectMemosSection key={selected.id} memos={memos} onUnlink={handleUnlinkMemo} />
           </>

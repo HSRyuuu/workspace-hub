@@ -139,6 +139,8 @@ export default function TodoPage({ selectedTodoId = null }: TodoPageProps) {
     let result = todos;
     if (filters.tab === "overdue") {
       result = result.filter(isOpenOverdue);
+    } else if (filters.tab === "open") {
+      result = result.filter((t) => t.status !== "done");
     } else if (filters.tab !== "all") {
       result = result.filter((t) => t.status === filters.tab);
     }

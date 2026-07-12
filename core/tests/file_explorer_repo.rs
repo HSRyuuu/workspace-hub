@@ -15,8 +15,8 @@ fn fresh_conn() -> (TempDir, Connection) {
 #[test]
 fn touch_creates_then_updates_same_row() {
     let (_dir, conn) = fresh_conn();
-    let a = repo::touch(&conn, "/Users/me/notes").unwrap();
-    let b = repo::touch(&conn, "/Users/me/notes").unwrap();
+    let a = repo::touch(&conn, "/Users/me/notes").unwrap().unwrap();
+    let b = repo::touch(&conn, "/Users/me/notes").unwrap().unwrap();
     assert_eq!(a.id, b.id);
     assert_eq!(repo::list(&conn).unwrap().len(), 1);
 }
@@ -26,6 +26,55 @@ fn touch_rejects_empty_path() {
     let (_dir, conn) = fresh_conn();
     let err = repo::touch(&conn, "   ").unwrap_err();
     assert!(matches!(err, CoreError::InvalidInput(_)));
+}
+
+#[test]
+fn touch_skips_noise_path_segments_without_creating_history() {
+    let (_dir, conn) = fresh_conn();
+
+    let touched = repo::touch(&conn, "/project/target/debug").unwrap();
+
+    assert!(touched.is_none());
+    assert!(repo::list(&conn).unwrap().is_empty());
+}
+
+#[test]
+fn touch_records_regular_paths() {
+    let (_dir, conn) = fresh_conn();
+
+    let touched = repo::touch(&conn, "/project/src").unwrap();
+
+    assert_eq!(touched.unwrap().path, "/project/src");
+}
+
+#[test]
+fn touch_keeps_existing_favorite_noise_path() {
+    let (_dir, conn) = fresh_conn();
+    conn.execute(
+        "INSERT INTO file_explorer_folder (path, is_favorite, last_opened_at)
+         VALUES (?1, 1, '2000-01-01T00:00:00Z')",
+        ["/project/node_modules/pkg"],
+    )
+    .unwrap();
+
+    let touched = repo::touch(&conn, "/project/node_modules/pkg")
+        .unwrap()
+        .unwrap();
+
+    assert!(touched.is_favorite);
+    assert_eq!(touched.path, "/project/node_modules/pkg");
+    assert_ne!(touched.last_opened_at, "2000-01-01T00:00:00Z");
+}
+
+#[test]
+fn touch_matches_noise_by_exact_path_component() {
+    let (_dir, conn) = fresh_conn();
+
+    let touched = repo::touch(&conn, "/project/my-target/src")
+        .unwrap()
+        .unwrap();
+
+    assert_eq!(touched.path, "/project/my-target/src");
 }
 
 #[test]
@@ -54,7 +103,7 @@ fn prune_keeps_only_20_non_favorites() {
 #[test]
 fn favorites_survive_prune() {
     let (_dir, conn) = fresh_conn();
-    let fav = repo::touch(&conn, "/keep-me").unwrap();
+    let fav = repo::touch(&conn, "/keep-me").unwrap().unwrap();
     repo::set_favorite(&conn, fav.id, true).unwrap();
     for i in 0..25 {
         repo::touch(&conn, &format!("/folder-{i}")).unwrap();
@@ -68,7 +117,7 @@ fn favorites_survive_prune() {
 #[test]
 fn set_favorite_roundtrip() {
     let (_dir, conn) = fresh_conn();
-    let f = repo::touch(&conn, "/x").unwrap();
+    let f = repo::touch(&conn, "/x").unwrap().unwrap();
     assert!(!f.is_favorite);
     let f = repo::set_favorite(&conn, f.id, true).unwrap();
     assert!(f.is_favorite);
@@ -86,7 +135,7 @@ fn set_favorite_unknown_id_is_not_found() {
 #[test]
 fn remove_deletes_row() {
     let (_dir, conn) = fresh_conn();
-    let f = repo::touch(&conn, "/gone").unwrap();
+    let f = repo::touch(&conn, "/gone").unwrap().unwrap();
     repo::remove(&conn, f.id).unwrap();
     assert!(repo::list(&conn).unwrap().is_empty());
     let err = repo::remove(&conn, f.id).unwrap_err();

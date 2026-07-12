@@ -6,7 +6,8 @@ import { MarkdownPreview } from "./MarkdownPreview";
 import type { ExplorerFolder, OpenTab, RevealRequest, TreeMutation, TreeNode } from "./types";
 
 interface FileExplorerLayoutProps {
-  readonly current: ExplorerFolder | null;
+  readonly currentPath: string | null;
+  readonly currentFolder: ExplorerFolder | null;
   readonly folders: readonly ExplorerFolder[];
   readonly tabs: readonly OpenTab[];
   readonly activeTab: OpenTab | null;
@@ -31,7 +32,8 @@ interface FileExplorerLayoutProps {
 }
 
 export function FileExplorerLayout({
-  current,
+  currentPath,
+  currentFolder,
   folders,
   tabs,
   activeTab,
@@ -58,23 +60,24 @@ export function FileExplorerLayout({
     <div className="files-layout">
       <div className="files-side">
         <FolderBar
-          current={current}
+          currentPath={currentPath}
+          currentFolder={currentFolder}
           folders={folders}
           onPickNewFolder={onPickNewFolder}
           onOpenPastedFile={onOpenPastedFile}
           onSelectFolder={(folder) => onOpenFolder(folder.path)}
           onToggleFavorite={onToggleFavorite}
         />
-        {current && (
+        {currentPath && (
           <FileTree
-            root={current.path}
+            root={currentPath}
             activePath={activePath}
             revealRequest={revealRequest}
             onOpenFile={onOpenFile}
             onMutate={onTreeMutation}
           />
         )}
-        {!current && (
+        {!currentPath && (
           <div className="files-side-empty">
             <strong>열린 폴더가 없습니다</strong>
             <span>상단의 폴더 열기로 작업할 디렉터리를 선택하세요.</span>
@@ -116,9 +119,9 @@ export function FileExplorerLayout({
         </div>
         {!activeTab && (
           <EmptyState
-            title={current ? "편집할 파일을 선택하세요" : "폴더를 먼저 열어주세요"}
+            title={currentPath ? "편집할 파일을 선택하세요" : "폴더를 먼저 열어주세요"}
             body={
-              current
+              currentPath
                 ? "왼쪽 탐색 트리에서 텍스트 파일을 선택하면 이 영역에 에디터가 열립니다."
                 : "최근 폴더가 없으면 폴더 열기로 시작할 수 있습니다."
             }

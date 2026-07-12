@@ -11,7 +11,7 @@ const SAVE_DEBOUNCE_MS = 400;
 
 export default function FilesPage() {
   const [folders, setFolders] = useState<ExplorerFolder[]>([]);
-  const [current, setCurrent] = useState<ExplorerFolder | null>(null);
+  const [currentPath, setCurrentPath] = useState<string | null>(null);
   const [tabs, setTabs] = useState<OpenTab[]>([]);
   const [activePath, setActivePath] = useState<string | null>(null);
   const [mode, setMode] = useState<"edit" | "preview">("edit");
@@ -84,8 +84,8 @@ export default function FilesPage() {
     async (path: string) => {
       flushAll();
       try {
-        const folder = await filesFolderApi.touch(path);
-        setCurrent(folder);
+        await filesFolderApi.touch(path);
+        setCurrentPath(path);
         setTabs([]);
         setActivePath(null);
         setDirtyPaths(new Set());
@@ -108,7 +108,7 @@ export default function FilesPage() {
       try {
         const list = await filesFolderApi.list();
         setFolders(list);
-        if (list.length > 0) setCurrent(list[0]);
+        if (list.length > 0) setCurrentPath(list[0].path);
       } catch (e) {
         showErrorToast(`폴더 목록을 불러오지 못했습니다: ${e}`);
       }
@@ -123,14 +123,13 @@ export default function FilesPage() {
   const toggleFavorite = useCallback(
     async (f: ExplorerFolder) => {
       try {
-        const updated = await filesFolderApi.setFavorite(f.id, !f.is_favorite);
-        if (current?.id === updated.id) setCurrent(updated);
+        await filesFolderApi.setFavorite(f.id, !f.is_favorite);
         await refreshFolders();
       } catch (e) {
         showErrorToast(`즐겨찾기 변경에 실패했습니다: ${e}`);
       }
     },
-    [current, refreshFolders],
+    [refreshFolders],
   );
 
   // ── 탭 ────────────────────────────────────────────────────────────────────
@@ -213,7 +212,7 @@ export default function FilesPage() {
       const name = path.slice(slash + 1);
       flushAll();
       try {
-        const folder = await filesFolderApi.touch(folderPath);
+        await filesFolderApi.touch(folderPath);
         let binary = false;
 
         for (const [, timer] of saveTimerRef.current) clearTimeout(timer);
@@ -227,7 +226,7 @@ export default function FilesPage() {
           binary = true;
         }
 
-        setCurrent(folder);
+        setCurrentPath(folderPath);
         setTabs([{ path, name, binary }]);
         setActivePath(path);
         setMode(!binary && isMarkdown(name) ? "preview" : "edit");
@@ -301,11 +300,13 @@ export default function FilesPage() {
 
   // ── 렌더 ──────────────────────────────────────────────────────────────────
   const activeTab = tabs.find((t) => t.path === activePath) ?? null;
+  const currentFolder = folders.find((folder) => folder.path === currentPath) ?? null;
   const showPreviewToggle = activeTab !== null && !activeTab.binary && isMarkdown(activeTab.name);
 
   return (
     <FileExplorerLayout
-      current={current}
+      currentPath={currentPath}
+      currentFolder={currentFolder}
       folders={folders}
       tabs={tabs}
       activeTab={activeTab}

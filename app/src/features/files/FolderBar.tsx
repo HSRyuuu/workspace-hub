@@ -5,7 +5,8 @@ import { extractPastedFilePath } from "./helpers";
 import type { ExplorerFolder } from "./types";
 
 interface FolderBarProps {
-  current: ExplorerFolder | null;
+  currentPath: string | null;
+  currentFolder: ExplorerFolder | null;
   folders: readonly ExplorerFolder[];
   onPickNewFolder: () => void;
   onOpenPastedFile: (path: string) => Promise<boolean>;
@@ -16,7 +17,8 @@ interface FolderBarProps {
 const baseName = (p: string) => p.split("/").filter(Boolean).pop() ?? p;
 
 export function FolderBar({
-  current,
+  currentPath,
+  currentFolder,
   folders,
   onPickNewFolder,
   onOpenPastedFile,
@@ -46,14 +48,14 @@ export function FolderBar({
           type="button"
           className="files-folder-trigger"
           onClick={() => setOpen((v) => !v)}
-          title={current?.path ?? ""}
+          title={currentPath ?? ""}
         >
           <span className="files-folder-trigger-icon">
             <FolderIcon size={15} />
           </span>
           <span className="files-folder-trigger-text">
             <span className="files-folder-trigger-name">
-              {current ? baseName(current.path) : "선택 안 됨"}
+              {currentPath ? baseName(currentPath) : "선택 안 됨"}
             </span>
           </span>
           <span className="files-folder-trigger-caret" aria-hidden>
@@ -90,14 +92,14 @@ export function FolderBar({
           </div>
         )}
       </div>
-      {current && (
+      {currentFolder && (
         <button
           type="button"
-          className={`files-fav-toggle${current.is_favorite ? " on" : ""}`}
+          className={`files-fav-toggle${currentFolder.is_favorite ? " on" : ""}`}
           aria-label="즐겨찾기 토글"
-          onClick={() => onToggleFavorite(current)}
+          onClick={() => onToggleFavorite(currentFolder)}
         >
-          <PinIcon pinned={current.is_favorite} size={15} />
+          <PinIcon pinned={currentFolder.is_favorite} size={15} />
         </button>
       )}
       <button type="button" className="files-folder-open" onClick={onPickNewFolder}>

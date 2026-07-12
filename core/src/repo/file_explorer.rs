@@ -1,4 +1,6 @@
-use rusqlite::{params, Connection, Row};
+use std::path::Path;
+
+use rusqlite::{params, Connection, OptionalExtension, Row};
 
 use crate::error::CoreError;
 use crate::models::file_explorer::FileExplorerFolder;
@@ -6,6 +8,8 @@ use crate::repo::now_iso;
 
 /// 즐겨찾기가 아닌 히스토리의 최대 보관 개수. 초과분은 touch 시 오래된 것부터 잘린다.
 pub const MAX_HISTORY: usize = 20;
+
+const NOISE_SEGMENTS: &[&str] = &["node_modules", ".git", "target"];
 
 const SELECT_COLUMNS: &str = "id, path, is_favorite, last_opened_at";
 
@@ -15,6 +19,14 @@ fn map_row(row: &Row<'_>) -> rusqlite::Result<FileExplorerFolder> {
         path: row.get("path")?,
         is_favorite: row.get::<_, i64>("is_favorite")? != 0,
         last_opened_at: row.get("last_opened_at")?,
+    })
+}
+
+fn has_noise_segment(path: &str) -> bool {
+    Path::new(path).components().any(|component| {
+        NOISE_SEGMENTS
+            .iter()
+            .any(|noise| component.as_os_str() == *noise)
     })
 }
 
@@ -45,11 +57,24 @@ pub fn get(conn: &Connection, id: i64) -> Result<FileExplorerFolder, CoreError> 
         })
 }
 
-/// 폴더를 열 때 호출 — upsert + last_opened_at 갱신 + 비즐겨찾기 초과분 prune.
-pub fn touch(conn: &Connection, path: &str) -> Result<FileExplorerFolder, CoreError> {
+/// 폴더를 열 때 호출 — 노이즈 경로는 기록하지 않고, 그 외는 upsert + prune.
+/// 이미 즐겨찾기된 노이즈 경로는 예외로 기존 행을 갱신한다.
+pub fn touch(conn: &Connection, path: &str) -> Result<Option<FileExplorerFolder>, CoreError> {
     let trimmed = path.trim();
     if trimmed.is_empty() {
         return Err(CoreError::InvalidInput("path is required".into()));
+    }
+    if has_noise_segment(trimmed) {
+        let is_favorite = conn
+            .query_row(
+                "SELECT is_favorite FROM file_explorer_folder WHERE path = ?1",
+                params![trimmed],
+                |row| row.get::<_, i64>(0),
+            )
+            .optional()?;
+        if is_favorite != Some(1) {
+            return Ok(None);
+        }
     }
     let now = now_iso();
     conn.execute(
@@ -61,6 +86,7 @@ pub fn touch(conn: &Connection, path: &str) -> Result<FileExplorerFolder, CoreEr
     prune(conn)?;
     let sql = format!("SELECT {SELECT_COLUMNS} FROM file_explorer_folder WHERE path = ?1");
     conn.query_row(&sql, params![trimmed], map_row)
+        .map(Some)
         .map_err(CoreError::Sqlite)
 }
 

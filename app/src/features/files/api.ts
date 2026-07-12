@@ -5,9 +5,9 @@ export const filesFolderApi = {
   /** 히스토리+즐겨찾기 전체 — 최근 연 순. */
   list: (): Promise<ExplorerFolder[]> => invoke<ExplorerFolder[]>("files_folder_list"),
 
-  /** 폴더를 열 때 호출 — upsert + 비즐겨찾기 20개 초과분 prune. */
-  touch: (path: string): Promise<ExplorerFolder> =>
-    invoke<ExplorerFolder>("files_folder_touch", { path }),
+  /** 폴더를 열 때 호출 — 노이즈 경로는 열되 히스토리에는 기록하지 않는다. */
+  touch: (path: string): Promise<ExplorerFolder | null> =>
+    invoke<ExplorerFolder | null>("files_folder_touch", { path }),
 
   setFavorite: (id: number, favorite: boolean): Promise<ExplorerFolder> =>
     invoke<ExplorerFolder>("files_folder_set_favorite", { id, favorite }),

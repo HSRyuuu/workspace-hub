@@ -18,7 +18,7 @@ pub(crate) fn files_folder_list(
 pub(crate) fn files_folder_touch(
     state: tauri::State<DbState>,
     path: String,
-) -> Result<FileExplorerFolder, String> {
+) -> Result<Option<FileExplorerFolder>, String> {
     let conn = state.0.lock().map_err(lock_err)?;
     repo::file_explorer::touch(&conn, &path).map_err(core_err)
 }

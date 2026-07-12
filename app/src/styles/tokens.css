@@ -67,8 +67,8 @@
 
   /* === Typography === */
   --font-sans:
-    "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI",
-    "Apple SD Gothic Neo", system-ui, sans-serif;
+    "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "Apple SD Gothic Neo",
+    system-ui, sans-serif;
   --font-mono: "SF Mono", ui-monospace, Menlo, monospace;
 
   --fs-hero: 48px;

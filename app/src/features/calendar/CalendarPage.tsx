@@ -58,11 +58,9 @@ export default function CalendarPage({ onNavigateToTodo }: CalendarPageProps) {
   }, [refresh]);
 
   const selectedSchedule =
-    selection?.kind === "schedule"
-      ? schedules.find((s) => s.id === selection.id) ?? null
-      : null;
+    selection?.kind === "schedule" ? (schedules.find((s) => s.id === selection.id) ?? null) : null;
   const selectedTodo =
-    selection?.kind === "todo" ? todos.find((t) => t.id === selection.id) ?? null : null;
+    selection?.kind === "todo" ? (todos.find((t) => t.id === selection.id) ?? null) : null;
   const composeDayIso = selection?.kind === "compose" ? selection.dayIso : null;
 
   function gotoMonth(delta: number) {

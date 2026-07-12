@@ -36,10 +36,7 @@ pub fn unlink(conn: &Connection, memo_id: i64, project_id: i64) -> Result<(), Co
 }
 
 /// 메모에 매핑된 프로젝트 목록 (sort_order ASC, id ASC).
-pub fn list_projects_for_memo(
-    conn: &Connection,
-    memo_id: i64,
-) -> Result<Vec<Project>, CoreError> {
+pub fn list_projects_for_memo(conn: &Connection, memo_id: i64) -> Result<Vec<Project>, CoreError> {
     let mut stmt = conn.prepare(
         "SELECT p.id, p.title, p.description, p.color, p.sort_order, p.created_at, p.updated_at
          FROM project p
@@ -67,10 +64,7 @@ pub fn list_projects_for_memo(
 
 /// 프로젝트에 매핑된 메모 목록. 활성 메모(`deleted_at IS NULL`)만 노출하며
 /// `pinned DESC, updated_at DESC` 로 정렬해 메모 목록 화면과 동일한 감각을 준다.
-pub fn list_memos_for_project(
-    conn: &Connection,
-    project_id: i64,
-) -> Result<Vec<Memo>, CoreError> {
+pub fn list_memos_for_project(conn: &Connection, project_id: i64) -> Result<Vec<Memo>, CoreError> {
     let mut stmt = conn.prepare(
         "SELECT m.id, m.folder_id, m.title, m.body, m.pinned, m.deleted_at,
                 m.created_at, m.updated_at

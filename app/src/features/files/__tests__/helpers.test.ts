@@ -74,7 +74,9 @@ describe("shouldWrapEditorLines", () => {
 describe("extractPastedFilePath", () => {
   it("trims outer whitespace, removes spacing, and drops Korean trailing text", () => {
     expect(
-      extractPastedFilePath("   /Users/happyhsryu/dev/personal/harness-as-usual/test.java.  입니다. "),
+      extractPastedFilePath(
+        "   /Users/happyhsryu/dev/personal/harness-as-usual/test.java.  입니다. ",
+      ),
     ).toBe("/Users/happyhsryu/dev/personal/harness-as-usual/test.java");
   });
 

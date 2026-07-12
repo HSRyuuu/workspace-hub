@@ -55,9 +55,7 @@ export function TodoDetailPanel({
       {error && <div className="error-banner">⚠ {error}</div>}
 
       <div className="cal-todo-readonly">
-        <div className={`cal-todo-title ${todo.status === "done" ? "done" : ""}`}>
-          {todo.title}
-        </div>
+        <div className={`cal-todo-title ${todo.status === "done" ? "done" : ""}`}>{todo.title}</div>
         <dl className="cal-todo-meta">
           <dt>상태</dt>
           <dd>{todo.status === "done" ? "완료" : "열림"}</dd>
@@ -73,9 +71,7 @@ export function TodoDetailPanel({
           <dt>마감일</dt>
           <dd>{dueLabel}</dd>
         </dl>
-        {todo.description && (
-          <p className="cal-todo-desc">{todo.description}</p>
-        )}
+        {todo.description && <p className="cal-todo-desc">{todo.description}</p>}
       </div>
 
       <div className="cal-editor-actions">

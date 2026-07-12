@@ -118,18 +118,18 @@ export function ScheduleEditor({
 
   const isNew = existing === null;
 
-  function patchState<K extends keyof typeof state>(key: K, value: typeof state[K]) {
+  function patchState<K extends keyof typeof state>(key: K, value: (typeof state)[K]) {
     setState((prev) => ({ ...prev, [key]: value }));
   }
 
-  function patchStart<K extends "startDate" | "startTime">(key: K, value: typeof state[K]) {
+  function patchStart<K extends "startDate" | "startTime">(key: K, value: (typeof state)[K]) {
     setState((prev) => {
       const next = { ...prev, [key]: value };
       return !isNew || endEdited ? next : syncEndAfterStartChange(prev, next);
     });
   }
 
-  function patchEnd<K extends "endDate" | "endTime">(key: K, value: typeof state[K]) {
+  function patchEnd<K extends "endDate" | "endTime">(key: K, value: (typeof state)[K]) {
     setEndEdited(true);
     patchState(key, value);
   }

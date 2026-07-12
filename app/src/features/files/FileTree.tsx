@@ -19,9 +19,7 @@ interface FileTreeProps {
 type CtxMenu = { x: number; y: number; node: TreeNode } | null;
 /** 인라인 입력 상태 — rename 은 node, create 는 부모 dirPath 기준. */
 type Editing =
-  | { kind: "rename"; node: TreeNode }
-  | { kind: "new-file" | "new-dir"; dirPath: string }
-  | null;
+  { kind: "rename"; node: TreeNode } | { kind: "new-file" | "new-dir"; dirPath: string } | null;
 
 export function FileTree({ root, activePath, revealRequest, onOpenFile, onMutate }: FileTreeProps) {
   const [childrenByDir, setChildrenByDir] = useState<Map<string, TreeNode[]>>(new Map());
@@ -77,9 +75,7 @@ export function FileTree({ root, activePath, revealRequest, onOpenFile, onMutate
   // 대상 row 가 렌더되면(조상 펼침·로드 완료) 가운데로 스크롤하고 1.2초 뒤 강조 해제.
   useEffect(() => {
     if (!revealed) return;
-    const el = bodyRef.current?.querySelector<HTMLElement>(
-      `[data-path="${CSS.escape(revealed)}"]`,
-    );
+    const el = bodyRef.current?.querySelector<HTMLElement>(`[data-path="${CSS.escape(revealed)}"]`);
     if (!el) return;
     el.scrollIntoView({ block: "center" });
     const t = setTimeout(() => setRevealed(null), 1200);
@@ -116,7 +112,12 @@ export function FileTree({ root, activePath, revealRequest, onOpenFile, onMutate
         const newPath = `${dir}/${name}`;
         if (newPath !== snapshot.node.path) {
           await fileOps.rename(snapshot.node.path, newPath);
-          onMutate({ type: "rename", path: snapshot.node.path, newPath, isDir: snapshot.node.isDir });
+          onMutate({
+            type: "rename",
+            path: snapshot.node.path,
+            newPath,
+            isDir: snapshot.node.isDir,
+          });
           await loadDir(dir);
         }
       } else {
@@ -221,7 +222,9 @@ export function FileTree({ root, activePath, revealRequest, onOpenFile, onMutate
                 node.path === activePath ? "active" : "",
                 node.path === revealed ? "revealed" : "",
                 node.isDir ? "dir" : "file",
-              ].filter(Boolean).join(" ")}
+              ]
+                .filter(Boolean)
+                .join(" ")}
               data-path={node.path}
               style={{ paddingLeft: 8 + depth * 14 }}
               onClick={() => (node.isDir ? toggleDir(node) : onOpenFile(node))}
@@ -240,9 +243,11 @@ export function FileTree({ root, activePath, revealRequest, onOpenFile, onMutate
               <span className={`files-tree-ficon${node.isDir ? " dir" : ""}`} aria-hidden>
                 {node.isDir ? <FolderIcon /> : <FileIcon />}
               </span>
-              {editing && editing.kind === "rename" && editing.node.path === node.path
-                ? renderInlineInput(node.name, editing)
-                : <span className="files-tree-name">{node.name}</span>}
+              {editing && editing.kind === "rename" && editing.node.path === node.path ? (
+                renderInlineInput(node.name, editing)
+              ) : (
+                <span className="files-tree-name">{node.name}</span>
+              )}
             </div>
             {node.isDir && expanded.has(node.path) && renderNodes(node.path, depth + 1)}
           </div>
@@ -255,23 +260,39 @@ export function FileTree({ root, activePath, revealRequest, onOpenFile, onMutate
     <div className="files-tree">
       <div className="files-tree-header">
         <div className="files-tree-actions" aria-label="파일 트리 작업">
-          <button type="button" className="files-icon-btn" aria-label="새 파일" onClick={() => startCreate("new-file", root)}>
+          <button
+            type="button"
+            className="files-icon-btn"
+            aria-label="새 파일"
+            onClick={() => startCreate("new-file", root)}
+          >
             <PlusIcon size={13} />
             <span>파일</span>
           </button>
-          <button type="button" className="files-icon-btn" aria-label="새 폴더" onClick={() => startCreate("new-dir", root)}>
+          <button
+            type="button"
+            className="files-icon-btn"
+            aria-label="새 폴더"
+            onClick={() => startCreate("new-dir", root)}
+          >
             <PlusIcon size={13} />
             <span>폴더</span>
           </button>
         </div>
       </div>
-      <div className="files-tree-body" ref={bodyRef}>{renderNodes(root, 0)}</div>
+      <div className="files-tree-body" ref={bodyRef}>
+        {renderNodes(root, 0)}
+      </div>
       {ctxMenu && (
         <div ref={menuRef} className="files-ctxmenu" style={{ top: ctxMenu.y, left: ctxMenu.x }}>
           {ctxMenu.node.isDir && (
             <>
-              <button type="button" onClick={() => startCreate("new-file", ctxMenu.node.path)}>새 파일</button>
-              <button type="button" onClick={() => startCreate("new-dir", ctxMenu.node.path)}>새 폴더</button>
+              <button type="button" onClick={() => startCreate("new-file", ctxMenu.node.path)}>
+                새 파일
+              </button>
+              <button type="button" onClick={() => startCreate("new-dir", ctxMenu.node.path)}>
+                새 폴더
+              </button>
             </>
           )}
           <button
@@ -284,10 +305,18 @@ export function FileTree({ root, activePath, revealRequest, onOpenFile, onMutate
           >
             이름 변경
           </button>
-          <button type="button" onClick={() => copyToClipboard(ctxMenu.node.path)}>경로 복사</button>
-          <button type="button" onClick={() => copyToClipboard(ctxMenu.node.name)}>이름 복사</button>
-          <button type="button" onClick={() => revealInFinder(ctxMenu.node.path)}>Finder에서 보기</button>
-          <button type="button" className="danger" onClick={() => requestDelete(ctxMenu.node)}>삭제</button>
+          <button type="button" onClick={() => copyToClipboard(ctxMenu.node.path)}>
+            경로 복사
+          </button>
+          <button type="button" onClick={() => copyToClipboard(ctxMenu.node.name)}>
+            이름 복사
+          </button>
+          <button type="button" onClick={() => revealInFinder(ctxMenu.node.path)}>
+            Finder에서 보기
+          </button>
+          <button type="button" className="danger" onClick={() => requestDelete(ctxMenu.node)}>
+            삭제
+          </button>
         </div>
       )}
     </div>

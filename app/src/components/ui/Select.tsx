@@ -27,7 +27,10 @@ export function Select<T extends string | number>({
 }: SelectProps<T>) {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number>(() =>
-    Math.max(0, options.findIndex((o) => o.value === value)),
+    Math.max(
+      0,
+      options.findIndex((o) => o.value === value),
+    ),
   );
   const rootRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
@@ -131,7 +134,11 @@ export function Select<T extends string | number>({
                   {opt.leading}
                   <span className="ws-select-option-label">{opt.label}</span>
                 </span>
-                {selected && <span className="ws-select-check" aria-hidden>✓</span>}
+                {selected && (
+                  <span className="ws-select-check" aria-hidden>
+                    ✓
+                  </span>
+                )}
               </li>
             );
           })}

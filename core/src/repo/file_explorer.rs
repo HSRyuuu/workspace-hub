@@ -36,12 +36,13 @@ pub fn list(conn: &Connection) -> Result<Vec<FileExplorerFolder>, CoreError> {
 
 pub fn get(conn: &Connection, id: i64) -> Result<FileExplorerFolder, CoreError> {
     let sql = format!("SELECT {SELECT_COLUMNS} FROM file_explorer_folder WHERE id = ?1");
-    conn.query_row(&sql, params![id], map_row).map_err(|e| match e {
-        rusqlite::Error::QueryReturnedNoRows => {
-            CoreError::NotFound(format!("file_explorer_folder id={id}"))
-        }
-        other => CoreError::Sqlite(other),
-    })
+    conn.query_row(&sql, params![id], map_row)
+        .map_err(|e| match e {
+            rusqlite::Error::QueryReturnedNoRows => {
+                CoreError::NotFound(format!("file_explorer_folder id={id}"))
+            }
+            other => CoreError::Sqlite(other),
+        })
 }
 
 /// 폴더를 열 때 호출 — upsert + last_opened_at 갱신 + 비즐겨찾기 초과분 prune.

@@ -80,11 +80,7 @@ function findTodoColInWeek(week: WeekCell[], t: Todo): number | null {
 }
 
 /** 같은 슬롯에 겹치지 않도록 greedy 할당. */
-function buildWeekBars(
-  week: WeekCell[],
-  schedules: Schedule[],
-  todos: Todo[],
-): WeekBar[] {
+function buildWeekBars(week: WeekCell[], schedules: Schedule[], todos: Todo[]): WeekBar[] {
   const raw: RawBar[] = [];
   for (const s of schedules) {
     const r = findScheduleSpanInWeek(week, s);
@@ -146,10 +142,7 @@ export function MonthGrid({
     <div className="cal-month">
       <div className="cal-weekdays">
         {WEEKDAYS.map((w, i) => (
-          <div
-            key={w}
-            className={`cal-weekday ${i === 0 ? "sun" : ""} ${i === 6 ? "sat" : ""}`}
-          >
+          <div key={w} className={`cal-weekday ${i === 0 ? "sun" : ""} ${i === 6 ? "sat" : ""}`}>
             {w}
           </div>
         ))}
@@ -160,8 +153,7 @@ export function MonthGrid({
           return (
             <div className="cal-week" key={wi}>
               {week.map((day, ci) => {
-                const isComposeHere =
-                  selected?.kind === "compose" && selected.dayIso === day.iso;
+                const isComposeHere = selected?.kind === "compose" && selected.dayIso === day.iso;
                 return (
                   <div
                     key={day.iso}
@@ -195,8 +187,7 @@ export function MonthGrid({
                   const top = `calc(var(--cal-bar-top) + ${bar.slot} * var(--cal-bar-row))`;
                   if (bar.kind === "schedule") {
                     const isSelected =
-                      selected?.kind === "schedule" &&
-                      selected.id === bar.schedule.id;
+                      selected?.kind === "schedule" && selected.id === bar.schedule.id;
                     return (
                       <button
                         key={`s-${bar.schedule.id}-${bi}`}
@@ -223,8 +214,7 @@ export function MonthGrid({
                       </button>
                     );
                   }
-                  const isSelected =
-                    selected?.kind === "todo" && selected.id === bar.todo.id;
+                  const isSelected = selected?.kind === "todo" && selected.id === bar.todo.id;
                   return (
                     <button
                       key={`t-${bar.todo.id}-${bi}`}

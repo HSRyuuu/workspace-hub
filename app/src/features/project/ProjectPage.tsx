@@ -1,13 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { Button, ColorSwatch, showConfirmToast, showErrorToast } from "../../components/ui";
-import {
-  CheckIcon,
-  FolderIcon,
-  PencilIcon,
-  PlusIcon,
-  TrashIcon,
-} from "../../components/ui/icons";
+import { CheckIcon, FolderIcon, PencilIcon, PlusIcon, TrashIcon } from "../../components/ui/icons";
 import type { Memo } from "../memo/types";
 import { memoDisplayTitle } from "../memo/markdown";
 import { projectApi } from "./api";
@@ -563,9 +557,7 @@ export default function ProjectPage() {
                   </li>
                 ))}
                 {directories.length === 0 && (
-                  <li className="dirs-empty">
-                    + 추가 버튼으로 디렉터리를 등록하세요.
-                  </li>
+                  <li className="dirs-empty">+ 추가 버튼으로 디렉터리를 등록하세요.</li>
                 )}
               </ul>
             </section>

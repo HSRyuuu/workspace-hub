@@ -1,9 +1,7 @@
 use rusqlite::{params, Connection, Row};
 
 use crate::error::CoreError;
-use crate::models::project::{
-    NewProjectApplication, ProjectApplication, UpdateProjectApplication,
-};
+use crate::models::project::{NewProjectApplication, ProjectApplication, UpdateProjectApplication};
 use crate::repo::{empty_to_none, now_iso, project as project_repo};
 
 const SELECT_COLUMNS: &str = "id, project_id, path, label, created_at, updated_at";
@@ -112,10 +110,7 @@ pub fn update(
 }
 
 pub fn delete(conn: &Connection, id: i64) -> Result<(), CoreError> {
-    let affected = conn.execute(
-        "DELETE FROM project_application WHERE id = ?1",
-        params![id],
-    )?;
+    let affected = conn.execute("DELETE FROM project_application WHERE id = ?1", params![id])?;
     if affected == 0 {
         return Err(CoreError::NotFound(format!("project_application id={id}")));
     }

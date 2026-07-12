@@ -7,8 +7,7 @@ export const scheduleApi = {
 
   get: (id: number): Promise<Schedule> => invoke<Schedule>("schedule_get", { id }),
 
-  add: (input: NewScheduleInput): Promise<Schedule> =>
-    invoke<Schedule>("schedule_add", { input }),
+  add: (input: NewScheduleInput): Promise<Schedule> => invoke<Schedule>("schedule_add", { input }),
 
   update: (id: number, patch: UpdateSchedulePatch): Promise<Schedule> =>
     invoke<Schedule>("schedule_update", { id, patch }),

@@ -1,10 +1,6 @@
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  ConfirmToast,
-  showConfirmToast,
-  _resetConfirmToastForTest,
-} from "../ConfirmToast";
+import { ConfirmToast, showConfirmToast, _resetConfirmToastForTest } from "../ConfirmToast";
 
 beforeEach(() => {
   _resetConfirmToastForTest();

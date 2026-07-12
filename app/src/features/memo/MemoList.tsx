@@ -30,7 +30,10 @@ interface MemoListProps {
 }
 
 function formatDate(iso: string): string {
-  return iso.replace("T", " ").replace(/:\d{2}Z?$/, "").slice(0, 16);
+  return iso
+    .replace("T", " ")
+    .replace(/:\d{2}Z?$/, "")
+    .slice(0, 16);
 }
 
 function createDragGhost(title: string): HTMLElement {
@@ -83,11 +86,7 @@ export default function MemoList(props: MemoListProps) {
               {props.trashMode ? "휴지통이 비었습니다" : "메모가 없습니다"}
             </p>
             {!props.trashMode && (
-              <button
-                type="button"
-                className="memo-list-empty-cta"
-                onClick={props.onCreate}
-              >
+              <button type="button" className="memo-list-empty-cta" onClick={props.onCreate}>
                 + 새 메모 만들기
               </button>
             )}
@@ -103,7 +102,10 @@ export default function MemoList(props: MemoListProps) {
               onDragStart={(e) => {
                 if (props.trashMode) return;
                 // dragend 가 누락된 이전 드래그가 남긴 ghost 가 있으면 청소.
-                if (dragGhostEl) { dragGhostEl.remove(); dragGhostEl = undefined; }
+                if (dragGhostEl) {
+                  dragGhostEl.remove();
+                  dragGhostEl = undefined;
+                }
                 e.dataTransfer.setData("application/x-memo-id", String(m.id));
                 e.dataTransfer.effectAllowed = "move";
                 const ghost = createDragGhost(memoDisplayTitle(m));
@@ -130,7 +132,7 @@ export default function MemoList(props: MemoListProps) {
                 </div>
                 <div className="memo-list-row-meta">
                   <span className="memo-list-row-date">
-                    {formatDate(props.trashMode ? m.deleted_at ?? m.updated_at : m.updated_at)}
+                    {formatDate(props.trashMode ? (m.deleted_at ?? m.updated_at) : m.updated_at)}
                   </span>
                   {props.scope !== "folder" &&
                     m.folder_id !== null &&

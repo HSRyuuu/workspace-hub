@@ -14,10 +14,7 @@ interface WorkspaceChipProps {
 export function WorkspaceChip({ label, color }: WorkspaceChipProps) {
   return (
     <span className="ws-chip">
-      <span
-        className="ws-chip-dot"
-        style={color ? { background: color } : undefined}
-      />
+      <span className="ws-chip-dot" style={color ? { background: color } : undefined} />
       {label}
     </span>
   );

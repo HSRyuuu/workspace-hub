@@ -16,18 +16,13 @@ interface ProjectMemosSectionProps {
  */
 export function ProjectMemosSection({ memos, onUnlink }: ProjectMemosSectionProps) {
   const [openMemoId, setOpenMemoId] = useState<number | null>(null);
-  const openMemo =
-    openMemoId !== null ? memos.find((m) => m.id === openMemoId) ?? null : null;
+  const openMemo = openMemoId !== null ? (memos.find((m) => m.id === openMemoId) ?? null) : null;
 
   if (openMemo) {
     return (
       <section className="scratch-section">
         <div className="section-head">
-          <button
-            type="button"
-            className="memo-view-back"
-            onClick={() => setOpenMemoId(null)}
-          >
+          <button type="button" className="memo-view-back" onClick={() => setOpenMemoId(null)}>
             ← 관련 메모
           </button>
           <button
@@ -43,11 +38,7 @@ export function ProjectMemosSection({ memos, onUnlink }: ProjectMemosSectionProp
         <article className="memo-view">
           <h3 className="memo-view-title">{memoDisplayTitle(openMemo)}</h3>
           {openMemo.body.trim() ? (
-            <MarkdownEditor
-              resetKey={openMemo.id}
-              initialMarkdown={openMemo.body}
-              readOnly
-            />
+            <MarkdownEditor resetKey={openMemo.id} initialMarkdown={openMemo.body} readOnly />
           ) : (
             <p className="memo-view-empty">(본문 없음)</p>
           )}
@@ -67,25 +58,25 @@ export function ProjectMemosSection({ memos, onUnlink }: ProjectMemosSectionProp
         {memos.map((m) => {
           const preview = memoBodyPreview(m);
           return (
-          <li key={m.id} className="scratch-row">
-            <button
-              type="button"
-              className="scratch-row-open"
-              onClick={() => setOpenMemoId(m.id)}
-            >
-              <div className="scratch-title">{memoDisplayTitle(m)}</div>
-              {preview && <div className="scratch-body">{preview}</div>}
-            </button>
-            <button
-              type="button"
-              className="icon-btn icon-btn--danger"
-              onClick={() => onUnlink(m)}
-              aria-label={`${memoDisplayTitle(m)} 매핑 해제`}
-              title="매핑 해제"
-            >
-              <TrashIcon size={16} />
-            </button>
-          </li>
+            <li key={m.id} className="scratch-row">
+              <button
+                type="button"
+                className="scratch-row-open"
+                onClick={() => setOpenMemoId(m.id)}
+              >
+                <div className="scratch-title">{memoDisplayTitle(m)}</div>
+                {preview && <div className="scratch-body">{preview}</div>}
+              </button>
+              <button
+                type="button"
+                className="icon-btn icon-btn--danger"
+                onClick={() => onUnlink(m)}
+                aria-label={`${memoDisplayTitle(m)} 매핑 해제`}
+                title="매핑 해제"
+              >
+                <TrashIcon size={16} />
+              </button>
+            </li>
           );
         })}
         {memos.length === 0 && (

@@ -132,9 +132,7 @@ pub fn run(cmd: &ScheduleCommand, human: bool) -> Result<(), AppError> {
         }
         ScheduleCommand::List(args) => {
             let items = match (args.from.as_deref(), args.to.as_deref()) {
-                (Some(f), Some(t)) => {
-                    repo::list_in_range(&conn, f, t)?
-                }
+                (Some(f), Some(t)) => repo::list_in_range(&conn, f, t)?,
                 (None, None) => repo::list(&conn)?,
                 _ => {
                     return Err(AppError::User(
@@ -142,8 +140,7 @@ pub fn run(cmd: &ScheduleCommand, human: bool) -> Result<(), AppError> {
                     ))
                 }
             };
-            output::emit(&items, human, |xs| output::print_schedules_human(xs))
-                ?;
+            output::emit(&items, human, |xs| output::print_schedules_human(xs))?;
         }
         ScheduleCommand::Get(id) => {
             let s = repo::get(&conn, id.id)?;
@@ -165,8 +162,7 @@ pub fn run(cmd: &ScheduleCommand, human: bool) -> Result<(), AppError> {
         ScheduleCommand::Delete(id) => {
             repo::delete(&conn, id.id)?;
             let ack = serde_json::json!({ "deleted": id.id });
-            output::emit(&ack, human, |_| println!("deleted #{}", id.id))
-                ?;
+            output::emit(&ack, human, |_| println!("deleted #{}", id.id))?;
         }
     }
     Ok(())

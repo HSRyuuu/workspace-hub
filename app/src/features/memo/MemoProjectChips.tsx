@@ -27,10 +27,7 @@ export function MemoProjectChips({ memoId, onChange }: Props) {
     let cancelled = false;
     (async () => {
       try {
-        const [all, mapped] = await Promise.all([
-          projectApi.list(),
-          memoApi.listProjects(memoId),
-        ]);
+        const [all, mapped] = await Promise.all([projectApi.list(), memoApi.listProjects(memoId)]);
         if (cancelled) return;
         setAllProjects(all);
         setLinked(mapped);

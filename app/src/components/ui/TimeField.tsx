@@ -49,7 +49,10 @@ export function TimeField({
       const t = triggerRef.current;
       if (!t) return;
       const r = t.getBoundingClientRect();
-      const left = Math.max(8, Math.min(window.innerWidth - POPOVER_WIDTH - 8, r.right - POPOVER_WIDTH));
+      const left = Math.max(
+        8,
+        Math.min(window.innerWidth - POPOVER_WIDTH - 8, r.right - POPOVER_WIDTH),
+      );
       setPopStyle({ top: r.bottom + 4, left, width: POPOVER_WIDTH });
     }
     update();

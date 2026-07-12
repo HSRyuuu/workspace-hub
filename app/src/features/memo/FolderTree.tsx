@@ -109,12 +109,7 @@ export default function FolderTree(props: FolderTreeProps) {
     if (!draggedFolder) return;
     if (draggedFolder.parentId !== target.parent_id) return;
     if (draggedFolder.id === target.id) return;
-    const next = computeReordered(
-      target.parent_id,
-      draggedFolder.id,
-      target.id,
-      position,
-    );
+    const next = computeReordered(target.parent_id, draggedFolder.id, target.id, position);
     const current = props.folders
       .filter((f) => f.parent_id === target.parent_id)
       .sort((a, b) => a.sort_order - b.sort_order || a.id - b.id)
@@ -164,24 +159,18 @@ export default function FolderTree(props: FolderTreeProps) {
       <div className="memo-sidebar-section">
         <button
           type="button"
-          className={`memo-sidebar-row ${
-            props.selectedScope === "active" ? "selected" : ""
-          }`}
+          className={`memo-sidebar-row ${props.selectedScope === "active" ? "selected" : ""}`}
           onClick={() => props.onSelect("active", null)}
         >
           <span className="memo-sidebar-row-label">모든 메모</span>
         </button>
         <button
           type="button"
-          className={`memo-sidebar-row ${
-            props.selectedScope === "trash" ? "selected" : ""
-          }`}
+          className={`memo-sidebar-row ${props.selectedScope === "trash" ? "selected" : ""}`}
           onClick={() => props.onSelect("trash", null)}
         >
           <span className="memo-sidebar-row-label">최근 삭제</span>
-          {props.trashCount > 0 && (
-            <span className="memo-sidebar-badge">{props.trashCount}</span>
-          )}
+          {props.trashCount > 0 && <span className="memo-sidebar-badge">{props.trashCount}</span>}
         </button>
       </div>
 
@@ -213,9 +202,7 @@ export default function FolderTree(props: FolderTreeProps) {
             key={node.id}
             node={node}
             depth={0}
-            selectedFolderId={
-              props.selectedScope === "folder" ? props.selectedFolderId : null
-            }
+            selectedFolderId={props.selectedScope === "folder" ? props.selectedFolderId : null}
             onSelect={(id) => props.onSelect("folder", id)}
             addingUnder={addingUnder}
             onStartAdd={(parentId) => setAddingUnder(parentId)}
@@ -237,9 +224,7 @@ export default function FolderTree(props: FolderTreeProps) {
           />
         ))}
         <div
-          className={`memo-folder-tree-tail ${
-            tailHover ? "memo-folder-tree-tail--hover" : ""
-          }`}
+          className={`memo-folder-tree-tail ${tailHover ? "memo-folder-tree-tail--hover" : ""}`}
           onDragOver={(e) => {
             if (!draggedFolder) return;
             if (!Array.from(e.dataTransfer.types).includes(FOLDER_MIME)) return;
@@ -318,10 +303,8 @@ function FolderNode({
   const showAddChild = addingUnder === node.id;
 
   const canDropMemo = draggedMemo !== null && draggedMemo.folderId !== node.id;
-  const sameFolderParent =
-    draggedFolder !== null && draggedFolder.parentId === node.parent_id;
-  const canFolderDrop =
-    draggedFolder !== null && !forbiddenIds.has(node.id);
+  const sameFolderParent = draggedFolder !== null && draggedFolder.parentId === node.parent_id;
+  const canFolderDrop = draggedFolder !== null && !forbiddenIds.has(node.id);
 
   const commitRename = () => {
     const next = draft.trim();
@@ -457,10 +440,7 @@ function FolderNode({
             }}
           />
         ) : (
-          <span
-            className="memo-folder-name-btn"
-            onDoubleClick={() => setEditing(true)}
-          >
+          <span className="memo-folder-name-btn" onDoubleClick={() => setEditing(true)}>
             {node.name}
           </span>
         )}

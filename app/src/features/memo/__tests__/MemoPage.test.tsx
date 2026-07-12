@@ -87,10 +87,7 @@ describe("MemoPage", () => {
 
     fireEvent.click(screen.getByLabelText("목록으로"));
 
-    expect(invokeMock).not.toHaveBeenCalledWith(
-      "memo_update",
-      expect.objectContaining({ id: 1 }),
-    );
+    expect(invokeMock).not.toHaveBeenCalledWith("memo_update", expect.objectContaining({ id: 1 }));
   });
 
   it("does not send a blank title when the editor reports a normalized body on open", async () => {

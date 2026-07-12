@@ -198,8 +198,7 @@ pub fn run(cmd: &ProjectCommand, human: bool) -> Result<(), AppError> {
         }
         ProjectCommand::List => {
             let items = repo::list(&conn)?;
-            output::emit(&items, human, |xs| output::print_projects_human(xs))
-                ?;
+            output::emit(&items, human, |xs| output::print_projects_human(xs))?;
         }
         ProjectCommand::Get(id) => {
             let p = repo::get(&conn, id.id)?;
@@ -218,8 +217,7 @@ pub fn run(cmd: &ProjectCommand, human: bool) -> Result<(), AppError> {
         ProjectCommand::Delete(id) => {
             repo::delete(&conn, id.id)?;
             let ack = serde_json::json!({ "deleted": id.id });
-            output::emit(&ack, human, |_| println!("deleted #{}", id.id))
-                ?;
+            output::emit(&ack, human, |_| println!("deleted #{}", id.id))?;
         }
         ProjectCommand::Dir(DirCommand::Add(args)) => {
             let new = NewProjectDirectory {
@@ -228,14 +226,11 @@ pub fn run(cmd: &ProjectCommand, human: bool) -> Result<(), AppError> {
                 label: args.label.clone(),
             };
             let d = dir_repo::create(&conn, &new)?;
-            output::emit(&d, human, output::print_project_dir_human)
-                ?;
+            output::emit(&d, human, output::print_project_dir_human)?;
         }
         ProjectCommand::Dir(DirCommand::List(args)) => {
-            let items =
-                dir_repo::list_by_project(&conn, args.project)?;
-            output::emit(&items, human, |xs| output::print_project_dirs_human(xs))
-                ?;
+            let items = dir_repo::list_by_project(&conn, args.project)?;
+            output::emit(&items, human, |xs| output::print_project_dirs_human(xs))?;
         }
         ProjectCommand::Dir(DirCommand::Update(args)) => {
             let patch = UpdateProjectDirectory {
@@ -243,14 +238,12 @@ pub fn run(cmd: &ProjectCommand, human: bool) -> Result<(), AppError> {
                 label: clear_or_value(args.clear_label, args.label.clone()),
             };
             let d = dir_repo::update(&conn, args.id, &patch)?;
-            output::emit(&d, human, output::print_project_dir_human)
-                ?;
+            output::emit(&d, human, output::print_project_dir_human)?;
         }
         ProjectCommand::Dir(DirCommand::Delete(id)) => {
             dir_repo::delete(&conn, id.id)?;
             let ack = serde_json::json!({ "deleted": id.id });
-            output::emit(&ack, human, |_| println!("deleted #{}", id.id))
-                ?;
+            output::emit(&ack, human, |_| println!("deleted #{}", id.id))?;
         }
         ProjectCommand::App(AppCommand::Add(args)) => {
             let new = NewProjectApplication {
@@ -259,14 +252,11 @@ pub fn run(cmd: &ProjectCommand, human: bool) -> Result<(), AppError> {
                 label: args.label.clone(),
             };
             let a = app_repo::create(&conn, &new)?;
-            output::emit(&a, human, output::print_project_app_human)
-                ?;
+            output::emit(&a, human, output::print_project_app_human)?;
         }
         ProjectCommand::App(AppCommand::List(args)) => {
-            let items =
-                app_repo::list_by_project(&conn, args.project)?;
-            output::emit(&items, human, |xs| output::print_project_apps_human(xs))
-                ?;
+            let items = app_repo::list_by_project(&conn, args.project)?;
+            output::emit(&items, human, |xs| output::print_project_apps_human(xs))?;
         }
         ProjectCommand::App(AppCommand::Update(args)) => {
             let patch = UpdateProjectApplication {
@@ -274,20 +264,16 @@ pub fn run(cmd: &ProjectCommand, human: bool) -> Result<(), AppError> {
                 label: clear_or_value(args.clear_label, args.label.clone()),
             };
             let a = app_repo::update(&conn, args.id, &patch)?;
-            output::emit(&a, human, output::print_project_app_human)
-                ?;
+            output::emit(&a, human, output::print_project_app_human)?;
         }
         ProjectCommand::App(AppCommand::Delete(id)) => {
             app_repo::delete(&conn, id.id)?;
             let ack = serde_json::json!({ "deleted": id.id });
-            output::emit(&ack, human, |_| println!("deleted #{}", id.id))
-                ?;
+            output::emit(&ack, human, |_| println!("deleted #{}", id.id))?;
         }
         ProjectCommand::Memos(id) => {
-            let items = link_repo::list_memos_for_project(&conn, id.id)
-                ?;
-            output::emit(&items, human, |xs| output::print_memos_human(xs))
-                ?;
+            let items = link_repo::list_memos_for_project(&conn, id.id)?;
+            output::emit(&items, human, |xs| output::print_memos_human(xs))?;
         }
     }
     Ok(())

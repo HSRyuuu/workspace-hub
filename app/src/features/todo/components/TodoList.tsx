@@ -41,10 +41,20 @@ function isDueOverdue(due: string | null, dueTime: number, status: string): bool
   if (!due || status === "done") return false;
   const h = Math.floor(dueTime / 60);
   const m = dueTime % 60;
-  return new Date(`${due}T${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:00`).getTime() < Date.now();
+  return (
+    new Date(`${due}T${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:00`).getTime() <
+    Date.now()
+  );
 }
 
-export function TodoList({ todos, selectedId, onSelect, onToggle, onDelete, focusId }: TodoListProps) {
+export function TodoList({
+  todos,
+  selectedId,
+  onSelect,
+  onToggle,
+  onDelete,
+  focusId,
+}: TodoListProps) {
   if (todos.length === 0) {
     return <div className="empty-state">할 일이 없어요.</div>;
   }
@@ -82,9 +92,7 @@ export function TodoList({ todos, selectedId, onSelect, onToggle, onDelete, focu
               aria-label={isDone ? "완료 해제" : "완료"}
             />
             <span className="todo-title">{t.title}</span>
-            <span className={`todo-due ${overdue ? "overdue" : ""}`}>
-              {dueLabel}
-            </span>
+            <span className={`todo-due ${overdue ? "overdue" : ""}`}>{dueLabel}</span>
             <PriorityDot priority={t.priority} />
             <Button
               variant="ghost"

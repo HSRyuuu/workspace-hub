@@ -431,9 +431,13 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
       }
     }, [editor, resetKey]);
 
-    useImperativeHandle(ref, () => ({
-      focus: () => editor?.commands.focus(),
-    }), [editor]);
+    useImperativeHandle(
+      ref,
+      () => ({
+        focus: () => editor?.commands.focus(),
+      }),
+      [editor],
+    );
 
     if (!editor) return null;
 
@@ -450,115 +454,125 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
     return (
       <div
         className={
-          readOnly ? "markdown-editor-shell markdown-editor-shell--readonly" : "markdown-editor-shell"
+          readOnly
+            ? "markdown-editor-shell markdown-editor-shell--readonly"
+            : "markdown-editor-shell"
         }
       >
         {!readOnly && (
-        <div className="markdown-editor-toolbar" role="toolbar" aria-label="formatting">
-          <button
-            type="button"
-            className={editor.isActive("paragraph") ? "active" : ""}
-            onClick={setParagraph}
-            title="본문 (⌘⌥0)"
-          >
-            P
-          </button>
-          {([1, 2, 3, 4, 5, 6] as const).map((l) => (
+          <div className="markdown-editor-toolbar" role="toolbar" aria-label="formatting">
             <button
-              key={l}
               type="button"
-              className={editor.isActive("heading", { level: l }) ? "active" : ""}
-              onClick={() => setHeading(l)}
-              title={`H${l} (⌘⌥${l})`}
+              className={editor.isActive("paragraph") ? "active" : ""}
+              onClick={setParagraph}
+              title="본문 (⌘⌥0)"
             >
-              H{l}
+              P
             </button>
-          ))}
-          <span className="markdown-toolbar-sep" />
-          <button
-            type="button"
-            className={editor.isActive("bold") ? "active" : ""}
-            onClick={() => editor.chain().focus().toggleBold().run()}
-            title="Bold (⌘B)"
-          >
-            <b>B</b>
-          </button>
-          <button
-            type="button"
-            className={editor.isActive("italic") ? "active" : ""}
-            onClick={() => editor.chain().focus().toggleItalic().run()}
-            title="Italic (⌘I)"
-          >
-            <i>I</i>
-          </button>
-          <button
-            type="button"
-            className={editor.isActive("strike") ? "active" : ""}
-            onClick={() => editor.chain().focus().toggleStrike().run()}
-            title="Strikethrough"
-          >
-            <s>S</s>
-          </button>
-          <button
-            type="button"
-            className={editor.isActive("code") ? "active" : ""}
-            onClick={() => editor.chain().focus().toggleCode().run()}
-            title="Inline code (⌘E)"
-          >
-            {"<>"}
-          </button>
-          <span className="markdown-toolbar-sep" />
-          <button
-            type="button"
-            className={editor.isActive("bulletList") ? "active" : ""}
-            onClick={toggleBullet}
-            title="Bullet list (⌘⌥7)"
-          >
-            •
-          </button>
-          <button
-            type="button"
-            className={editor.isActive("orderedList") ? "active" : ""}
-            onClick={toggleOrdered}
-            title="Ordered list (⌘⌥8)"
-          >
-            1.
-          </button>
-          <button
-            type="button"
-            className={editor.isActive("taskList") ? "markdown-toolbar-task active" : "markdown-toolbar-task"}
-            onClick={toggleTask}
-            title="Task list (⌘⌥9)"
-          >
-            ☑
-          </button>
-          <button
-            type="button"
-            className={editor.isActive("codeBlock") ? "active" : ""}
-            onClick={toggleCodeBlock}
-            title="Code block (```)"
-          >
-            {"</>"}
-          </button>
-          <button
-            ref={tableButtonRef}
-            type="button"
-            className={editor.isActive("table") ? "markdown-toolbar-table active" : "markdown-toolbar-table"}
-            onClick={insertTable}
-            title="표 삽입 (3×3)"
-          >
-            ⊞
-          </button>
-          <span className="markdown-toolbar-sep" />
-          <button
-            type="button"
-            onClick={() => void pastePlainText(editor)}
-            title="텍스트만 붙여넣기 — 클립보드 내용을 마크다운 해석 없이 코드 블록으로 삽입 (⌘⇧V)"
-          >
-            텍스트
-          </button>
-          {saveIndicator && <span className="markdown-save-indicator">{saveIndicator}</span>}
-        </div>
+            {([1, 2, 3, 4, 5, 6] as const).map((l) => (
+              <button
+                key={l}
+                type="button"
+                className={editor.isActive("heading", { level: l }) ? "active" : ""}
+                onClick={() => setHeading(l)}
+                title={`H${l} (⌘⌥${l})`}
+              >
+                H{l}
+              </button>
+            ))}
+            <span className="markdown-toolbar-sep" />
+            <button
+              type="button"
+              className={editor.isActive("bold") ? "active" : ""}
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              title="Bold (⌘B)"
+            >
+              <b>B</b>
+            </button>
+            <button
+              type="button"
+              className={editor.isActive("italic") ? "active" : ""}
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+              title="Italic (⌘I)"
+            >
+              <i>I</i>
+            </button>
+            <button
+              type="button"
+              className={editor.isActive("strike") ? "active" : ""}
+              onClick={() => editor.chain().focus().toggleStrike().run()}
+              title="Strikethrough"
+            >
+              <s>S</s>
+            </button>
+            <button
+              type="button"
+              className={editor.isActive("code") ? "active" : ""}
+              onClick={() => editor.chain().focus().toggleCode().run()}
+              title="Inline code (⌘E)"
+            >
+              {"<>"}
+            </button>
+            <span className="markdown-toolbar-sep" />
+            <button
+              type="button"
+              className={editor.isActive("bulletList") ? "active" : ""}
+              onClick={toggleBullet}
+              title="Bullet list (⌘⌥7)"
+            >
+              •
+            </button>
+            <button
+              type="button"
+              className={editor.isActive("orderedList") ? "active" : ""}
+              onClick={toggleOrdered}
+              title="Ordered list (⌘⌥8)"
+            >
+              1.
+            </button>
+            <button
+              type="button"
+              className={
+                editor.isActive("taskList")
+                  ? "markdown-toolbar-task active"
+                  : "markdown-toolbar-task"
+              }
+              onClick={toggleTask}
+              title="Task list (⌘⌥9)"
+            >
+              ☑
+            </button>
+            <button
+              type="button"
+              className={editor.isActive("codeBlock") ? "active" : ""}
+              onClick={toggleCodeBlock}
+              title="Code block (```)"
+            >
+              {"</>"}
+            </button>
+            <button
+              ref={tableButtonRef}
+              type="button"
+              className={
+                editor.isActive("table")
+                  ? "markdown-toolbar-table active"
+                  : "markdown-toolbar-table"
+              }
+              onClick={insertTable}
+              title="표 삽입 (3×3)"
+            >
+              ⊞
+            </button>
+            <span className="markdown-toolbar-sep" />
+            <button
+              type="button"
+              onClick={() => void pastePlainText(editor)}
+              title="텍스트만 붙여넣기 — 클립보드 내용을 마크다운 해석 없이 코드 블록으로 삽입 (⌘⇧V)"
+            >
+              텍스트
+            </button>
+            {saveIndicator && <span className="markdown-save-indicator">{saveIndicator}</span>}
+          </div>
         )}
         {!readOnly && (
           <BubbleMenu

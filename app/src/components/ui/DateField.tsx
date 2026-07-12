@@ -78,7 +78,10 @@ export function DateField({
       const t = triggerRef.current;
       if (!t) return;
       const r = t.getBoundingClientRect();
-      const left = Math.max(8, Math.min(window.innerWidth - POPOVER_WIDTH - 8, r.right - POPOVER_WIDTH));
+      const left = Math.max(
+        8,
+        Math.min(window.innerWidth - POPOVER_WIDTH - 8, r.right - POPOVER_WIDTH),
+      );
       setPopStyle({ top: r.bottom + 4, left, width: POPOVER_WIDTH });
     }
     update();
@@ -153,13 +156,24 @@ export function DateField({
       {open && (
         <div className="ws-datepopover" role="dialog" aria-label="날짜 선택" style={popStyle}>
           <div className="ws-datepopover-header">
-            <button type="button" className="ws-cal-nav" onClick={gotoPrev} aria-label="이전 달">‹</button>
-            <div className="ws-cal-title">{viewYear}년 {viewMonth}월</div>
-            <button type="button" className="ws-cal-nav" onClick={gotoNext} aria-label="다음 달">›</button>
+            <button type="button" className="ws-cal-nav" onClick={gotoPrev} aria-label="이전 달">
+              ‹
+            </button>
+            <div className="ws-cal-title">
+              {viewYear}년 {viewMonth}월
+            </div>
+            <button type="button" className="ws-cal-nav" onClick={gotoNext} aria-label="다음 달">
+              ›
+            </button>
           </div>
           <div className="ws-cal-weekdays">
             {WEEKDAYS.map((w, i) => (
-              <div key={w} className={`ws-cal-weekday ${i === 0 ? "sun" : ""} ${i === 6 ? "sat" : ""}`}>{w}</div>
+              <div
+                key={w}
+                className={`ws-cal-weekday ${i === 0 ? "sun" : ""} ${i === 6 ? "sat" : ""}`}
+              >
+                {w}
+              </div>
             ))}
           </div>
           <div className="ws-cal-grid">
@@ -175,7 +189,9 @@ export function DateField({
                 isSelected ? "selected" : "",
                 wd === 0 ? "sun" : "",
                 wd === 6 ? "sat" : "",
-              ].filter(Boolean).join(" ");
+              ]
+                .filter(Boolean)
+                .join(" ");
               return (
                 <button
                   type="button"
@@ -191,8 +207,12 @@ export function DateField({
             })}
           </div>
           <div className="ws-datepopover-footer">
-            <button type="button" className="ws-datepopover-link" onClick={gotoToday}>오늘</button>
-            <button type="button" className="ws-datepopover-link danger" onClick={clear}>지우기</button>
+            <button type="button" className="ws-datepopover-link" onClick={gotoToday}>
+              오늘
+            </button>
+            <button type="button" className="ws-datepopover-link danger" onClick={clear}>
+              지우기
+            </button>
           </div>
         </div>
       )}

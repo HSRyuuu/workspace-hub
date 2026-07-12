@@ -141,8 +141,7 @@ pub fn run(cmd: &MemoCommand, human: bool) -> Result<(), AppError> {
                 ListScope::AllActive
             };
             let items = repo::list(&conn, scope)?;
-            output::emit(&items, human, |xs| output::print_memos_human(xs))
-                ?;
+            output::emit(&items, human, |xs| output::print_memos_human(xs))?;
         }
         MemoCommand::Get(id) => {
             let m = repo::get(&conn, id.id)?;
@@ -174,20 +173,18 @@ pub fn run(cmd: &MemoCommand, human: bool) -> Result<(), AppError> {
         MemoCommand::Purge(id) => {
             repo::purge(&conn, id.id)?;
             let ack = serde_json::json!({ "purged": id.id });
-            output::emit(&ack, human, |_| println!("purged #{}", id.id))
-                ?;
+            output::emit(&ack, human, |_| println!("purged #{}", id.id))?;
         }
         MemoCommand::EmptyTrash => {
             let count = repo::empty_trash(&conn)?;
             let ack = serde_json::json!({ "purged_count": count });
-            output::emit(&ack, human, |_| println!("emptied trash: {count} memo(s) purged"))
-                ?;
+            output::emit(&ack, human, |_| {
+                println!("emptied trash: {count} memo(s) purged")
+            })?;
         }
         MemoCommand::Project(MemoProjectCommand::List(args)) => {
-            let items = link_repo::list_projects_for_memo(&conn, args.id)
-                ?;
-            output::emit(&items, human, |xs| output::print_projects_human(xs))
-                ?;
+            let items = link_repo::list_projects_for_memo(&conn, args.id)?;
+            output::emit(&items, human, |xs| output::print_projects_human(xs))?;
         }
         MemoCommand::Project(MemoProjectCommand::Link(args)) => {
             link_repo::link(&conn, args.memo, args.project)?;
@@ -196,8 +193,7 @@ pub fn run(cmd: &MemoCommand, human: bool) -> Result<(), AppError> {
             });
             output::emit(&ack, human, |_| {
                 println!("linked memo #{} ↔ project #{}", args.memo, args.project)
-            })
-            ?;
+            })?;
         }
         MemoCommand::Project(MemoProjectCommand::Unlink(args)) => {
             link_repo::unlink(&conn, args.memo, args.project)?;
@@ -206,8 +202,7 @@ pub fn run(cmd: &MemoCommand, human: bool) -> Result<(), AppError> {
             });
             output::emit(&ack, human, |_| {
                 println!("unlinked memo #{} ↔ project #{}", args.memo, args.project)
-            })
-            ?;
+            })?;
         }
     }
     Ok(())

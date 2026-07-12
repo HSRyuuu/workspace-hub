@@ -54,7 +54,9 @@ function applyDueRangeFilter(todos: Todo[], dueRange: Filters["dueRange"]): Todo
 function dueDateTime(todo: Todo): Date {
   const h = Math.floor(todo.due_time / 60);
   const m = todo.due_time % 60;
-  return new Date(`${todo.due_date}T${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:00`);
+  return new Date(
+    `${todo.due_date}T${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:00`,
+  );
 }
 
 function isOpenOverdue(todo: Todo): boolean {
@@ -227,11 +229,7 @@ export default function TodoPage({ selectedTodoId = null }: TodoPageProps) {
             />
           </div>
           <div>
-            <TodoDetail
-              todo={selectedTodo}
-              descriptionRef={descriptionRef}
-              onPatch={onPatch}
-            />
+            <TodoDetail todo={selectedTodo} descriptionRef={descriptionRef} onPatch={onPatch} />
           </div>
         </div>
       )}

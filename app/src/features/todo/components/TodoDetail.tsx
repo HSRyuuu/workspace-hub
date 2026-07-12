@@ -28,7 +28,9 @@ export function TodoDetail({ todo, descriptionRef, onPatch }: TodoDetailProps) {
   if (!todo) {
     return (
       <div className="todo-detail-empty">
-        <span className="empty-icon" aria-hidden="true">📋</span>
+        <span className="empty-icon" aria-hidden="true">
+          📋
+        </span>
         <p className="empty-primary">좌측에서 할 일을 선택하세요</p>
         <p className="empty-secondary">↑/↓ 이동, Enter 열기</p>
       </div>
@@ -67,9 +69,10 @@ export function TodoDetail({ todo, descriptionRef, onPatch }: TodoDetailProps) {
     if (Number.isNaN(d.getTime())) return value;
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
       d.getDate(),
-    ).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(
-      d.getMinutes(),
-    ).padStart(2, "0")}`;
+    ).padStart(2, "0")} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(
+      2,
+      "0",
+    )}`;
   };
 
   const createdDate = todo.created_at.slice(0, 10);

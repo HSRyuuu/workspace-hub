@@ -86,14 +86,12 @@ pub fn run(cmd: &MemoFolderCommand, human: bool) -> Result<(), AppError> {
                 name: args.name.clone(),
             };
             let f = repo::create(&mut conn, &new)?;
-            output::emit(&f, human, output::print_memo_folder_human)
-                ?;
+            output::emit(&f, human, output::print_memo_folder_human)?;
         }
         MemoFolderCommand::List => {
             let conn = db::open()?;
             let items = repo::list_all(&conn)?;
-            output::emit(&items, human, |xs| output::print_memo_folders_human(xs))
-                ?;
+            output::emit(&items, human, |xs| output::print_memo_folders_human(xs))?;
         }
         MemoFolderCommand::Rename(args) => {
             let mut conn = db::open()?;
@@ -102,8 +100,7 @@ pub fn run(cmd: &MemoFolderCommand, human: bool) -> Result<(), AppError> {
                 ..Default::default()
             };
             let f = repo::update(&mut conn, args.id, &patch)?;
-            output::emit(&f, human, output::print_memo_folder_human)
-                ?;
+            output::emit(&f, human, output::print_memo_folder_human)?;
         }
         MemoFolderCommand::Move(args) => {
             let mut conn = db::open()?;
@@ -121,8 +118,7 @@ pub fn run(cmd: &MemoFolderCommand, human: bool) -> Result<(), AppError> {
                 ..Default::default()
             };
             let f = repo::update(&mut conn, args.id, &patch)?;
-            output::emit(&f, human, output::print_memo_folder_human)
-                ?;
+            output::emit(&f, human, output::print_memo_folder_human)?;
         }
         MemoFolderCommand::Reorder(args) => {
             let mut conn = db::open()?;
@@ -139,15 +135,13 @@ pub fn run(cmd: &MemoFolderCommand, human: bool) -> Result<(), AppError> {
                         .map(|p| p.to_string())
                         .unwrap_or_else(|| "root".into())
                 )
-            })
-            ?;
+            })?;
         }
         MemoFolderCommand::Delete(id) => {
             let mut conn = db::open()?;
             repo::delete(&mut conn, id.id)?;
             let ack = serde_json::json!({ "deleted": id.id });
-            output::emit(&ack, human, |_| println!("deleted folder #{}", id.id))
-                ?;
+            output::emit(&ack, human, |_| println!("deleted folder #{}", id.id))?;
         }
     }
     Ok(())

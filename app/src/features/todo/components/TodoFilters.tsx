@@ -77,11 +77,7 @@ export function TodoFilters({ filters, onChange }: TodoFiltersProps) {
           aria-label="할 일 검색"
         />
 
-        <div
-          className="todo-filters-priorities"
-          role="group"
-          aria-label="우선순위 필터"
-        >
+        <div className="todo-filters-priorities" role="group" aria-label="우선순위 필터">
           {(["low", "mid", "high"] as Priority[]).map((p) => (
             <PriorityToggle
               key={p}

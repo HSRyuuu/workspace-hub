@@ -13,13 +13,12 @@ export const memoApi = {
   list: (scope: MemoListScope, folderId?: number | null): Promise<Memo[]> =>
     invoke<Memo[]>("memo_list", {
       scope,
-      folderId: scope === "folder" ? folderId ?? null : null,
+      folderId: scope === "folder" ? (folderId ?? null) : null,
     }),
 
   get: (id: number): Promise<Memo> => invoke<Memo>("memo_get", { id }),
 
-  add: (input: NewMemoInput): Promise<Memo> =>
-    invoke<Memo>("memo_add", { input }),
+  add: (input: NewMemoInput): Promise<Memo> => invoke<Memo>("memo_add", { input }),
 
   update: (id: number, patch: UpdateMemoPatch): Promise<Memo> =>
     invoke<Memo>("memo_update", { id, patch }),

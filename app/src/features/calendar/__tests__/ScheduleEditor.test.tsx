@@ -24,9 +24,7 @@ function renderNewScheduleEditor() {
 }
 
 function localIso(year: number, month1to12: number, day: number, hour: number): string {
-  return new Date(year, month1to12 - 1, day, hour, 0, 0, 0)
-    .toISOString()
-    .replace(/\.\d{3}Z$/, "Z");
+  return new Date(year, month1to12 - 1, day, hour, 0, 0, 0).toISOString().replace(/\.\d{3}Z$/, "Z");
 }
 
 function makeSchedule(): Schedule {

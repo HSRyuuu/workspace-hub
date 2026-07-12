@@ -86,12 +86,18 @@ export default function App() {
             aria-label={s.label}
             aria-disabled={!s.enabled}
           >
-            <span className="sidebar-item-icon"><s.Icon /></span>
-            <span className="sidebar-item-label" aria-hidden>{s.label}</span>
+            <span className="sidebar-item-icon">
+              <s.Icon />
+            </span>
+            <span className="sidebar-item-label" aria-hidden>
+              {s.label}
+            </span>
           </div>
         ))}
       </aside>
-      <main className={`main${section === "memos" || section === "project" || section === "files" ? " main--flush" : ""}`}>
+      <main
+        className={`main${section === "memos" || section === "project" || section === "files" ? " main--flush" : ""}`}
+      >
         {section === "todo" && <TodoPage selectedTodoId={selectedTodoId} />}
         {section === "calendar" && (
           <CalendarPage

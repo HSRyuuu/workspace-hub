@@ -11,9 +11,7 @@ pub mod todo;
 /// 모든 도메인 repo 가 created_at / updated_at / completed_at 등에 공통으로 사용하는
 /// ISO8601 UTC 타임스탬프. v0.2 의 memo / event / workspace 도 같은 형식을 따른다.
 pub fn now_iso() -> String {
-    chrono::Utc::now()
-        .format("%Y-%m-%dT%H:%M:%SZ")
-        .to_string()
+    chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string()
 }
 
 /// nullable string 컬럼 입력값을 정규화: trim 후 빈 문자열이면 `None`, 그 외에는 `Some(s)`.

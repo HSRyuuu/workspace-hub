@@ -60,10 +60,7 @@ export function buildMonthGrid(
 }
 
 /** 월 fetch 범위. [그리드 첫날, 다음달 1일) */
-export function monthFetchRange(
-  year: number,
-  month1to12: number,
-): { from: string; to: string } {
+export function monthFetchRange(year: number, month1to12: number): { from: string; to: string } {
   const first = new Date(year, month1to12 - 1, 1);
   const startWeekday = first.getDay();
   const gridStart = new Date(year, month1to12 - 1, 1 - startWeekday);
@@ -71,7 +68,10 @@ export function monthFetchRange(
   return { from: toIsoDate(gridStart), to: toIsoDate(next) };
 }
 
-export function utcRangeForLocalDateRange(from: string, to: string): {
+export function utcRangeForLocalDateRange(
+  from: string,
+  to: string,
+): {
   completedFrom: string;
   completedTo: string;
 } {
@@ -97,7 +97,10 @@ export function formatDateLocal(utcIso: string): string {
 }
 
 /** 이 날짜 셀(로컬 YYYY-MM-DD)에 표시되어야 하는 스케줄인지. */
-export function scheduleOverlapsDay(s: { start_at: string; end_at: string }, dayIso: string): boolean {
+export function scheduleOverlapsDay(
+  s: { start_at: string; end_at: string },
+  dayIso: string,
+): boolean {
   const day = fromIsoDate(dayIso);
   if (!day) return false;
   const nextDay = new Date(day);
@@ -132,7 +135,11 @@ export function todoFallsOnDay(
   return todoCalendarDate(todo) === dayIso;
 }
 
-export function shiftMonth(year: number, month1to12: number, delta: number): {
+export function shiftMonth(
+  year: number,
+  month1to12: number,
+  delta: number,
+): {
   year: number;
   month: number;
 } {

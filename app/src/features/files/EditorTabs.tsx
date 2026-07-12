@@ -22,7 +22,14 @@ interface EditorTabsProps {
 
 type TabMenu = { x: number; y: number; path: string } | null;
 
-export function EditorTabs({ tabs, activePath, onSelect, onClose, onCloseMany, onRevealInTree }: EditorTabsProps) {
+export function EditorTabs({
+  tabs,
+  activePath,
+  onSelect,
+  onClose,
+  onCloseMany,
+  onRevealInTree,
+}: EditorTabsProps) {
   const [menu, setMenu] = useState<TabMenu>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   useOutsideClick(menuRef, menu !== null, () => setMenu(null));

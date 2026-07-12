@@ -167,7 +167,8 @@ export default function MemoPage() {
         current &&
         current.title === next &&
         (!bodyDirtyRef.current || current.body === draftBodyRef.current)
-      ) return;
+      )
+        return;
       titleDirtyRef.current = true;
       const patch: UpdateMemoPatch = { title: next };
       if (bodyDirtyRef.current) patch.body = draftBodyRef.current;
@@ -186,7 +187,8 @@ export default function MemoPage() {
         current &&
         current.body === md &&
         (!titleDirtyRef.current || current.title === draftTitleRef.current)
-      ) return;
+      )
+        return;
       bodyDirtyRef.current = true;
       const patch: UpdateMemoPatch = { body: md };
       if (titleDirtyRef.current) patch.title = draftTitleRef.current;
@@ -406,7 +408,7 @@ export default function MemoPage() {
   );
 
   const selectedMemo = useMemo(
-    () => (selectedId !== null ? memos.find((m) => m.id === selectedId) ?? null : null),
+    () => (selectedId !== null ? (memos.find((m) => m.id === selectedId) ?? null) : null),
     [memos, selectedId],
   );
 
@@ -511,7 +513,9 @@ export default function MemoPage() {
             </div>
             {scope === "trash" ? (
               <div className="memo-editor-readonly">
-                <h2>{selectedMemo.title || firstLineAsTitle(selectedMemo.body) || "(제목 없음)"}</h2>
+                <h2>
+                  {selectedMemo.title || firstLineAsTitle(selectedMemo.body) || "(제목 없음)"}
+                </h2>
                 <pre className="memo-readonly-body">{selectedMemo.body}</pre>
                 <p className="memo-readonly-note">
                   휴지통의 메모는 읽기 전용입니다. 복원 후 편집할 수 있습니다.

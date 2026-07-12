@@ -48,9 +48,13 @@ export function FolderBar({
           onClick={() => setOpen((v) => !v)}
           title={current?.path ?? ""}
         >
-          <span className="files-folder-trigger-icon"><FolderIcon size={15} /></span>
+          <span className="files-folder-trigger-icon">
+            <FolderIcon size={15} />
+          </span>
           <span className="files-folder-trigger-text">
-            <span className="files-folder-trigger-name">{current ? baseName(current.path) : "선택 안 됨"}</span>
+            <span className="files-folder-trigger-name">
+              {current ? baseName(current.path) : "선택 안 됨"}
+            </span>
           </span>
           <span className="files-folder-trigger-caret" aria-hidden>
             <ChevronIcon rotation={open ? 0 : 90} size={16} />
@@ -62,14 +66,26 @@ export function FolderBar({
               <>
                 <div className="files-folder-dropdown-label">즐겨찾기</div>
                 {favorites.map((f) => (
-                  <FolderRow key={f.id} folder={f} onSelect={onSelectFolder} onToggleFavorite={onToggleFavorite} close={() => setOpen(false)} />
+                  <FolderRow
+                    key={f.id}
+                    folder={f}
+                    onSelect={onSelectFolder}
+                    onToggleFavorite={onToggleFavorite}
+                    close={() => setOpen(false)}
+                  />
                 ))}
               </>
             )}
             <div className="files-folder-dropdown-label">최근</div>
             {recents.length === 0 && <div className="files-folder-dropdown-empty">없음</div>}
             {recents.map((f) => (
-              <FolderRow key={f.id} folder={f} onSelect={onSelectFolder} onToggleFavorite={onToggleFavorite} close={() => setOpen(false)} />
+              <FolderRow
+                key={f.id}
+                folder={f}
+                onSelect={onSelectFolder}
+                onToggleFavorite={onToggleFavorite}
+                close={() => setOpen(false)}
+              />
             ))}
           </div>
         )}

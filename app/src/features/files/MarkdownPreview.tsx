@@ -34,12 +34,21 @@ function splitFrontmatter(content: string): PreviewContent {
   if (current) frontmatter.push(current);
 
   return {
-    body: lines.slice(end + 1).join("\n").replace(/^\n/, ""),
+    body: lines
+      .slice(end + 1)
+      .join("\n")
+      .replace(/^\n/, ""),
     frontmatter,
   };
 }
 
-export function MarkdownPreview({ path, content }: { readonly path: string; readonly content: string }) {
+export function MarkdownPreview({
+  path,
+  content,
+}: {
+  readonly path: string;
+  readonly content: string;
+}) {
   const preview = splitFrontmatter(content);
   return (
     <div className="files-md-preview">

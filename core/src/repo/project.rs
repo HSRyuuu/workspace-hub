@@ -4,8 +4,7 @@ use crate::error::CoreError;
 use crate::models::project::{NewProject, Project, UpdateProject};
 use crate::repo::{empty_to_none, now_iso};
 
-const SELECT_COLUMNS: &str =
-    "id, title, description, color, sort_order, created_at, updated_at";
+const SELECT_COLUMNS: &str = "id, title, description, color, sort_order, created_at, updated_at";
 
 const DEFAULT_COLOR: &str = "#3F3393";
 
@@ -55,18 +54,14 @@ pub fn get(conn: &Connection, id: i64) -> Result<Project, CoreError> {
     let sql = format!("SELECT {SELECT_COLUMNS} FROM project WHERE id = ?1");
     conn.query_row(&sql, params![id], map_row)
         .map_err(|e| match e {
-            rusqlite::Error::QueryReturnedNoRows => {
-                CoreError::NotFound(format!("project id={id}"))
-            }
+            rusqlite::Error::QueryReturnedNoRows => CoreError::NotFound(format!("project id={id}")),
             other => CoreError::Sqlite(other),
         })
 }
 
 /// sort_order ASC, id ASC.
 pub fn list(conn: &Connection) -> Result<Vec<Project>, CoreError> {
-    let sql = format!(
-        "SELECT {SELECT_COLUMNS} FROM project ORDER BY sort_order ASC, id ASC"
-    );
+    let sql = format!("SELECT {SELECT_COLUMNS} FROM project ORDER BY sort_order ASC, id ASC");
     let mut stmt = conn.prepare(&sql)?;
     let rows = stmt.query_map([], map_row)?;
     let mut out = Vec::new();

@@ -92,11 +92,7 @@ pub fn list(conn: &Connection) -> Result<Vec<Schedule>, CoreError> {
 
 /// `[from, to)` 와 겹치는 일정. from/to 는 `YYYY-MM-DD` 또는 RFC3339 모두 허용.
 /// 조건: `start_at < to AND end_at >= from`.
-pub fn list_in_range(
-    conn: &Connection,
-    from: &str,
-    to: &str,
-) -> Result<Vec<Schedule>, CoreError> {
+pub fn list_in_range(conn: &Connection, from: &str, to: &str) -> Result<Vec<Schedule>, CoreError> {
     let from_norm = require_normalized("from", from)?;
     let to_norm = require_normalized("to", to)?;
     let sql = format!(

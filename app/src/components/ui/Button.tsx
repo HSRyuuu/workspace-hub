@@ -31,12 +31,7 @@ export function Button({
   type = "button",
   ...rest
 }: ButtonProps) {
-  const cls = [
-    VARIANT_CLASS[variant],
-    SIZE_CLASS[size],
-    iconOnly ? "btn--icon" : "",
-    className,
-  ]
+  const cls = [VARIANT_CLASS[variant], SIZE_CLASS[size], iconOnly ? "btn--icon" : "", className]
     .filter(Boolean)
     .join(" ");
   return <button type={type} className={cls} {...rest} />;

@@ -1,11 +1,4 @@
-import {
-  mkdir,
-  readDir,
-  readTextFile,
-  remove,
-  rename,
-  writeTextFile,
-} from "@tauri-apps/plugin-fs";
+import { mkdir, readDir, readTextFile, remove, rename, writeTextFile } from "@tauri-apps/plugin-fs";
 import { isHiddenInTree } from "./helpers";
 import type { TreeNode } from "./types";
 
@@ -23,16 +16,13 @@ export async function listDir(dirPath: string): Promise<TreeNode[]> {
       name: e.name,
       isDir: e.isDirectory,
     }))
-    .sort((a, b) =>
-      a.isDir === b.isDir ? a.name.localeCompare(b.name) : a.isDir ? -1 : 1,
-    );
+    .sort((a, b) => (a.isDir === b.isDir ? a.name.localeCompare(b.name) : a.isDir ? -1 : 1));
 }
 
 export const fileOps = {
   /** UTF-8 이 아니면 reject — 호출부에서 "바이너리 파일" 안내로 처리. */
   read: (path: string): Promise<string> => readTextFile(path),
-  write: (path: string, content: string): Promise<void> =>
-    writeTextFile(path, content),
+  write: (path: string, content: string): Promise<void> => writeTextFile(path, content),
   createFile: (path: string): Promise<void> => writeTextFile(path, ""),
   createDir: (path: string): Promise<void> => mkdir(path),
   rename: (from: string, to: string): Promise<void> => rename(from, to),

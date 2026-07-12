@@ -18,18 +18,14 @@ export const todoApi = {
       completedTo,
     }),
 
-  add: (input: NewTodoInput): Promise<Todo> =>
-    invoke<Todo>("todo_add", { input }),
+  add: (input: NewTodoInput): Promise<Todo> => invoke<Todo>("todo_add", { input }),
 
   update: (id: number, patch: TodoPatch): Promise<Todo> =>
     invoke<Todo>("todo_update", { id, patch }),
 
-  complete: (id: number): Promise<Todo> =>
-    invoke<Todo>("todo_complete", { id }),
+  complete: (id: number): Promise<Todo> => invoke<Todo>("todo_complete", { id }),
 
-  uncomplete: (id: number): Promise<Todo> =>
-    invoke<Todo>("todo_uncomplete", { id }),
+  uncomplete: (id: number): Promise<Todo> => invoke<Todo>("todo_uncomplete", { id }),
 
-  delete: (id: number): Promise<void> =>
-    invoke<void>("todo_delete", { id }),
+  delete: (id: number): Promise<void> => invoke<void>("todo_delete", { id }),
 };

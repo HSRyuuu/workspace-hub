@@ -314,7 +314,7 @@ export default function FilesPage() {
       dirtyPaths={dirtyPaths}
       mode={mode}
       showPreviewToggle={showPreviewToggle}
-      contentForActiveTab={activeTab ? contentRef.current.get(activeTab.path) ?? "" : ""}
+      contentForActiveTab={activeTab ? (contentRef.current.get(activeTab.path) ?? "") : ""}
       onPickNewFolder={() => void pickNewFolder()}
       onOpenPastedFile={openPastedFile}
       onOpenFolder={(path) => void openFolder(path)}

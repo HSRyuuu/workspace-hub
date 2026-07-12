@@ -84,7 +84,11 @@ export function FileExplorerLayout({
       <div className="files-main">
         <div className="files-main-top">
           <EditorTabs
-            tabs={tabs.map((tab) => ({ path: tab.path, name: tab.name, dirty: dirtyPaths.has(tab.path) }))}
+            tabs={tabs.map((tab) => ({
+              path: tab.path,
+              name: tab.name,
+              dirty: dirtyPaths.has(tab.path),
+            }))}
             activePath={activePath}
             onSelect={onSelectTab}
             onClose={onCloseTab}
@@ -93,10 +97,18 @@ export function FileExplorerLayout({
           />
           {showPreviewToggle && (
             <div className="files-mode-toggle" role="tablist">
-              <button type="button" className={mode === "edit" ? "active" : ""} onClick={() => onModeChange("edit")}>
+              <button
+                type="button"
+                className={mode === "edit" ? "active" : ""}
+                onClick={() => onModeChange("edit")}
+              >
                 Edit
               </button>
-              <button type="button" className={mode === "preview" ? "active" : ""} onClick={() => onModeChange("preview")}>
+              <button
+                type="button"
+                className={mode === "preview" ? "active" : ""}
+                onClick={() => onModeChange("preview")}
+              >
                 Preview
               </button>
             </div>
@@ -105,7 +117,11 @@ export function FileExplorerLayout({
         {!activeTab && (
           <EmptyState
             title={current ? "편집할 파일을 선택하세요" : "폴더를 먼저 열어주세요"}
-            body={current ? "왼쪽 탐색 트리에서 텍스트 파일을 선택하면 이 영역에 에디터가 열립니다." : "최근 폴더가 없으면 폴더 열기로 시작할 수 있습니다."}
+            body={
+              current
+                ? "왼쪽 탐색 트리에서 텍스트 파일을 선택하면 이 영역에 에디터가 열립니다."
+                : "최근 폴더가 없으면 폴더 열기로 시작할 수 있습니다."
+            }
             actionLabel="폴더 열기"
             onAction={onPickNewFolder}
           />

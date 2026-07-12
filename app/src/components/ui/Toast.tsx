@@ -96,8 +96,7 @@ export function Toast() {
   if (!toast || confirm) return null;
 
   if (toast.kind === "hint") {
-    const positionCls =
-      toast.position === "center" ? " error-toast--center" : "";
+    const positionCls = toast.position === "center" ? " error-toast--center" : "";
     return (
       <div
         className={`error-toast error-toast--hint${positionCls}`}

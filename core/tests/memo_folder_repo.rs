@@ -267,8 +267,7 @@ fn reorder_rejects_foreign_id() {
     let root_b = repo::create(&mut conn, &mk("B", None)).unwrap();
     let child = repo::create(&mut conn, &mk("child", Some(root_a.id))).unwrap();
     // root 형제 reorder 인데 자식 ID 가 섞임.
-    let err =
-        repo::reorder(&mut conn, None, &[root_a.id, root_b.id, child.id]).unwrap_err();
+    let err = repo::reorder(&mut conn, None, &[root_a.id, root_b.id, child.id]).unwrap_err();
     assert!(matches!(err, CoreError::InvalidInput(_)), "got {err:?}");
 }
 

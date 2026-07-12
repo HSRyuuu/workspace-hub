@@ -4,12 +4,7 @@ import type { Todo } from "../../todo/types";
 import type { Schedule } from "../types";
 import { MonthGrid } from "../MonthGrid";
 
-function makeSchedule(
-  id: number,
-  title: string,
-  start_at: string,
-  end_at: string,
-): Schedule {
+function makeSchedule(id: number, title: string, start_at: string, end_at: string): Schedule {
   return {
     id,
     title,
@@ -65,18 +60,8 @@ function scheduleTitles(container: HTMLElement): string[] {
 
 describe("MonthGrid schedule ordering", () => {
   it("orders schedules by start time before duration", () => {
-    const early = makeSchedule(
-      1,
-      "09:00",
-      "2026-05-20T09:00:00Z",
-      "2026-05-20T10:00:00Z",
-    );
-    const late = makeSchedule(
-      2,
-      "15:00",
-      "2026-05-20T15:00:00Z",
-      "2026-05-22T16:00:00Z",
-    );
+    const early = makeSchedule(1, "09:00", "2026-05-20T09:00:00Z", "2026-05-20T10:00:00Z");
+    const late = makeSchedule(2, "15:00", "2026-05-20T15:00:00Z", "2026-05-22T16:00:00Z");
 
     const { container } = renderMonthGrid([early, late]);
 
@@ -84,12 +69,7 @@ describe("MonthGrid schedule ordering", () => {
   });
 
   it("orders multi-day schedules by later end date first", () => {
-    const endsLater = makeSchedule(
-      1,
-      "ends later",
-      "2026-05-17T09:00:00Z",
-      "2026-05-30T18:00:00Z",
-    );
+    const endsLater = makeSchedule(1, "ends later", "2026-05-17T09:00:00Z", "2026-05-30T18:00:00Z");
     const endsEarlier = makeSchedule(
       2,
       "ends earlier",
@@ -124,9 +104,10 @@ describe("MonthGrid schedule ordering", () => {
 
 describe("MonthGrid todo display date", () => {
   it("shows todos without due_date on their start date", () => {
-    const { container } = renderMonthGrid([], [
-      makeTodo({ id: 1, title: "Start only", start_date: "2026-05-03" }),
-    ]);
+    const { container } = renderMonthGrid(
+      [],
+      [makeTodo({ id: 1, title: "Start only", start_date: "2026-05-03" })],
+    );
 
     const bar = container.querySelector<HTMLButtonElement>(".cal-bar.todo");
     expect(bar?.title).toBe("Start only");
@@ -134,14 +115,17 @@ describe("MonthGrid todo display date", () => {
   });
 
   it("uses due_date instead of start date when both exist", () => {
-    const { container } = renderMonthGrid([], [
-      makeTodo({
-        id: 1,
-        title: "Due wins",
-        start_date: "2026-05-03",
-        due_date: "2026-05-20",
-      }),
-    ]);
+    const { container } = renderMonthGrid(
+      [],
+      [
+        makeTodo({
+          id: 1,
+          title: "Due wins",
+          start_date: "2026-05-03",
+          due_date: "2026-05-20",
+        }),
+      ],
+    );
 
     const bar = container.querySelector<HTMLButtonElement>(".cal-bar.todo");
     expect(bar?.title).toBe("Due wins");
@@ -149,16 +133,19 @@ describe("MonthGrid todo display date", () => {
   });
 
   it("uses completed date for done todos", () => {
-    const { container } = renderMonthGrid([], [
-      makeTodo({
-        id: 1,
-        title: "Done wins",
-        start_date: "2026-05-03",
-        due_date: "2026-05-20",
-        status: "done",
-        completed_at: "2026-05-10T00:00:00Z",
-      }),
-    ]);
+    const { container } = renderMonthGrid(
+      [],
+      [
+        makeTodo({
+          id: 1,
+          title: "Done wins",
+          start_date: "2026-05-03",
+          due_date: "2026-05-20",
+          status: "done",
+          completed_at: "2026-05-10T00:00:00Z",
+        }),
+      ],
+    );
 
     const bar = container.querySelector<HTMLButtonElement>(".cal-bar.todo");
     expect(bar?.title).toBe("Done wins");

@@ -112,10 +112,7 @@ pub fn update(
 }
 
 pub fn delete(conn: &Connection, id: i64) -> Result<(), CoreError> {
-    let affected = conn.execute(
-        "DELETE FROM project_directory WHERE id = ?1",
-        params![id],
-    )?;
+    let affected = conn.execute("DELETE FROM project_directory WHERE id = ?1", params![id])?;
     if affected == 0 {
         return Err(CoreError::NotFound(format!("project_directory id={id}")));
     }

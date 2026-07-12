@@ -17,6 +17,7 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "workspace-hub",
         "width": 1200,
         "height": 800,
@@ -24,6 +25,17 @@
         "minHeight": 600,
         "resizable": true,
         "dragDropEnabled": false
+      },
+      {
+        "label": "capture",
+        "title": "빠른 캡처",
+        "width": 560,
+        "height": 200,
+        "visible": false,
+        "resizable": false,
+        "alwaysOnTop": true,
+        "center": true,
+        "skipTaskbar": true
       }
     ],
     "security": {

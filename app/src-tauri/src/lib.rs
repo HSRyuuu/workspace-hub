@@ -233,12 +233,32 @@ fn schedule_add(
         .and_then(|v| v.as_str())
         .ok_or_else(|| "end is required".to_string())?
         .to_string();
-    let all_day = input.get("all_day").and_then(|v| v.as_bool()).unwrap_or(false);
-    let description = input.get("description").and_then(|v| v.as_str()).map(String::from);
-    let location = input.get("location").and_then(|v| v.as_str()).map(String::from);
-    let color = input.get("color").and_then(|v| v.as_str()).map(String::from);
+    let all_day = input
+        .get("all_day")
+        .and_then(|v| v.as_bool())
+        .unwrap_or(false);
+    let description = input
+        .get("description")
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let location = input
+        .get("location")
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let color = input
+        .get("color")
+        .and_then(|v| v.as_str())
+        .map(String::from);
 
-    let new = NewSchedule { title, description, location, start_at, end_at, all_day, color };
+    let new = NewSchedule {
+        title,
+        description,
+        location,
+        start_at,
+        end_at,
+        all_day,
+        color,
+    };
     let conn = state.0.lock().map_err(lock_err)?;
     repo::schedule::create(&conn, &new).map_err(core_err)
 }
@@ -249,8 +269,14 @@ fn schedule_update(
     id: i64,
     patch: serde_json::Value,
 ) -> Result<Schedule, String> {
-    let title = patch.get("title").and_then(|v| v.as_str()).map(String::from);
-    let start_at = patch.get("start").and_then(|v| v.as_str()).map(String::from);
+    let title = patch
+        .get("title")
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let start_at = patch
+        .get("start")
+        .and_then(|v| v.as_str())
+        .map(String::from);
     let end_at = patch.get("end").and_then(|v| v.as_str()).map(String::from);
     let all_day = patch.get("all_day").and_then(|v| v.as_bool());
     let description = nullable_string_patch(patch.get("description"));
@@ -258,7 +284,13 @@ fn schedule_update(
     let color = nullable_string_patch(patch.get("color"));
 
     let up = UpdateSchedule {
-        title, description, location, start_at, end_at, all_day, color,
+        title,
+        description,
+        location,
+        start_at,
+        end_at,
+        all_day,
+        color,
     };
     let conn = state.0.lock().map_err(lock_err)?;
     repo::schedule::update(&conn, id, &up).map_err(core_err)
@@ -304,11 +336,23 @@ fn memo_get(state: tauri::State<DbState>, id: i64) -> Result<Memo, String> {
 
 #[tauri::command]
 fn memo_add(state: tauri::State<DbState>, input: serde_json::Value) -> Result<Memo, String> {
-    let title = input.get("title").and_then(|v| v.as_str()).unwrap_or("").to_string();
-    let body = input.get("body").and_then(|v| v.as_str()).unwrap_or("").to_string();
+    let title = input
+        .get("title")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
+    let body = input
+        .get("body")
+        .and_then(|v| v.as_str())
+        .unwrap_or("")
+        .to_string();
     let folder_id = input.get("folder_id").and_then(|v| v.as_i64());
 
-    let new = NewMemo { folder_id, title, body };
+    let new = NewMemo {
+        folder_id,
+        title,
+        body,
+    };
     let conn = state.0.lock().map_err(lock_err)?;
     repo::memo::create(&conn, &new).map_err(core_err)
 }
@@ -319,7 +363,10 @@ fn memo_update(
     id: i64,
     patch: serde_json::Value,
 ) -> Result<Memo, String> {
-    let title = patch.get("title").and_then(|v| v.as_str()).map(String::from);
+    let title = patch
+        .get("title")
+        .and_then(|v| v.as_str())
+        .map(String::from);
     let body = patch.get("body").and_then(|v| v.as_str()).map(String::from);
     let pinned = patch.get("pinned").and_then(|v| v.as_bool());
     // folder_id: 키 없음=None(변경없음), null=Some(None)(루트로), 숫자=Some(Some(n))(폴더로).
@@ -332,7 +379,12 @@ fn memo_update(
         },
     };
 
-    let up = UpdateMemo { folder_id, title, body, pinned };
+    let up = UpdateMemo {
+        folder_id,
+        title,
+        body,
+        pinned,
+    };
     let conn = state.0.lock().map_err(lock_err)?;
     repo::memo::update(&conn, id, &up).map_err(core_err)
 }
@@ -360,7 +412,9 @@ fn memo_purge(state: tauri::State<DbState>, id: i64) -> Result<DeletedAck, Strin
 fn memo_empty_trash(state: tauri::State<DbState>) -> Result<PurgedCountAck, String> {
     let conn = state.0.lock().map_err(lock_err)?;
     let count = repo::memo::empty_trash(&conn).map_err(core_err)?;
-    Ok(PurgedCountAck { purged_count: count })
+    Ok(PurgedCountAck {
+        purged_count: count,
+    })
 }
 
 // =========================================================================
@@ -396,7 +450,10 @@ fn memo_folder_rename(
     id: i64,
     name: String,
 ) -> Result<MemoFolder, String> {
-    let patch = UpdateMemoFolder { name: Some(name), parent_id: None };
+    let patch = UpdateMemoFolder {
+        name: Some(name),
+        parent_id: None,
+    };
     let mut conn = state.0.lock().map_err(lock_err)?;
     repo::memo_folder::update(&mut conn, id, &patch).map_err(core_err)
 }
@@ -408,7 +465,10 @@ fn memo_folder_move(
     parent_id: Option<i64>,
 ) -> Result<MemoFolder, String> {
     // Tauri 시그니처상 `parent_id` 가 Option<i64>. None 이면 루트로 이동(Some(None)).
-    let patch = UpdateMemoFolder { name: None, parent_id: Some(parent_id) };
+    let patch = UpdateMemoFolder {
+        name: None,
+        parent_id: Some(parent_id),
+    };
     let mut conn = state.0.lock().map_err(lock_err)?;
     repo::memo_folder::update(&mut conn, id, &patch).map_err(core_err)
 }
@@ -455,11 +515,22 @@ fn project_add(state: tauri::State<DbState>, input: serde_json::Value) -> Result
         .and_then(|v| v.as_str())
         .ok_or_else(|| "title is required".to_string())?
         .to_string();
-    let description = input.get("description").and_then(|v| v.as_str()).map(String::from);
-    let color = input.get("color").and_then(|v| v.as_str()).map(String::from);
+    let description = input
+        .get("description")
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let color = input
+        .get("color")
+        .and_then(|v| v.as_str())
+        .map(String::from);
     let sort_order = input.get("sort_order").and_then(|v| v.as_i64());
 
-    let new = NewProject { title, description, color, sort_order };
+    let new = NewProject {
+        title,
+        description,
+        color,
+        sort_order,
+    };
     let conn = state.0.lock().map_err(lock_err)?;
     repo::project::create(&conn, &new).map_err(core_err)
 }
@@ -470,12 +541,23 @@ fn project_update(
     id: i64,
     patch: serde_json::Value,
 ) -> Result<Project, String> {
-    let title = patch.get("title").and_then(|v| v.as_str()).map(String::from);
-    let color = patch.get("color").and_then(|v| v.as_str()).map(String::from);
+    let title = patch
+        .get("title")
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let color = patch
+        .get("color")
+        .and_then(|v| v.as_str())
+        .map(String::from);
     let sort_order = patch.get("sort_order").and_then(|v| v.as_i64());
     let description = nullable_string_patch(patch.get("description"));
 
-    let up = UpdateProject { title, description, color, sort_order };
+    let up = UpdateProject {
+        title,
+        description,
+        color,
+        sort_order,
+    };
     let conn = state.0.lock().map_err(lock_err)?;
     repo::project::update(&conn, id, &up).map_err(core_err)
 }
@@ -510,9 +592,16 @@ fn project_dir_add(
         .and_then(|v| v.as_str())
         .ok_or_else(|| "path is required".to_string())?
         .to_string();
-    let label = input.get("label").and_then(|v| v.as_str()).map(String::from);
+    let label = input
+        .get("label")
+        .and_then(|v| v.as_str())
+        .map(String::from);
 
-    let new = NewProjectDirectory { project_id, path, label };
+    let new = NewProjectDirectory {
+        project_id,
+        path,
+        label,
+    };
     let conn = state.0.lock().map_err(lock_err)?;
     repo::project_directory::create(&conn, &new).map_err(core_err)
 }
@@ -561,9 +650,16 @@ fn project_app_add(
         .and_then(|v| v.as_str())
         .ok_or_else(|| "path is required".to_string())?
         .to_string();
-    let label = input.get("label").and_then(|v| v.as_str()).map(String::from);
+    let label = input
+        .get("label")
+        .and_then(|v| v.as_str())
+        .map(String::from);
 
-    let new = NewProjectApplication { project_id, path, label };
+    let new = NewProjectApplication {
+        project_id,
+        path,
+        label,
+    };
     let conn = state.0.lock().map_err(lock_err)?;
     repo::project_application::create(&conn, &new).map_err(core_err)
 }
@@ -779,4 +875,75 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    #[test]
+    fn nullable_string_patch_returns_no_change_for_absent_key() {
+        assert_eq!(nullable_string_patch(None), None);
+    }
+
+    #[test]
+    fn nullable_string_patch_returns_clear_for_null() {
+        let value = serde_json::Value::Null;
+
+        assert_eq!(nullable_string_patch(Some(&value)), Some(None));
+    }
+
+    #[test]
+    fn nullable_string_patch_returns_clear_for_empty_string() {
+        let value = json!("");
+
+        assert_eq!(nullable_string_patch(Some(&value)), Some(None));
+    }
+
+    #[test]
+    fn nullable_string_patch_returns_value_for_non_empty_string() {
+        let value = json!("updated");
+
+        assert_eq!(
+            nullable_string_patch(Some(&value)),
+            Some(Some("updated".to_string()))
+        );
+    }
+
+    #[test]
+    fn nullable_string_patch_ignores_non_string_value() {
+        let value = json!(42);
+
+        assert_eq!(nullable_string_patch(Some(&value)), None);
+    }
+
+    #[test]
+    fn parse_priority_accepts_known_values() {
+        assert_eq!(parse_priority("low"), Ok(Priority::Low));
+        assert_eq!(parse_priority("mid"), Ok(Priority::Mid));
+        assert_eq!(parse_priority("high"), Ok(Priority::High));
+    }
+
+    #[test]
+    fn parse_priority_rejects_unknown_value() {
+        assert_eq!(
+            parse_priority("urgent"),
+            Err("unknown priority: urgent".to_string())
+        );
+    }
+
+    #[test]
+    fn parse_status_accepts_known_values() {
+        assert_eq!(parse_status("open"), Ok(TodoStatus::Open));
+        assert_eq!(parse_status("done"), Ok(TodoStatus::Done));
+    }
+
+    #[test]
+    fn parse_status_rejects_unknown_value() {
+        assert_eq!(
+            parse_status("archived"),
+            Err("unknown status: archived".to_string())
+        );
+    }
 }

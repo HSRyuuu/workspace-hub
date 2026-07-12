@@ -2,6 +2,7 @@ use serde::Serialize;
 use workspace_hub_core::models::todo::{Priority, TodoStatus};
 use workspace_hub_core::CoreError;
 
+pub(crate) mod dashboard;
 pub(crate) mod files;
 pub(crate) mod memo;
 pub(crate) mod project;

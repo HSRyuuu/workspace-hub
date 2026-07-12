@@ -17,6 +17,7 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .manage(DbState(Mutex::new(conn)))
         .invoke_handler(tauri::generate_handler![
+            handlers::dashboard::dashboard_summary,
             handlers::todo::todo_list,
             handlers::todo::todo_list_calendar_range,
             handlers::todo::todo_add,
@@ -75,10 +76,11 @@ pub fn run() {
 
 #[cfg(test)]
 mod handler_structure_tests {
-    use super::handlers::{files, memo, project, schedule, todo};
+    use super::handlers::{dashboard, files, memo, project, schedule, todo};
 
     #[test]
     fn domain_handler_modules_expose_representative_commands() {
+        let _ = dashboard::dashboard_summary;
         let _ = todo::todo_list;
         let _ = schedule::schedule_get;
         let _ = memo::memo_get;

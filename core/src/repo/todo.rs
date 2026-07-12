@@ -116,6 +116,48 @@ pub fn list(conn: &Connection, status_filter: Option<TodoStatus>) -> Result<Vec<
     Ok(result)
 }
 
+pub fn list_open_due_until(conn: &Connection, until: &str) -> Result<Vec<Todo>, CoreError> {
+    let sql = format!(
+        "SELECT {SELECT_COLUMNS}
+         FROM todo
+         WHERE status = 'open' AND due_date IS NOT NULL AND due_date <= ?1
+         ORDER BY due_date ASC, due_time ASC, id ASC"
+    );
+    let mut stmt = conn.prepare(&sql)?;
+    let rows = stmt.query_map(params![until], map_row)?;
+    let mut result = Vec::new();
+    for row in rows {
+        result.push(row?);
+    }
+    Ok(result)
+}
+
+pub fn list_open_oldest(conn: &Connection, limit: i64) -> Result<Vec<Todo>, CoreError> {
+    let sql = format!(
+        "SELECT {SELECT_COLUMNS}
+         FROM todo
+         WHERE status = 'open'
+         ORDER BY created_at ASC, id ASC
+         LIMIT ?1"
+    );
+    let mut stmt = conn.prepare(&sql)?;
+    let rows = stmt.query_map(params![limit], map_row)?;
+    let mut result = Vec::new();
+    for row in rows {
+        result.push(row?);
+    }
+    Ok(result)
+}
+
+pub fn count_open(conn: &Connection) -> Result<i64, CoreError> {
+    conn.query_row(
+        "SELECT COUNT(*) FROM todo WHERE status = 'open'",
+        [],
+        |row| row.get(0),
+    )
+    .map_err(CoreError::Sqlite)
+}
+
 pub fn list_calendar_range(
     conn: &Connection,
     from: &str,

@@ -65,9 +65,10 @@ export function TimeField({
   }, [open]);
 
   useEffect(() => {
-    if (parsed) {
-      setHour(parsed[0]);
-      setMinute(parsed[1]);
+    const p = parseHM(value);
+    if (p) {
+      setHour(p[0]);
+      setMinute(p[1]);
     }
   }, [value]);
 

@@ -1,6 +1,6 @@
 ---
 name: verify-domain
-description: workspace-hub 의 Rust 도메인(core + cli) 자동 QA. `cargo test --workspace` 를 실행하고, 사용자 데이터 디렉토리(`~/.workspace-hub/`)가 테스트로 변경되지 않았음을 md5 로 검증한다.
+description: Use when workspace-hub의 core·CLI Rust 코드, repo 테스트, 마이그레이션 또는 Cargo workspace 변경을 검증해야 할 때.
 disable-model-invocation: true
 argument-hint: ""
 ---
@@ -11,8 +11,8 @@ argument-hint: ""
 
 workspace-hub 의 Rust 도메인 레이어(`core` 단위 + `cli` 통합) 가 회귀 없이 동작하는지 자동 검증한다. 이 스킬은 다음을 보장한다:
 
-1. `core` 단위 테스트 통과 (도메인 모델·repo CRUD·`normalize_iso_date`·마이그레이션 idempotency)
-2. `cli` 통합 테스트 통과 (JSON 출력 형식·exit code 매핑·status 필터·격리)
+1. `core/tests/*.rs` 전체 통과 (모든 도메인 repo·모델·마이그레이션)
+2. `cli/tests/*.rs` 전체 통과 (JSON 출력·exit code·도메인 명령·격리)
 3. **테스트가 사용자 데이터(`~/.workspace-hub/workspace-hub.sqlite`)를 건드리지 않았음** — 모든 테스트는 `tempfile::TempDir` 로 격리되며, 이 검증은 실측 md5 비교로 한 번 더 보증한다.
 
 ## 실행 시점
@@ -40,6 +40,12 @@ SNAPSHOT_BEFORE=$(ls -la ~/.workspace-hub/ 2>/dev/null | md5)
 
 ### Step 2 — 워크스페이스 테스트 실행
 
+먼저 현재 테스트 파일을 동적으로 수집한다. 고정 파일명이나 테스트 개수를 기준으로 삼지 않는다.
+
+```bash
+rg --files core/tests cli/tests | sort
+```
+
 ```bash
 . "$HOME/.cargo/env" 2>/dev/null
 cargo test --workspace 2>&1 | tail -80
@@ -47,10 +53,12 @@ cargo test --workspace 2>&1 | tail -80
 
 다음 항목을 확인한다:
 - 컴파일 에러 없음
-- 단위 테스트 (core/tests/repo_todo.rs) 모두 통과 — 현재 16건
-- 통합 테스트 (cli/tests/cli_integration.rs) 모두 통과 — 현재 11건
+- `core/tests/*.rs`로 수집된 모든 테스트 바이너리 통과
+- `cli/tests/*.rs`로 수집된 모든 통합 테스트 바이너리 통과
 - doc-tests 실패 없음
 - 합계 `test result: ok` 표시
+
+새 `core/tests/*_repo.rs` 또는 `cli/tests/*.rs`가 추가되어도 자동으로 보고 대상에 포함한다. 결과의 테스트 개수는 `cargo test --workspace`의 현재 출력에서 읽고, SKILL.md에 고정하지 않는다.
 
 실패 발견 시:
 - 실패 테스트 이름과 패닉/assert 메시지를 발췌해 보고
@@ -73,8 +81,8 @@ SNAPSHOT_AFTER=$(ls -la ~/.workspace-hub/ 2>/dev/null | md5)
 
 | 항목 | 결과 |
 |---|---|
-| core 단위 (core/tests/repo_todo.rs) | ✅ N passed |
-| cli 통합 (cli/tests/cli_integration.rs) | ✅ N passed |
+| core 통합 (`core/tests/*.rs`) | ✅ N files / N tests passed |
+| cli 통합 (`cli/tests/*.rs`) | ✅ N files / N tests passed |
 | 사용자 데이터 격리 (md5 일치) | ✅ |
 | 소요 시간 | ~XXX ms |
 
@@ -94,8 +102,8 @@ SNAPSHOT_AFTER=$(ls -la ~/.workspace-hub/ 2>/dev/null | md5)
 
 | 영역 | 경로 |
 |------|------|
-| core 단위 테스트 | `core/tests/repo_todo.rs` |
-| cli 통합 테스트 | `cli/tests/cli_integration.rs` |
+| core 통합 테스트 | `core/tests/*.rs` |
+| CLI 통합 테스트 | `cli/tests/*.rs` |
 | 격리 진입점 | `core/src/db.rs::open_at(path)` |
 | 격리 env 오버라이드 | `core/src/paths.rs::data_dir` (`WORKSPACE_HUB_DATA_DIR`) |
 | 마이그레이션 레지스트리 | `core/src/db.rs::MIGRATIONS` |

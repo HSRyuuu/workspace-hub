@@ -30,6 +30,7 @@ argument-hint: "[선택사항: 특정 verify 스킬 이름]"
 | # | 스킬 | 설명 |
 |---|------|------|
 | 1 | verify-domain | core/cli Rust 도메인 자동 QA — `cargo test --workspace` + `~/.workspace-hub` 데이터 보존 md5 검증 |
+| 2 | verify-ui | React/Tauri UI 자동 QA — typecheck, Vitest, lint, diff whitespace, design token, Tauri crate 검증 |
 
 ## 워크플로우
 
@@ -72,7 +73,7 @@ argument-hint: "[선택사항: 특정 verify 스킬 이름]"
 
 #### 2a. 스킬 SKILL.md 읽기
 
-해당 스킬의 `.Codex/skills/verify-<name>/SKILL.md`를 읽고 다음 섹션을 파싱합니다:
+해당 스킬의 `.agents/skills/verify-<name>/SKILL.md`를 읽고 다음 섹션을 파싱합니다:
 
 - **Workflow** — 실행할 검사 단계와 탐지 명령어
 - **Exceptions** — 위반이 아닌 것으로 간주되는 패턴
@@ -229,5 +230,5 @@ X개 수정 완료.
 
 | File | Purpose |
 |------|---------|
-| `.Codex/skills/manage-skills/SKILL.md` | 스킬 유지보수 (이 파일의 실행 대상 스킬 목록을 관리) |
+| `.agents/skills/manage-skills/SKILL.md` | 스킬 유지보수 (이 파일의 실행 대상 스킬 목록을 관리) |
 | `AGENTS.md` | 프로젝트 지침 |

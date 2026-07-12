@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { listen } from "@tauri-apps/api/event";
 import { ConfirmToast } from "./components/ui/ConfirmToast";
 import { Toast } from "./components/ui/Toast";
 import TodoPage from "./features/todo/TodoPage";
@@ -9,6 +10,7 @@ import FilesPage from "./features/files/FilesPage";
 import TodayPage from "./features/today/TodayPage";
 
 type Section = "today" | "todo" | "calendar" | "memos" | "project" | "files";
+type QuickCaptureNavigation = { kind: "memo" | "todo"; id: number };
 
 const ICON_SIZE = 18;
 const iconProps = {
@@ -73,6 +75,29 @@ export default function App() {
   const [section, setSection] = useState<Section>("today");
   const [selectedTodoId, setSelectedTodoId] = useState<number | null>(null);
   const [selectedMemoId, setSelectedMemoId] = useState<number | null>(null);
+
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    let disposed = false;
+
+    void listen<QuickCaptureNavigation>("quick-capture:navigate", ({ payload }) => {
+      if (payload.kind === "memo") {
+        setSelectedMemoId(payload.id);
+        setSection("memos");
+      } else {
+        setSelectedTodoId(payload.id);
+        setSection("todo");
+      }
+    }).then((stopListening) => {
+      if (disposed) stopListening();
+      else unlisten = stopListening;
+    });
+
+    return () => {
+      disposed = true;
+      unlisten?.();
+    };
+  }, []);
 
   return (
     <div className="app-shell">

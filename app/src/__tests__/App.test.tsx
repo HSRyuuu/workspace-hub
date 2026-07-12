@@ -1,6 +1,13 @@
-import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import type { Event } from "@tauri-apps/api/event";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "../App";
+
+const { listenMock } = vi.hoisted(() => ({ listenMock: vi.fn() }));
+let quickCaptureHandler:
+  ((event: Event<{ kind: "memo" | "todo"; id: number }>) => void) | undefined;
+
+vi.mock("@tauri-apps/api/event", () => ({ listen: listenMock }));
 
 vi.mock("../features/today/TodayPage", () => ({
   default: ({
@@ -35,12 +42,23 @@ vi.mock("../features/project/ProjectPage", () => ({ default: () => <div>Project 
 vi.mock("../features/files/FilesPage", () => ({ default: () => <div>Files page</div> }));
 
 describe("App Today navigation", () => {
+  beforeEach(() => {
+    quickCaptureHandler = undefined;
+    listenMock.mockReset();
+    listenMock.mockImplementation((_event: string, handler: typeof quickCaptureHandler) => {
+      quickCaptureHandler = handler;
+      return Promise.resolve(() => undefined);
+    });
+  });
+
   it("starts on Today and exposes it as the first sidebar destination", () => {
     render(<App />);
 
     expect(screen.getByRole("heading", { name: "Today dashboard" })).toBeInTheDocument();
     expect(screen.queryByText(/Todo page selected/)).not.toBeInTheDocument();
-    const destinations = screen.getAllByRole("button").map((button) => button.getAttribute("aria-label"));
+    const destinations = screen
+      .getAllByRole("button")
+      .map((button) => button.getAttribute("aria-label"));
     expect(destinations[0]).toBe("Today");
   });
 
@@ -62,5 +80,28 @@ describe("App Today navigation", () => {
     fireEvent.click(screen.getByRole("button", { name: "Today" }));
     fireEvent.click(screen.getByRole("button", { name: "Open memo 24" }));
     expect(screen.getByText("Memo page selected 24")).toBeInTheDocument();
+  });
+
+  it("opens the captured item when the Tauri navigation event arrives", async () => {
+    render(<App />);
+
+    await waitFor(() =>
+      expect(listenMock).toHaveBeenCalledWith("quick-capture:navigate", expect.any(Function)),
+    );
+    act(() =>
+      quickCaptureHandler?.({ payload: { kind: "todo", id: 73 } } as Event<{
+        kind: "todo";
+        id: number;
+      }>),
+    );
+    expect(screen.getByText("Todo page selected 73")).toBeInTheDocument();
+
+    act(() =>
+      quickCaptureHandler?.({ payload: { kind: "memo", id: 41 } } as Event<{
+        kind: "memo";
+        id: number;
+      }>),
+    );
+    expect(screen.getByText("Memo page selected 41")).toBeInTheDocument();
   });
 });

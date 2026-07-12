@@ -54,6 +54,7 @@ impl rusqlite::types::ToSql for Priority {
 #[serde(rename_all = "lowercase")]
 pub enum TodoStatus {
     Open,
+    Hold,
     Done,
 }
 
@@ -61,6 +62,7 @@ impl TodoStatus {
     pub fn as_str(&self) -> &'static str {
         match self {
             TodoStatus::Open => "open",
+            TodoStatus::Hold => "hold",
             TodoStatus::Done => "done",
         }
     }
@@ -68,6 +70,7 @@ impl TodoStatus {
     pub fn parse(s: &str) -> Option<Self> {
         match s {
             "open" => Some(TodoStatus::Open),
+            "hold" => Some(TodoStatus::Hold),
             "done" => Some(TodoStatus::Done),
             _ => None,
         }
@@ -78,6 +81,7 @@ impl TodoStatus {
 pub struct Todo {
     pub id: i64,
     pub workspace_id: Option<i64>,
+    pub project_id: Option<i64>,
     pub title: String,
     pub description: Option<String>,
     pub start_date: String,
@@ -93,6 +97,7 @@ pub struct Todo {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct NewTodo {
     pub workspace_id: Option<i64>,
+    pub project_id: Option<i64>,
     pub title: String,
     pub description: Option<String>,
     pub start_date: Option<String>,

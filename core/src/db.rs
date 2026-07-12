@@ -26,6 +26,8 @@ const MIGRATIONS: &[(u32, &str)] = &[
         10,
         include_str!("../migrations/V010__todo_calendar_indexes.sql"),
     ),
+    (11, include_str!("../migrations/V011__todo_status_hold.sql")),
+    (12, include_str!("../migrations/V012__todo_project_id.sql")),
 ];
 
 /// MIGRATIONS 배열의 마지막 버전. 테스트가 매직 넘버 대신 이 상수를 참조하면 새 마이그레이션
@@ -85,6 +87,24 @@ fn run_migrations(conn: &mut Connection) -> Result<(), CoreError> {
                     let db_path = std::path::Path::new(db_path_str);
                     let backup_path = db_path.with_extension("bak-pre-v005");
                     std::fs::copy(db_path, &backup_path)?;
+                }
+            }
+            if *version == 11 {
+                if let Some(db_path_str) = conn.path() {
+                    let db_path = std::path::Path::new(db_path_str);
+                    let backup_path = db_path.with_extension("bak-pre-v011");
+                    if !backup_path.exists() {
+                        let temp_path = db_path
+                            .with_extension(format!("bak-pre-v011.tmp-{}", std::process::id()));
+                        let temp_path_string = temp_path.to_string_lossy().into_owned();
+                        let backup_result =
+                            conn.execute("VACUUM INTO ?1", params![temp_path_string]);
+                        if let Err(error) = backup_result {
+                            let _ = std::fs::remove_file(&temp_path);
+                            return Err(error.into());
+                        }
+                        std::fs::rename(temp_path, backup_path)?;
+                    }
                 }
             }
             let tx = conn.transaction()?;

@@ -22,6 +22,7 @@ fn map_row(row: &Row<'_>) -> rusqlite::Result<Todo> {
     Ok(Todo {
         id: row.get("id")?,
         workspace_id: row.get("workspace_id")?,
+        project_id: row.get("project_id")?,
         title: row.get("title")?,
         description: row.get("description")?,
         start_date: row.get("start_date")?,
@@ -36,7 +37,13 @@ fn map_row(row: &Row<'_>) -> rusqlite::Result<Todo> {
 }
 
 const SELECT_COLUMNS: &str =
-    "id, workspace_id, title, description, start_date, due_date, due_time, priority, status, completed_at, created_at, updated_at";
+    "id, workspace_id, project_id, title, description, start_date, due_date, due_time, priority, status, completed_at, created_at, updated_at";
+
+const TODO_ORDER: &str =
+    "ORDER BY CASE status WHEN 'open' THEN 0 WHEN 'hold' THEN 1 ELSE 2 END ASC, \
+              CASE WHEN due_date IS NULL THEN 1 ELSE 0 END, due_date ASC, due_time ASC, \
+              CASE priority WHEN 'high' THEN 0 WHEN 'mid' THEN 1 ELSE 2 END ASC, \
+              id DESC";
 
 /// `None` = 미지정(보존), `Some(None)` = NULL 클리어, `Some(Some(v))` = 값 설정.
 /// CLI 레이어가 빈 문자열을 `Some(None)` 으로 변환한다 (schedule_update 와 동일 패턴).
@@ -48,6 +55,7 @@ pub struct TodoPatch {
     pub due_time: Option<i64>,
     pub priority: Option<Priority>,
     pub status: Option<TodoStatus>,
+    pub project_id: Option<Option<i64>>,
 }
 
 pub fn create(conn: &Connection, input: &NewTodo) -> Result<Todo, CoreError> {
@@ -67,10 +75,11 @@ pub fn create(conn: &Connection, input: &NewTodo) -> Result<Todo, CoreError> {
 
     conn.execute(
         "INSERT INTO todo
-            (workspace_id, title, description, start_date, due_date, due_time, priority, status, created_at, updated_at)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'open', ?8, ?8)",
+            (workspace_id, project_id, title, description, start_date, due_date, due_time, priority, status, created_at, updated_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 'open', ?9, ?9)",
         params![
             input.workspace_id,
+            input.project_id,
             input.title.trim(),
             input.description,
             start_date,
@@ -94,16 +103,15 @@ pub fn get(conn: &Connection, id: i64) -> Result<Todo, CoreError> {
 }
 
 pub fn list(conn: &Connection, status_filter: Option<TodoStatus>) -> Result<Vec<Todo>, CoreError> {
-    let order = "ORDER BY (status = 'open') DESC, \
-                          CASE WHEN due_date IS NULL THEN 1 ELSE 0 END, due_date ASC, due_time ASC, \
-                          CASE priority WHEN 'high' THEN 0 WHEN 'mid' THEN 1 ELSE 2 END ASC, \
-                          id DESC";
     let (sql, params): (String, Vec<Box<dyn rusqlite::ToSql>>) = match status_filter {
         Some(s) => (
-            format!("SELECT {SELECT_COLUMNS} FROM todo WHERE status = ?1 {order}"),
+            format!("SELECT {SELECT_COLUMNS} FROM todo WHERE status = ?1 {TODO_ORDER}"),
             vec![Box::new(s.as_str().to_string())],
         ),
-        None => (format!("SELECT {SELECT_COLUMNS} FROM todo {order}"), vec![]),
+        None => (
+            format!("SELECT {SELECT_COLUMNS} FROM todo {TODO_ORDER}"),
+            vec![],
+        ),
     };
 
     let mut stmt = conn.prepare(&sql)?;
@@ -112,6 +120,17 @@ pub fn list(conn: &Connection, status_filter: Option<TodoStatus>) -> Result<Vec<
     let mut result = Vec::new();
     for r in rows {
         result.push(r?);
+    }
+    Ok(result)
+}
+
+pub fn list_by_project(conn: &Connection, project_id: i64) -> Result<Vec<Todo>, CoreError> {
+    let sql = format!("SELECT {SELECT_COLUMNS} FROM todo WHERE project_id = ?1 {TODO_ORDER}");
+    let mut stmt = conn.prepare(&sql)?;
+    let rows = stmt.query_map(params![project_id], map_row)?;
+    let mut result = Vec::new();
+    for row in rows {
+        result.push(row?);
     }
     Ok(result)
 }
@@ -271,8 +290,16 @@ pub fn update(conn: &Connection, id: i64, patch: &TodoPatch) -> Result<Todo, Cor
         push!("status", status.as_str().to_string());
         match status {
             TodoStatus::Done => push!("completed_at", now.clone()),
-            TodoStatus::Open => push!("completed_at", Option::<String>::None),
+            TodoStatus::Open | TodoStatus::Hold => {
+                push!("completed_at", Option::<String>::None)
+            }
         }
+    }
+
+    match patch.project_id {
+        Some(Some(project_id)) => push!("project_id", Some(project_id)),
+        Some(None) => push!("project_id", Option::<i64>::None),
+        None => {}
     }
 
     if sets.is_empty() {

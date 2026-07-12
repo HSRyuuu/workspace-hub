@@ -114,6 +114,7 @@ export function ScheduleEditor({
     setEndEdited(false);
     setError(null);
     // existing 의 id 가 같아도 다른 필드가 갱신되면(예: 저장 후 refresh) 폼이 stale 해지므로 updated_at 도 deps 에 포함.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- existing 전체가 아닌 id+updated_at 로 의도적으로 좁힘
   }, [existing?.id, existing?.updated_at, defaultDayIso]);
 
   const isNew = existing === null;

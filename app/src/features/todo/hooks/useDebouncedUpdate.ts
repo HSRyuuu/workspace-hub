@@ -50,9 +50,10 @@ export function useDebouncedUpdate({
 
   useEffect(() => {
     mountedRef.current = true;
+    const timers = timerRef.current;
     return () => {
       mountedRef.current = false;
-      timerRef.current.forEach(clearTimeout);
+      timers.forEach(clearTimeout);
     };
   }, []);
 

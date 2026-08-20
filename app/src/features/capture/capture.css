@@ -28,6 +28,35 @@
   color: var(--color-ink);
 }
 
+.capture-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-md);
+}
+
+/* 캘린더 탭에서만 제목 : 날짜 = 2 : 1 */
+.capture-row.split {
+  grid-template-columns: 2fr 1fr;
+}
+
+.capture-date {
+  min-width: 0;
+  min-height: 48px;
+  padding: 0 var(--space-md);
+  border: 1px solid var(--color-hairline-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: inherit;
+  font-size: var(--fs-body);
+  outline: none;
+}
+
+.capture-date:focus {
+  border-color: var(--color-ink);
+  box-shadow: 0 0 0 2px var(--color-primary-ring);
+}
+
 .capture-input {
   width: 100%;
   min-height: 48px;

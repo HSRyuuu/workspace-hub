@@ -10,7 +10,7 @@ import FilesPage from "./features/files/FilesPage";
 import TodayPage from "./features/today/TodayPage";
 
 type Section = "today" | "todo" | "calendar" | "memos" | "project" | "files";
-type QuickCaptureNavigation = { kind: "memo" | "todo"; id: number };
+type QuickCaptureNavigation = { kind: "memo" | "todo" | "schedule"; id: number };
 
 const ICON_SIZE = 18;
 const iconProps = {
@@ -75,6 +75,7 @@ export default function App() {
   const [section, setSection] = useState<Section>("today");
   const [selectedTodoId, setSelectedTodoId] = useState<number | null>(null);
   const [selectedMemoId, setSelectedMemoId] = useState<number | null>(null);
+  const [calendarNonce, setCalendarNonce] = useState(0);
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -84,6 +85,11 @@ export default function App() {
       if (payload.kind === "memo") {
         setSelectedMemoId(payload.id);
         setSection("memos");
+      } else if (payload.kind === "schedule") {
+        // CalendarPage 는 조건부 렌더라 이미 캘린더에 있으면 setSection 이 no-op 이 되어 refetch 가 안 된다.
+        // nonce 를 key 로 넘겨 캡처마다 재마운트시킨다.
+        setCalendarNonce((n) => n + 1);
+        setSection("calendar");
       } else {
         setSelectedTodoId(payload.id);
         setSection("todo");
@@ -147,6 +153,7 @@ export default function App() {
         {section === "todo" && <TodoPage selectedTodoId={selectedTodoId} />}
         {section === "calendar" && (
           <CalendarPage
+            key={calendarNonce}
             onNavigateToTodo={(id) => {
               setSelectedTodoId(id);
               setSection("todo");

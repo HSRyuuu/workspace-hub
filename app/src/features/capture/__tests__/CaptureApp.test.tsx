@@ -80,7 +80,7 @@ describe("CaptureApp", () => {
     expect(invokeMock).not.toHaveBeenCalled();
   });
 
-  it("toggles memo and TODO mode with Tab", () => {
+  it("cycles memo, TODO and calendar mode with Tab", () => {
     render(<CaptureApp />);
     const input = screen.getByRole("textbox", { name: "빠른 캡처" });
 
@@ -88,7 +88,78 @@ describe("CaptureApp", () => {
     expect(screen.getByRole("button", { name: "TODO" })).toHaveAttribute("aria-pressed", "true");
 
     fireEvent.keyDown(input, { key: "Tab" });
+    expect(screen.getByRole("button", { name: "캘린더" })).toHaveAttribute("aria-pressed", "true");
+
+    fireEvent.keyDown(input, { key: "Tab" });
     expect(screen.getByRole("button", { name: "메모" })).toHaveAttribute("aria-pressed", "true");
+  });
+
+  it("defaults the schedule date to today", () => {
+    render(<CaptureApp />);
+    fireEvent.click(screen.getByRole("button", { name: "캘린더" }));
+
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, "0");
+    expect(screen.getByLabelText("일정 날짜")).toHaveValue(
+      `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`,
+    );
+  });
+
+  it("creates an all-day red schedule on the picked date and opens the calendar", async () => {
+    invokeMock.mockImplementation((command: string) => {
+      if (command === "schedule_add") return Promise.resolve({ id: 9 });
+      return Promise.resolve();
+    });
+    // 선택한 날짜의 로컬 00:00 ~ 23:59 를 UTC RFC3339 로 저장한다.
+    const localIso = (h: number, m: number) =>
+      new Date(2026, 8, 3, h, m).toISOString().replace(/\.\d{3}Z$/, "Z");
+
+    render(<CaptureApp />);
+
+    fireEvent.click(screen.getByRole("button", { name: "캘린더" }));
+    fireEvent.change(screen.getByLabelText("일정 날짜"), { target: { value: "2026-09-03" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "빠른 캡처" }), {
+      target: { value: "치과 예약" },
+    });
+    fireEvent.keyDown(screen.getByRole("textbox", { name: "빠른 캡처" }), { key: "Enter" });
+
+    await waitFor(() => {
+      expect(invokeMock).toHaveBeenNthCalledWith(1, "schedule_add", {
+        input: {
+          title: "치과 예약",
+          start: localIso(0, 0),
+          end: localIso(23, 59),
+          all_day: true,
+          color: "#C33B3B",
+        },
+      });
+      expect(invokeMock).toHaveBeenNthCalledWith(2, "quick_capture_open_main", {
+        kind: "schedule",
+        id: 9,
+      });
+    });
+  });
+
+  it("refuses to save a schedule with a cleared date", async () => {
+    render(<CaptureApp />);
+
+    fireEvent.click(screen.getByRole("button", { name: "캘린더" }));
+    fireEvent.change(screen.getByLabelText("일정 날짜"), { target: { value: "" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "빠른 캡처" }), {
+      target: { value: "날짜 없음" },
+    });
+    fireEvent.keyDown(screen.getByRole("textbox", { name: "빠른 캡처" }), { key: "Enter" });
+
+    await screen.findByText("날짜를 선택하세요.");
+    expect(invokeMock).not.toHaveBeenCalled();
+  });
+
+  it("shows the date field only on the calendar tab", () => {
+    render(<CaptureApp />);
+    expect(screen.queryByLabelText("일정 날짜")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "캘린더" }));
+    expect(screen.getByLabelText("일정 날짜")).toBeInTheDocument();
   });
 
   it("retries navigation without creating a duplicate item", async () => {

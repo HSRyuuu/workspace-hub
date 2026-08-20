@@ -13,7 +13,7 @@ pub(crate) fn quick_capture_open_main(
     kind: String,
     id: i64,
 ) -> Result<(), String> {
-    if !matches!(kind.as_str(), "memo" | "todo") {
+    if !matches!(kind.as_str(), "memo" | "todo" | "schedule") {
         return Err(format!("unknown quick capture kind: {kind}"));
     }
 

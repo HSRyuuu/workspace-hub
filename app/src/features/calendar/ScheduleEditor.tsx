@@ -277,7 +277,7 @@ export function ScheduleEditor({
         <span className="cal-field-label">설명</span>
         <textarea
           className="input cal-textarea"
-          rows={3}
+          rows={8}
           value={state.description}
           onChange={(e) => patchState("description", e.target.value)}
           placeholder="(선택)"

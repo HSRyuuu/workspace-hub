@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { ScheduleEditor } from "../ScheduleEditor";
 import type { Schedule } from "../types";
@@ -93,5 +93,38 @@ describe("ScheduleEditor date range sync", () => {
 
     expect(screen.getByRole("button", { name: "시작 시간" })).toHaveTextContent("11:00");
     expect(screen.getByRole("button", { name: "종료 시간" })).toHaveTextContent("10:00");
+  });
+});
+
+describe("ScheduleEditor save feedback", () => {
+  it("holds a disabled 저장완료 button for one second after a successful save", async () => {
+    const { invoke } = await import("@tauri-apps/api/core");
+    vi.mocked(invoke).mockResolvedValue(makeSchedule());
+    vi.useFakeTimers();
+    try {
+      render(
+        <ScheduleEditor
+          existing={makeSchedule()}
+          defaultDayIso={null}
+          onSaved={vi.fn()}
+          onDeleted={vi.fn()}
+          onCancel={vi.fn()}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole("button", { name: "저장" }));
+      // save() 는 async 이므로 fake timer 아래에서 microtask 를 직접 flush 해야 한다.
+      await act(async () => {});
+
+      expect(screen.getByRole("button", { name: "저장완료" })).toBeDisabled();
+
+      await act(async () => {
+        vi.advanceTimersByTime(1000);
+      });
+
+      expect(screen.getByRole("button", { name: "저장" })).toBeEnabled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

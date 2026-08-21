@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button, ColorSwatch, DateField, TimeField, showConfirmToast } from "../../components/ui";
 import { TrashIcon } from "../../components/ui/icons";
 import { scheduleApi } from "./api";
@@ -108,6 +108,10 @@ export function ScheduleEditor({
   const [endEdited, setEndEdited] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [justSaved, setJustSaved] = useState(false);
+  const savedTimer = useRef<number | null>(null);
+
+  useEffect(() => () => window.clearTimeout(savedTimer.current ?? undefined), []);
 
   useEffect(() => {
     setState(defaultsFor(existing, defaultDayIso));
@@ -169,6 +173,9 @@ export function ScheduleEditor({
             color: state.color,
           });
       onSaved(saved);
+      setJustSaved(true);
+      window.clearTimeout(savedTimer.current ?? undefined);
+      savedTimer.current = window.setTimeout(() => setJustSaved(false), 1000);
     } catch (e) {
       setError(String(e));
     } finally {
@@ -312,8 +319,13 @@ export function ScheduleEditor({
             <TrashIcon />
           </button>
         )}
-        <Button variant="primary" onClick={save} disabled={busy}>
-          {isNew ? "추가" : "저장"}
+        <Button
+          variant="primary"
+          className={justSaved ? "btn-saved" : ""}
+          onClick={save}
+          disabled={busy || justSaved}
+        >
+          {justSaved ? "저장완료" : isNew ? "추가" : "저장"}
         </Button>
       </div>
     </div>

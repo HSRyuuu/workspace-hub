@@ -250,6 +250,16 @@ a {
   cursor: not-allowed;
 }
 
+/* 저장 성공 직후 1초간 유지되는 확인 상태 — disabled 지만 흐려지지 않아야 한다.
+   .btn:disabled 와 specificity 가 같으므로 반드시 그 뒤에 선언한다. */
+.btn-saved:disabled {
+  background: var(--color-data-blue);
+  border-color: var(--color-data-blue);
+  color: var(--color-on-primary);
+  opacity: 1;
+  cursor: default;
+}
+
 /* kbd 칩 — 버튼 안에 단축키 표시 */
 .kbd {
   font-family: var(--font-mono);

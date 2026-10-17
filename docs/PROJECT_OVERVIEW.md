@@ -203,7 +203,7 @@
 
 ## 현재 단계
 
-- **상태**: in development — TODO/Calendar/Memo/Project 도메인 코드 동작. 디자인 시스템·결정 문서는 churn 누적으로 2026-05-18 리셋(ADR/DESIGN/SOURCE_MAP/DB_SCHEMA/DEPLOY/LESSONS stub). v0.1 안정화 작업 중.
+- **상태**: in development — TODO/Calendar/Memo/Files 도메인 코드 동작. 디자인 시스템·결정 문서는 churn 누적으로 2026-05-18 리셋(ADR/DESIGN/SOURCE_MAP/DB_SCHEMA/DEPLOY/LESSONS stub). v0.1 안정화 작업 중.
 - **시작일**: 2026-05-15
 - **첫 배포일**: 미배포
 - **현재 사이클**: v0.1 안정화 — 디자인 톤 동결 + MVP 동작 검증 + 문서 재작성

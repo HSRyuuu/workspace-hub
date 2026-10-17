@@ -3,10 +3,7 @@ use clap::{Args, Subcommand};
 use workspace_hub_core::{
     db,
     models::memo::{NewMemo, UpdateMemo},
-    repo::{
-        memo::{self as repo, ListScope},
-        memo_project as link_repo,
-    },
+    repo::memo::{self as repo, ListScope},
 };
 
 use crate::{output, AppError};
@@ -29,33 +26,6 @@ pub enum MemoCommand {
     Purge(IdArg),
     /// 휴지통 비우기 (삭제된 모든 메모 영구 삭제)
     EmptyTrash,
-    /// 메모–프로젝트 매핑 명령
-    #[command(subcommand)]
-    Project(MemoProjectCommand),
-}
-
-#[derive(Subcommand)]
-pub enum MemoProjectCommand {
-    /// 매핑된 프로젝트 목록
-    List(MemoProjectListArgs),
-    /// 매핑 추가 (멱등)
-    Link(MemoProjectLinkArgs),
-    /// 매핑 제거
-    Unlink(MemoProjectLinkArgs),
-}
-
-#[derive(Args)]
-pub struct MemoProjectListArgs {
-    /// memo id
-    pub id: i64,
-}
-
-#[derive(Args)]
-pub struct MemoProjectLinkArgs {
-    /// memo id
-    pub memo: i64,
-    /// project id
-    pub project: i64,
 }
 
 #[derive(Args)]
@@ -180,28 +150,6 @@ pub fn run(cmd: &MemoCommand, human: bool) -> Result<(), AppError> {
             let ack = serde_json::json!({ "purged_count": count });
             output::emit(&ack, human, |_| {
                 println!("emptied trash: {count} memo(s) purged")
-            })?;
-        }
-        MemoCommand::Project(MemoProjectCommand::List(args)) => {
-            let items = link_repo::list_projects_for_memo(&conn, args.id)?;
-            output::emit(&items, human, |xs| output::print_projects_human(xs))?;
-        }
-        MemoCommand::Project(MemoProjectCommand::Link(args)) => {
-            link_repo::link(&conn, args.memo, args.project)?;
-            let ack = serde_json::json!({
-                "linked": { "memo_id": args.memo, "project_id": args.project }
-            });
-            output::emit(&ack, human, |_| {
-                println!("linked memo #{} ↔ project #{}", args.memo, args.project)
-            })?;
-        }
-        MemoCommand::Project(MemoProjectCommand::Unlink(args)) => {
-            link_repo::unlink(&conn, args.memo, args.project)?;
-            let ack = serde_json::json!({
-                "unlinked": { "memo_id": args.memo, "project_id": args.project }
-            });
-            output::emit(&ack, human, |_| {
-                println!("unlinked memo #{} ↔ project #{}", args.memo, args.project)
             })?;
         }
     }

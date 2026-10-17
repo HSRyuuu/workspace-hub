@@ -6,7 +6,6 @@ import { memoApi, memoFolderApi } from "./api";
 import FolderTree from "./FolderTree";
 import MemoActions from "./MemoActions";
 import MemoList from "./MemoList";
-import { MemoProjectChips } from "./MemoProjectChips";
 import { firstLineAsTitle } from "./markdown";
 import type { Memo, MemoFolder, MemoListScope, UpdateMemoPatch } from "./types";
 import { useSaveIndicator } from "./useSaveIndicator";
@@ -544,7 +543,6 @@ export default function MemoPage({ selectedMemoId = null }: MemoPageProps) {
                   placeholder="제목 입력"
                   aria-label="제목"
                 />
-                <MemoProjectChips memoId={selectedMemo.id} />
                 <MarkdownEditor
                   resetKey={selectedMemo.id}
                   initialMarkdown={selectedMemo.body}

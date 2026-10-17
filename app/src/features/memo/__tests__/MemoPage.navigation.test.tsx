@@ -51,8 +51,6 @@ describe("MemoPage selectedMemoId navigation", () => {
       if (command === "memo_folder_list") return Promise.resolve([]);
       if (command === "memo_list" && args?.scope === "trash") return Promise.resolve([]);
       if (command === "memo_list") return Promise.resolve([memo(1, "First"), memo(2, "Target")]);
-      if (command === "project_list") return Promise.resolve([]);
-      if (command === "memo_project_list_projects") return Promise.resolve([]);
       return Promise.resolve(undefined);
     });
   });

@@ -11,7 +11,7 @@
 - **구조**: Tauri v2 + React 셸 → Rust `core` 라이브러리(`workspace-hub-core`) → SQLite. `core`가 도메인·DB의 단일 진실 원천. Tauri 앱은 `core`를 in-process 의존으로 직접 호출(ADR-0012).
 - **두 호출자**: Tauri UI는 `core`를 라이브러리로 직접 호출. Claude Code 스킬은 같은 `core`를 감싼 `workspace-hub` CLI 바이너리를 호출 (JSON I/O 기본, `--human` 플래그).
 - **외부 의존 없음**: 네트워크 호출 금지. 동기화·클라우드·외부 캘린더는 v0.5 이후 보류.
-- **현재 상태**: v0.2 진행 중 — schedule / memo / project 도메인 추가 완료. **Design System v0.2 적용 (ADR-0010)**: TODO · 메모 · 프로젝트 도메인이 공유 UI 컴포넌트로 일관화 (검정 ink primary + 라벨 사이드바 + dot 칩 + underline 탭). 캘린더 도메인 마이그레이션 보류. 새 도메인 작업 시 [`docs/SOURCE_MAP.md`](../docs/SOURCE_MAP.md#새-도메인-추가-체크리스트)의 체크리스트를 따른다.
+- **현재 상태**: v0.2 진행 중 — schedule / memo 도메인 추가 완료 (project 도메인은 ADR-0013 으로 제거). **Design System v0.2 적용 (ADR-0010)**: TODO · 메모 도메인이 공유 UI 컴포넌트로 일관화 (검정 ink primary + 라벨 사이드바 + dot 칩 + underline 탭). 캘린더 도메인 마이그레이션 보류. 새 도메인 작업 시 [`docs/SOURCE_MAP.md`](../docs/SOURCE_MAP.md#새-도메인-추가-체크리스트)의 체크리스트를 따른다.
 
 이 문서는 Claude가 매 세션에 가장 먼저 읽는다. 따라서 **고정된 규약과 진입점만** 두고, 영역별 상세 지침은 아래 [문서 매핑](#문서-매핑) 표에서 필요할 때 끌어다 쓴다 (점진적 공개).
 

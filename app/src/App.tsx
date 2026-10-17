@@ -5,12 +5,11 @@ import { Toast } from "./components/ui/Toast";
 import TodoPage from "./features/todo/TodoPage";
 import CalendarPage from "./features/calendar/CalendarPage";
 import MemoPage from "./features/memo/MemoPage";
-import ProjectPage from "./features/project/ProjectPage";
 import FilesPage from "./features/files/FilesPage";
 import TodayPage from "./features/today/TodayPage";
 import SettingsPage from "./features/settings/SettingsPage";
 
-type Section = "today" | "todo" | "calendar" | "memos" | "project" | "files" | "settings";
+type Section = "today" | "todo" | "calendar" | "memos" | "files" | "settings";
 type QuickCaptureNavigation = { kind: "memo" | "todo" | "schedule"; id: number };
 
 const ICON_SIZE = 18;
@@ -49,14 +48,6 @@ const MemoIcon = () => (
     <path d="M8 9.5h8M8 13h8M8 16.5h5" />
   </svg>
 );
-const ProjectIcon = () => (
-  <svg {...iconProps} aria-hidden>
-    <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" />
-    <rect x="13.5" y="3.5" width="7" height="7" rx="1.5" />
-    <rect x="3.5" y="13.5" width="7" height="7" rx="1.5" />
-    <rect x="13.5" y="13.5" width="7" height="7" rx="1.5" />
-  </svg>
-);
 const FilesIcon = () => (
   <svg {...iconProps} aria-hidden>
     <path d="M3.5 7.5v11A1.5 1.5 0 0 0 5 20h14a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 19 8h-7.2L9.6 5.7A1.5 1.5 0 0 0 8.5 5H5a1.5 1.5 0 0 0-1.5 1.5z" />
@@ -75,7 +66,6 @@ const SECTIONS: { id: Section; label: string; enabled: boolean; Icon: () => JSX.
   { id: "todo", label: "TODO", enabled: true, Icon: TodoIcon },
   { id: "calendar", label: "Calendar", enabled: true, Icon: CalendarIcon },
   { id: "memos", label: "Memo", enabled: true, Icon: MemoIcon },
-  { id: "project", label: "Workspace", enabled: true, Icon: ProjectIcon },
   { id: "files", label: "파일탐색기", enabled: true, Icon: FilesIcon },
 ];
 
@@ -158,7 +148,7 @@ export default function App() {
         </div>
       </aside>
       <main
-        className={`main${section === "memos" || section === "project" || section === "files" ? " main--flush" : ""}`}
+        className={`main${section === "memos" || section === "files" ? " main--flush" : ""}`}
       >
         {section === "today" && (
           <TodayPage
@@ -183,7 +173,6 @@ export default function App() {
           />
         )}
         {section === "memos" && <MemoPage selectedMemoId={selectedMemoId} />}
-        {section === "project" && <ProjectPage />}
         {section === "files" && <FilesPage />}
         {section === "settings" && <SettingsPage />}
       </main>

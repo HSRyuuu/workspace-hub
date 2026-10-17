@@ -1,7 +1,6 @@
 use workspace_hub_core::models::memo::{
     Memo, MemoFolder, NewMemo, NewMemoFolder, UpdateMemo, UpdateMemoFolder,
 };
-use workspace_hub_core::models::project::Project;
 use workspace_hub_core::repo;
 use workspace_hub_core::repo::memo::ListScope;
 
@@ -189,42 +188,4 @@ pub(crate) fn memo_folder_reorder(
 ) -> Result<(), String> {
     let mut conn = state.0.lock().map_err(lock_err)?;
     repo::memo_folder::reorder(&mut conn, parent_id, &ordered_ids).map_err(core_err)
-}
-
-#[tauri::command]
-pub(crate) fn memo_project_list_projects(
-    state: tauri::State<DbState>,
-    memo_id: i64,
-) -> Result<Vec<Project>, String> {
-    let conn = state.0.lock().map_err(lock_err)?;
-    repo::memo_project::list_projects_for_memo(&conn, memo_id).map_err(core_err)
-}
-
-#[tauri::command]
-pub(crate) fn memo_project_list_memos(
-    state: tauri::State<DbState>,
-    project_id: i64,
-) -> Result<Vec<Memo>, String> {
-    let conn = state.0.lock().map_err(lock_err)?;
-    repo::memo_project::list_memos_for_project(&conn, project_id).map_err(core_err)
-}
-
-#[tauri::command]
-pub(crate) fn memo_project_link(
-    state: tauri::State<DbState>,
-    memo_id: i64,
-    project_id: i64,
-) -> Result<(), String> {
-    let conn = state.0.lock().map_err(lock_err)?;
-    repo::memo_project::link(&conn, memo_id, project_id).map_err(core_err)
-}
-
-#[tauri::command]
-pub(crate) fn memo_project_unlink(
-    state: tauri::State<DbState>,
-    memo_id: i64,
-    project_id: i64,
-) -> Result<(), String> {
-    let conn = state.0.lock().map_err(lock_err)?;
-    repo::memo_project::unlink(&conn, memo_id, project_id).map_err(core_err)
 }

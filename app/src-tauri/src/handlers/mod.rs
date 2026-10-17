@@ -6,7 +6,6 @@ pub(crate) mod capture;
 pub(crate) mod dashboard;
 pub(crate) mod files;
 pub(crate) mod memo;
-pub(crate) mod project;
 pub(crate) mod schedule;
 pub(crate) mod skill;
 pub(crate) mod todo;
@@ -42,14 +41,6 @@ pub(super) fn nullable_string_patch(v: Option<&serde_json::Value>) -> Option<Opt
             Some(s) => Some(Some(s.to_string())),
             None => None,
         },
-    }
-}
-
-pub(super) fn nullable_i64_patch(v: Option<&serde_json::Value>) -> Option<Option<i64>> {
-    match v {
-        None => None,
-        Some(value) if value.is_null() => Some(None),
-        Some(value) => value.as_i64().map(Some),
     }
 }
 

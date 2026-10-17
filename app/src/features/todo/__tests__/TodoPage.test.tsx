@@ -24,7 +24,6 @@ function makeTodo(overrides: Partial<Todo> = {}): Todo {
   return {
     id: 1,
     workspace_id: null,
-    project_id: null,
     title: "Open todo",
     description: null,
     start_date: "2026-06-29",
@@ -70,7 +69,6 @@ describe("TodoPage filters", () => {
           }),
         ]);
       }
-      if (command === "project_list") return Promise.resolve([]);
       return Promise.resolve(undefined);
     });
   });

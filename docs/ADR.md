@@ -11,6 +11,7 @@
 |---|------|------|------|------|
 | 0011 | 검정 ink primary 는 CTA 전용, selected 표시는 옅은 회색 | Accepted | 2026-05-18 | design-system, color |
 | 0012 | Tauri 셸은 `core` 를 in-process 호출 (CLI sidecar 폐기) | Accepted | 2026-05-18 | architecture, ipc |
+| 0013 | 프로젝트(Workspace) 도메인 제거 | Accepted | 2026-10-17 | domain, db |
 
 > 상태 표기:
 > - **Proposed** — 검토 중, 아직 미적용
@@ -99,3 +100,28 @@ CLI(`cli/` crate)는 그대로 유지하되 **Claude Code 스킬 전용 외부 �
 
 - 구현: `app/src-tauri/Cargo.toml`, `app/src-tauri/src/lib.rs` (단일 PR/커밋)
 - 관련 문서: `docs/PROJECT_OVERVIEW.md` (호출 흐름), `docs/DB_SCHEMA.md` (접근 범위), `docs/SOURCE_MAP.md` (디렉터리 역할), `.claude/CLAUDE.md` (전체 구조 요약)
+
+---
+
+## ADR-0013: 프로젝트(Workspace) 도메인 제거
+
+- **상태**: Accepted
+- **날짜**: 2026-10-17
+
+### 결정
+
+사이드바의 Workspace 화면(코드상 `project` 도메인)과 프로젝트 개념을 완전히 제거한다. TODO 의 프로젝트 연결(`todo.project_id`)과 메모–프로젝트 매핑(`memo_project`)도 함께 제거한다.
+
+### 근거
+
+- 실제로 쓰지 않는 기능이다. 로컬 DB 에도 프로젝트 1건, 연결 0건만 남아 있었다.
+- 폴더 바로가기 용도는 파일탐색기(`files`)가 대신한다.
+
+### 영향 범위
+
+- `V013__drop_project.sql`: `todo` 를 `project_id` 없이 재구성하고 `project` · `project_directory` · `project_application` · `memo_project` 테이블을 삭제한다. 적용 직전 `bak-pre-v013` 백업을 남긴다.
+- core 모델·repo, Tauri 핸들러(`project_*`, `memo_project_*`, `todo_list_by_project`, `open_application`), CLI `project` · `memo project` 명령과 `todo --project`, 프런트 `features/project`, `MemoProjectChips`, TodoDetail 프로젝트 선택을 삭제했다.
+
+### 트레이드오프
+
+- 되돌리려면 새 마이그레이션으로 테이블을 다시 만들어야 하며, 삭제된 데이터는 `bak-pre-v013` 백업에서만 복구할 수 있다.

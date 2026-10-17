@@ -22,7 +22,6 @@ fn map_row(row: &Row<'_>) -> rusqlite::Result<Todo> {
     Ok(Todo {
         id: row.get("id")?,
         workspace_id: row.get("workspace_id")?,
-        project_id: row.get("project_id")?,
         title: row.get("title")?,
         description: row.get("description")?,
         start_date: row.get("start_date")?,
@@ -37,7 +36,7 @@ fn map_row(row: &Row<'_>) -> rusqlite::Result<Todo> {
 }
 
 const SELECT_COLUMNS: &str =
-    "id, workspace_id, project_id, title, description, start_date, due_date, due_time, priority, status, completed_at, created_at, updated_at";
+    "id, workspace_id, title, description, start_date, due_date, due_time, priority, status, completed_at, created_at, updated_at";
 
 const TODO_ORDER: &str =
     "ORDER BY CASE status WHEN 'open' THEN 0 WHEN 'hold' THEN 1 ELSE 2 END ASC, \
@@ -55,7 +54,6 @@ pub struct TodoPatch {
     pub due_time: Option<i64>,
     pub priority: Option<Priority>,
     pub status: Option<TodoStatus>,
-    pub project_id: Option<Option<i64>>,
 }
 
 pub fn create(conn: &Connection, input: &NewTodo) -> Result<Todo, CoreError> {
@@ -75,11 +73,10 @@ pub fn create(conn: &Connection, input: &NewTodo) -> Result<Todo, CoreError> {
 
     conn.execute(
         "INSERT INTO todo
-            (workspace_id, project_id, title, description, start_date, due_date, due_time, priority, status, created_at, updated_at)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, 'open', ?9, ?9)",
+            (workspace_id, title, description, start_date, due_date, due_time, priority, status, created_at, updated_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'open', ?8, ?8)",
         params![
             input.workspace_id,
-            input.project_id,
             input.title.trim(),
             input.description,
             start_date,
@@ -120,17 +117,6 @@ pub fn list(conn: &Connection, status_filter: Option<TodoStatus>) -> Result<Vec<
     let mut result = Vec::new();
     for r in rows {
         result.push(r?);
-    }
-    Ok(result)
-}
-
-pub fn list_by_project(conn: &Connection, project_id: i64) -> Result<Vec<Todo>, CoreError> {
-    let sql = format!("SELECT {SELECT_COLUMNS} FROM todo WHERE project_id = ?1 {TODO_ORDER}");
-    let mut stmt = conn.prepare(&sql)?;
-    let rows = stmt.query_map(params![project_id], map_row)?;
-    let mut result = Vec::new();
-    for row in rows {
-        result.push(row?);
     }
     Ok(result)
 }
@@ -294,12 +280,6 @@ pub fn update(conn: &Connection, id: i64, patch: &TodoPatch) -> Result<Todo, Cor
                 push!("completed_at", Option::<String>::None)
             }
         }
-    }
-
-    match patch.project_id {
-        Some(Some(project_id)) => push!("project_id", Some(project_id)),
-        Some(None) => push!("project_id", Option::<i64>::None),
-        None => {}
     }
 
     if sets.is_empty() {

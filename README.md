@@ -51,18 +51,10 @@ TODO 마감일과 자체 이벤트를 같은 월 · 주 · 일 뷰에 통합. �
 
 ### Memo
 
-폴더 트리 + 마크다운 본문(코드 블록 · 표 · 체크리스트 · 인용). 메모를 프로젝트에 매핑하면 Workspace 페이지에서 같이 보임.
+폴더 트리 + 마크다운 본문(코드 블록 · 표 · 체크리스트 · 인용).
 
 <p align="center">
   <img src="docs/screenshots/workspace-hub-Memo.png" width="820" alt="메모 페이지 — 마크다운 표/체크리스트 렌더링" />
-</p>
-
-### Workspace
-
-프로젝트별 **디렉터리 · `.app` · 매핑된 메모**를 한 카드 안에. 색상 dot 으로 구분, 더블클릭으로 Finder · 앱 바로 열기.
-
-<p align="center">
-  <img src="docs/screenshots/workspace-hub-Workspace.png" width="820" alt="Workspace 상세 페이지" />
 </p>
 
 ---

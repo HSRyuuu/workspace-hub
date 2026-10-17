@@ -108,7 +108,6 @@ pub fn run() {
             handlers::dashboard::dashboard_summary,
             handlers::todo::todo_list,
             handlers::todo::todo_list_calendar_range,
-            handlers::todo::todo_list_by_project,
             handlers::todo::todo_add,
             handlers::todo::todo_update,
             handlers::todo::todo_complete,
@@ -133,30 +132,12 @@ pub fn run() {
             handlers::memo::memo_folder_move,
             handlers::memo::memo_folder_reorder,
             handlers::memo::memo_folder_delete,
-            handlers::project::project_list,
-            handlers::project::project_get,
-            handlers::project::project_add,
-            handlers::project::project_update,
-            handlers::project::project_delete,
-            handlers::project::project_dir_list,
-            handlers::project::project_dir_add,
-            handlers::project::project_dir_update,
-            handlers::project::project_dir_delete,
-            handlers::project::project_app_list,
-            handlers::project::project_app_add,
-            handlers::project::project_app_update,
-            handlers::project::project_app_delete,
-            handlers::memo::memo_project_list_projects,
-            handlers::memo::memo_project_list_memos,
-            handlers::memo::memo_project_link,
-            handlers::memo::memo_project_unlink,
             handlers::files::files_folder_list,
             handlers::files::files_folder_touch,
             handlers::files::files_folder_set_favorite,
             handlers::files::files_folder_remove,
             handlers::files::open_in_finder,
             handlers::files::reveal_in_finder,
-            handlers::files::open_application,
             handlers::files::open_url,
             handlers::skill::skill_targets,
             handlers::skill::skill_install,
@@ -183,7 +164,7 @@ pub fn run() {
 
 #[cfg(test)]
 mod handler_structure_tests {
-    use super::handlers::{dashboard, files, memo, project, schedule, todo};
+    use super::handlers::{dashboard, files, memo, schedule, todo};
 
     #[test]
     fn domain_handler_modules_expose_representative_commands() {
@@ -191,7 +172,6 @@ mod handler_structure_tests {
         let _ = todo::todo_list;
         let _ = schedule::schedule_get;
         let _ = memo::memo_get;
-        let _ = project::project_get;
         let _ = files::files_folder_list;
     }
 }

@@ -49,7 +49,6 @@ vi.mock("../features/calendar/CalendarPage", () => ({
     return <div>Calendar page</div>;
   },
 }));
-vi.mock("../features/project/ProjectPage", () => ({ default: () => <div>Project page</div> }));
 vi.mock("../features/files/FilesPage", () => ({ default: () => <div>Files page</div> }));
 
 describe("App Today navigation", () => {

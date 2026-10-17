@@ -45,18 +45,6 @@ fn add_memo(dir: &std::path::Path, title: &str, body: &str, folder: Option<i64>)
     v["id"].as_i64().unwrap()
 }
 
-fn add_project(dir: &std::path::Path, title: &str) -> i64 {
-    let out = cli(dir)
-        .args(["project", "add", "--title", title])
-        .assert()
-        .success()
-        .get_output()
-        .stdout
-        .clone();
-    let v: serde_json::Value = serde_json::from_slice(&out).unwrap();
-    v["id"].as_i64().unwrap()
-}
-
 #[test]
 fn memo_add_emits_json() {
     let dir = TempDir::new().unwrap();
@@ -268,84 +256,6 @@ fn memo_update_can_pin_and_move_to_folder() {
         .success()
         .stdout(contains("\"pinned\": true"))
         .stdout(contains(&format!("\"folder_id\": {folder}")));
-}
-
-#[test]
-fn memo_project_link_then_unlink_updates_list() {
-    let dir = TempDir::new().unwrap();
-    let memo_id = add_memo(dir.path(), "linked memo", "", None);
-    let _filler_project = add_project(dir.path(), "filler project");
-    let project_id = add_project(dir.path(), "linked project");
-    assert_ne!(memo_id, project_id);
-
-    cli(dir.path())
-        .args([
-            "memo",
-            "project",
-            "link",
-            &memo_id.to_string(),
-            &project_id.to_string(),
-        ])
-        .assert()
-        .success();
-
-    let list = cli(dir.path())
-        .args(["memo", "project", "list", &memo_id.to_string()])
-        .assert()
-        .success()
-        .get_output()
-        .stdout
-        .clone();
-    let projects: Vec<serde_json::Value> = serde_json::from_slice(&list).unwrap();
-    assert_eq!(projects.len(), 1);
-    assert_eq!(projects[0]["id"], project_id);
-
-    cli(dir.path())
-        .args([
-            "memo",
-            "project",
-            "unlink",
-            &memo_id.to_string(),
-            &project_id.to_string(),
-        ])
-        .assert()
-        .success();
-
-    cli(dir.path())
-        .args(["memo", "project", "list", &memo_id.to_string()])
-        .assert()
-        .success()
-        .stdout(contains("[]"));
-}
-
-#[test]
-fn memo_project_duplicate_link_is_idempotent() {
-    let dir = TempDir::new().unwrap();
-    let memo_id = add_memo(dir.path(), "memo", "", None);
-    let _filler_project = add_project(dir.path(), "filler project");
-    let project_id = add_project(dir.path(), "project");
-    assert_ne!(memo_id, project_id);
-    let expected_project_id = project_id;
-    let memo_id = memo_id.to_string();
-    let project_id = project_id.to_string();
-
-    for _ in 0..2 {
-        cli(dir.path())
-            .args(["memo", "project", "link", &memo_id, &project_id])
-            .assert()
-            .success();
-    }
-
-    let list = cli(dir.path())
-        .args(["memo", "project", "list", &memo_id])
-        .assert()
-        .success()
-        .get_output()
-        .stdout
-        .clone();
-    let projects: Vec<serde_json::Value> = serde_json::from_slice(&list).unwrap();
-    assert_eq!(projects.len(), 1);
-    assert_eq!(projects[0]["id"], expected_project_id);
 }
 
 #[test]

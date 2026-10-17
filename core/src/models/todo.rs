@@ -81,7 +81,6 @@ impl TodoStatus {
 pub struct Todo {
     pub id: i64,
     pub workspace_id: Option<i64>,
-    pub project_id: Option<i64>,
     pub title: String,
     pub description: Option<String>,
     pub start_date: String,
@@ -97,7 +96,6 @@ pub struct Todo {
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct NewTodo {
     pub workspace_id: Option<i64>,
-    pub project_id: Option<i64>,
     pub title: String,
     pub description: Option<String>,
     pub start_date: Option<String>,

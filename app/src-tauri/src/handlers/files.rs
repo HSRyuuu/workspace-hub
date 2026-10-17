@@ -64,17 +64,6 @@ pub(crate) fn reveal_in_finder(path: String) -> Result<(), String> {
         .map_err(|e| format!("failed to reveal `{path}`: {e}"))
 }
 
-/// macOS `open` 로 .app 번들을 실행한다.
-/// .app 디렉터리든 그 안의 실행 바이너리 경로든 `open` 이 모두 처리한다.
-#[tauri::command]
-pub(crate) fn open_application(path: String) -> Result<(), String> {
-    Command::new("open")
-        .arg(&path)
-        .spawn()
-        .map(|_| ())
-        .map_err(|e| format!("failed to open application `{path}`: {e}"))
-}
-
 /// macOS `open` 로 URL 을 기본 브라우저에서 연다.
 #[tauri::command]
 pub(crate) fn open_url(url: String) -> Result<(), String> {

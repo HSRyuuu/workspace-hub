@@ -59,8 +59,6 @@ describe("MemoPage", () => {
     invokeMock.mockImplementation((command: string) => {
       if (command === "memo_folder_list") return Promise.resolve([]);
       if (command === "memo_list") return Promise.resolve([makeMemo()]);
-      if (command === "project_list") return Promise.resolve([]);
-      if (command === "memo_project_list_projects") return Promise.resolve([]);
       if (command === "memo_update") return Promise.resolve(makeMemo());
       return Promise.resolve(undefined);
     });

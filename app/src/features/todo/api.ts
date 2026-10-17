@@ -18,9 +18,6 @@ export const todoApi = {
       completedTo,
     }),
 
-  listByProject: (projectId: number): Promise<Todo[]> =>
-    invoke<Todo[]>("todo_list_by_project", { projectId }),
-
   add: (input: NewTodoInput): Promise<Todo> => invoke<Todo>("todo_add", { input }),
 
   update: (id: number, patch: TodoPatch): Promise<Todo> =>

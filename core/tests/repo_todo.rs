@@ -6,10 +6,9 @@
 
 use rusqlite::Connection;
 use tempfile::TempDir;
-use workspace_hub_core::models::project::NewProject;
 use workspace_hub_core::models::todo::{NewTodo, Priority, TodoStatus};
 use workspace_hub_core::repo::todo::TodoPatch;
-use workspace_hub_core::repo::{normalize_iso_date, project, todo as repo};
+use workspace_hub_core::repo::{normalize_iso_date, todo as repo};
 use workspace_hub_core::{db, CoreError};
 
 fn fresh_conn() -> (TempDir, Connection) {
@@ -22,7 +21,6 @@ fn fresh_conn() -> (TempDir, Connection) {
 fn mk(title: &str) -> NewTodo {
     NewTodo {
         workspace_id: None,
-        project_id: None,
         title: title.into(),
         description: None,
         start_date: None,
@@ -132,7 +130,6 @@ fn update_to_hold_clears_completed_at() {
             due_time: None,
             priority: None,
             status: Some(TodoStatus::Hold),
-            project_id: None,
         },
     )
     .unwrap();
@@ -158,7 +155,6 @@ fn list_orders_open_before_hold_before_done() {
             due_time: None,
             priority: None,
             status: Some(TodoStatus::Hold),
-            project_id: None,
         },
     )
     .unwrap();
@@ -171,63 +167,59 @@ fn list_orders_open_before_hold_before_done() {
 }
 
 #[test]
-fn todo_project_link_list_clear_and_delete_roundtrip() {
+fn v013_drops_project_tables_and_todo_project_id() {
     let (_dir, conn) = fresh_conn();
-    let project = project::create(
-        &conn,
-        &NewProject {
-            title: "Linked project".into(),
-            ..Default::default()
-        },
-    )
-    .unwrap();
-    let mut input = mk("linked todo");
-    input.project_id = Some(project.id);
+    let project_tables: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table'
+             AND name IN ('project', 'project_directory', 'project_application', 'memo_project')",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    let project_id_columns: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM pragma_table_info('todo') WHERE name = 'project_id'",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
 
-    let todo = repo::create(&conn, &input).unwrap();
-    assert_eq!(todo.project_id, Some(project.id));
-    assert_eq!(
-        repo::list_by_project(&conn, project.id).unwrap()[0].id,
-        todo.id
-    );
+    assert_eq!(db::LATEST_SCHEMA_VERSION, 13);
+    assert_eq!(project_tables, 0);
+    assert_eq!(project_id_columns, 0);
+}
 
-    let cleared = repo::update(
-        &conn,
-        todo.id,
-        &TodoPatch {
-            title: None,
-            description: None,
-            start_date: None,
-            due_date: None,
-            due_time: None,
-            priority: None,
-            status: None,
-            project_id: Some(None),
-        },
-    )
-    .unwrap();
-    assert_eq!(cleared.project_id, None);
+#[test]
+fn v013_preserves_v012_todos_and_creates_backup() {
+    let dir = TempDir::new().unwrap();
+    let path = dir.path().join("v012.sqlite");
+    {
+        let conn = db::open_at(&path).unwrap();
+        repo::create(&conn, &mk("keep me")).unwrap();
+        conn.execute_batch(
+            "DELETE FROM schema_version WHERE version = 13;
+             CREATE TABLE project (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL);
+             INSERT INTO project (id, title) VALUES (1, 'old');
+             ALTER TABLE todo ADD COLUMN project_id INTEGER REFERENCES project(id) ON DELETE SET NULL;
+             UPDATE todo SET project_id = 1;",
+        )
+        .unwrap();
+    }
 
-    let relinked = repo::update(
-        &conn,
-        todo.id,
-        &TodoPatch {
-            title: None,
-            description: None,
-            start_date: None,
-            due_date: None,
-            due_time: None,
-            priority: None,
-            status: None,
-            project_id: Some(Some(project.id)),
-        },
-    )
-    .unwrap();
-    assert_eq!(relinked.project_id, Some(project.id));
-
-    project::delete(&conn, project.id).unwrap();
-    assert_eq!(repo::get(&conn, todo.id).unwrap().project_id, None);
-    assert_eq!(db::LATEST_SCHEMA_VERSION, 12);
+    let conn = db::open_at(&path).unwrap();
+    let todos = repo::list(&conn, None).unwrap();
+    assert_eq!(todos.len(), 1);
+    assert_eq!(todos[0].title, "keep me");
+    let has_project: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'project'",
+            [],
+            |row| row.get(0),
+        )
+        .unwrap();
+    assert_eq!(has_project, 0);
+    assert!(path.with_extension("bak-pre-v013").exists());
 }
 
 #[test]
@@ -285,8 +277,8 @@ fn v011_preserves_v010_todos_and_creates_backup() {
         .query_row("SELECT COUNT(*) FROM todo", [], |row| row.get(0))
         .unwrap();
 
-    assert_eq!(db::LATEST_SCHEMA_VERSION, 12);
-    assert_eq!(version, 12);
+    assert_eq!(db::LATEST_SCHEMA_VERSION, 13);
+    assert_eq!(version, 13);
     assert_eq!(count, 2);
     assert_eq!(repo::get(&conn, 1).unwrap().status, TodoStatus::Open);
     assert_eq!(repo::get(&conn, 2).unwrap().status, TodoStatus::Done);
@@ -316,7 +308,7 @@ fn v011_preserves_v010_todos_and_creates_backup() {
             row.get(0)
         })
         .unwrap();
-    assert_eq!(retried_version, 12);
+    assert_eq!(retried_version, 13);
     assert_eq!(repo::list(&retried, None).unwrap().len(), 2);
 }
 
@@ -484,7 +476,6 @@ fn update_single_field_patch() {
             due_time: None,
             priority: Some(Priority::High),
             status: None,
-            project_id: None,
         },
     )
     .unwrap();
@@ -512,7 +503,6 @@ fn update_null_clear() {
             due_time: None,
             priority: None,
             status: None,
-            project_id: None,
         },
     )
     .unwrap();
@@ -542,7 +532,6 @@ fn update_unspecified_fields_preserved() {
             due_time: None,
             priority: None,
             status: None,
-            project_id: None,
         },
     )
     .unwrap();
@@ -573,7 +562,6 @@ fn update_due_date_clear_resets_due_time() {
             due_time: None,
             priority: None,
             status: None,
-            project_id: None,
         },
     )
     .unwrap();
@@ -600,7 +588,6 @@ fn update_status_syncs_completed_at() {
             due_time: None,
             priority: None,
             status: Some(TodoStatus::Done),
-            project_id: None,
         },
     )
     .unwrap();
@@ -619,7 +606,6 @@ fn update_status_syncs_completed_at() {
             due_time: None,
             priority: None,
             status: Some(TodoStatus::Open),
-            project_id: None,
         },
     )
     .unwrap();

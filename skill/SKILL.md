@@ -1,6 +1,6 @@
 ---
 name: workspace-hub
-description: Use when the user wants to read, add, edit, clean up, or organize their workspace-hub data — TODO, 캘린더 일정, 메모·메모 폴더, 프로젝트(워크스페이스). Triggers - "할 일 추가해줘", "TODO 정리해줘", "오늘 할 일 뭐야", "일정 잡아줘", "이번 주 일정 보여줘", "메모 남겨줘", "메모 폴더 정리해줘", "휴지통 비워줘", "프로젝트에 디렉터리 추가", "workspace-hub".
+description: Use when the user wants to read, add, edit, clean up, or organize their workspace-hub data — TODO, 캘린더 일정, 메모·메모 폴더. Triggers - "할 일 추가해줘", "TODO 정리해줘", "오늘 할 일 뭐야", "일정 잡아줘", "이번 주 일정 보여줘", "메모 남겨줘", "메모 폴더 정리해줘", "휴지통 비워줘", "workspace-hub".
 ---
 
 # workspace-hub
@@ -20,7 +20,7 @@ CLI={{CLI}}
 1. **출력은 JSON** (stdout). `--human` 은 사용자에게 표로 보여줄 때만 쓴다.
 2. **실패**: stderr 에 `error: ...`. 종료코드 1 = 입력 오류(not found·parse 포함), 2 = 시스템 오류.
 3. **수정 전에 조회**: `update`/`delete` 전에 `list`/`get` 으로 id 와 현재 값을 확인한다. id 를 추측하지 않는다.
-4. **파괴적 명령은 확인 후 실행**: `todo delete`, `schedule delete`, `memo purge`, `memo empty-trash`, `memo-folder delete`, `project delete`(디렉터리 CASCADE), `project dir delete`, `project app delete`. 대상 목록을 보여주고 사용자 승인을 받는다. `memo delete` 는 휴지통 이동이라 `memo restore` 로 되돌릴 수 있다.
+4. **파괴적 명령은 확인 후 실행**: `todo delete`, `schedule delete`, `memo purge`, `memo empty-trash`, `memo-folder delete`. 대상 목록을 보여주고 사용자 승인을 받는다. `memo delete` 는 휴지통 이동이라 `memo restore` 로 되돌릴 수 있다.
 5. **일괄 정리**: 여러 건을 바꿀 때는 먼저 변경 계획(대상 id·전→후)을 표로 보여주고 승인받은 뒤 한 건씩 실행한다. 실행 후 결과를 다시 조회해 보고한다.
 6. **날짜**: `YYYY-MM-DD` 또는 RFC3339. 시각이 있는 일정은 오프셋을 명시한다 (예: `2026-10-20T09:00:00+09:00`).
 7. **본문**: 메모 본문은 markdown. 여러 줄은 `--body "$(cat <<'EOF' ... EOF)"` 처럼 heredoc 으로 넘긴다.
@@ -39,5 +39,4 @@ CLI={{CLI}}
 "$CLI" memo get 7
 "$CLI" memo add --title "회의 메모" --body "- 결정사항 ..." --folder 3
 "$CLI" memo-folder list
-"$CLI" project list
 ```

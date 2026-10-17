@@ -1,5 +1,4 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Project } from "../project/types";
 import type {
   Memo,
   MemoFolder,
@@ -34,18 +33,6 @@ export const memoApi = {
   /** 휴지통 비우기. 삭제된 건수 반환. */
   emptyTrash: (): Promise<{ purged_count: number }> =>
     invoke<{ purged_count: number }>("memo_empty_trash"),
-
-  /** 메모에 매핑된 프로젝트 목록 (sort_order 정렬). */
-  listProjects: (memoId: number): Promise<Project[]> =>
-    invoke<Project[]>("memo_project_list_projects", { memoId }),
-
-  /** 매핑 추가 — 멱등(이미 있으면 no-op). */
-  linkProject: (memoId: number, projectId: number): Promise<void> =>
-    invoke<void>("memo_project_link", { memoId, projectId }),
-
-  /** 매핑 제거. */
-  unlinkProject: (memoId: number, projectId: number): Promise<void> =>
-    invoke<void>("memo_project_unlink", { memoId, projectId }),
 };
 
 export const memoFolderApi = {

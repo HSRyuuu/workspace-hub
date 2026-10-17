@@ -7,7 +7,6 @@ function makeTodo(id: number): Todo {
   return {
     id,
     workspace_id: null,
-    project_id: null,
     title: `Todo ${id}`,
     description: null,
     start_date: "2026-05-17",

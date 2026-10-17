@@ -2,10 +2,6 @@ pub mod dashboard;
 pub mod file_explorer;
 pub mod memo;
 pub mod memo_folder;
-pub mod memo_project;
-pub mod project;
-pub mod project_application;
-pub mod project_directory;
 pub mod schedule;
 pub mod todo;
 
@@ -16,7 +12,7 @@ pub fn now_iso() -> String {
 }
 
 /// nullable string 컬럼 입력값을 정규화: trim 후 빈 문자열이면 `None`, 그 외에는 `Some(s)`.
-/// schedule / project / project_directory / project_application 의 description·location·label·color 등이 공통 사용.
+/// schedule 의 description·location·color 등이 공통 사용.
 pub(crate) fn empty_to_none(v: Option<String>) -> Option<String> {
     v.and_then(|s| {
         let t = s.trim();

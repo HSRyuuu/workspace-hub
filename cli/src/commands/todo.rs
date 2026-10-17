@@ -54,10 +54,6 @@ pub struct AddArgs {
     /// 워크스페이스 ID (선택)
     #[arg(long)]
     pub workspace: Option<i64>,
-
-    /// 프로젝트 ID (선택)
-    #[arg(long)]
-    pub project: Option<i64>,
 }
 
 #[derive(Args)]
@@ -100,14 +96,6 @@ pub struct UpdateArgs {
     /// 상태 (open / hold / done)
     #[arg(long, value_enum)]
     pub status: Option<TodoStatus>,
-
-    /// 프로젝트 ID
-    #[arg(long)]
-    pub project: Option<i64>,
-
-    /// 프로젝트 연결 해제
-    #[arg(long)]
-    pub clear_project: bool,
 }
 
 #[derive(Args)]
@@ -170,7 +158,6 @@ pub fn run(cmd: &TodoCommand, human: bool) -> Result<(), AppError> {
             // 날짜 검증·정규화는 core::repo::create 안에서 수행된다 (raw 값을 그대로 전달).
             let new = NewTodo {
                 workspace_id: args.workspace,
-                project_id: args.project,
                 title: args.title.clone(),
                 description: args.description.clone(),
                 start_date: args.start.clone(),
@@ -200,11 +187,6 @@ pub fn run(cmd: &TodoCommand, human: bool) -> Result<(), AppError> {
                 due_time: parse_due_time(args.due_time.as_ref())?,
                 priority: args.priority,
                 status: args.status,
-                project_id: if args.clear_project {
-                    Some(None)
-                } else {
-                    args.project.map(Some)
-                },
             };
             let todo = repo::update(&conn, args.id, &patch)?;
             output::emit(&todo, human, output::print_todo_human)?;

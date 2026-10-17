@@ -1,6 +1,5 @@
 use serde::Serialize;
 use workspace_hub_core::models::memo::{Memo, MemoFolder};
-use workspace_hub_core::models::project::{Project, ProjectApplication, ProjectDirectory};
 use workspace_hub_core::models::schedule::Schedule;
 use workspace_hub_core::models::todo::Todo;
 use workspace_hub_core::CoreError;
@@ -43,12 +42,8 @@ pub fn print_todo_human(todo: &Todo) {
         .workspace_id
         .map(|i| i.to_string())
         .unwrap_or_else(|| "-".into());
-    let project = todo
-        .project_id
-        .map(|id| id.to_string())
-        .unwrap_or_else(|| "-".into());
     println!(
-        "#{id}  [{status}]  {prio}  due={due}  ws={ws}  project={project}  {title}",
+        "#{id}  [{status}]  {prio}  due={due}  ws={ws}  {title}",
         id = todo.id,
         title = todo.title,
     );
@@ -164,71 +159,4 @@ pub fn print_memo_folders_human(items: &[MemoFolder]) {
         print_memo_folder_human(f);
     }
     println!("\n{} folder(s)", items.len());
-}
-
-pub fn print_project_human(p: &Project) {
-    let desc = p.description.as_deref().unwrap_or("-");
-    println!(
-        "#{id}  order={order}  color={color}  {title}",
-        id = p.id,
-        order = p.sort_order,
-        color = p.color,
-        title = p.title,
-    );
-    if desc != "-" {
-        println!("       {desc}");
-    }
-}
-
-pub fn print_projects_human(items: &[Project]) {
-    if items.is_empty() {
-        println!("(no projects)");
-        return;
-    }
-    for p in items {
-        print_project_human(p);
-    }
-    println!("\n{} project(s)", items.len());
-}
-
-pub fn print_project_dir_human(d: &ProjectDirectory) {
-    let label = d.label.as_deref().unwrap_or("-");
-    println!(
-        "#{id}  project={pid}  label={label}  {path}",
-        id = d.id,
-        pid = d.project_id,
-        path = d.path,
-    );
-}
-
-pub fn print_project_dirs_human(items: &[ProjectDirectory]) {
-    if items.is_empty() {
-        println!("(no directories)");
-        return;
-    }
-    for d in items {
-        print_project_dir_human(d);
-    }
-    println!("\n{} directory(ies)", items.len());
-}
-
-pub fn print_project_app_human(a: &ProjectApplication) {
-    let label = a.label.as_deref().unwrap_or("-");
-    println!(
-        "#{id}  project={pid}  label={label}  {path}",
-        id = a.id,
-        pid = a.project_id,
-        path = a.path,
-    );
-}
-
-pub fn print_project_apps_human(items: &[ProjectApplication]) {
-    if items.is_empty() {
-        println!("(no applications)");
-        return;
-    }
-    for a in items {
-        print_project_app_human(a);
-    }
-    println!("\n{} application(s)", items.len());
 }

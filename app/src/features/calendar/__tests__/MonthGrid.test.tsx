@@ -23,7 +23,6 @@ function makeTodo(overrides: Partial<Todo>): Todo {
   return {
     id: 1,
     workspace_id: null,
-    project_id: null,
     title: "Todo",
     description: null,
     start_date: "2026-05-01",

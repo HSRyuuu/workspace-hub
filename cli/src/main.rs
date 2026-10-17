@@ -5,7 +5,6 @@ mod output;
 
 use commands::memo::MemoCommand;
 use commands::memo_folder::MemoFolderCommand;
-use commands::project::ProjectCommand;
 use commands::schedule::ScheduleCommand;
 use commands::todo::TodoCommand;
 use workspace_hub_core::CoreError;
@@ -42,10 +41,6 @@ enum Command {
     /// 메모 폴더 명령
     #[command(subcommand)]
     MemoFolder(MemoFolderCommand),
-
-    /// 프로젝트 명령 (워크스페이스 묶음 + 디렉터리)
-    #[command(subcommand)]
-    Project(ProjectCommand),
 
     /// 버전 출력
     Version,
@@ -96,7 +91,6 @@ fn run(cli: &Cli) -> Result<(), AppError> {
         Command::Schedule(cmd) => commands::schedule::run(cmd, cli.human),
         Command::Memo(cmd) => commands::memo::run(cmd, cli.human),
         Command::MemoFolder(cmd) => commands::memo_folder::run(cmd, cli.human),
-        Command::Project(cmd) => commands::project::run(cmd, cli.human),
     }
 }
 

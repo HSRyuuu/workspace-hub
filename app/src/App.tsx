@@ -8,8 +8,9 @@ import MemoPage from "./features/memo/MemoPage";
 import ProjectPage from "./features/project/ProjectPage";
 import FilesPage from "./features/files/FilesPage";
 import TodayPage from "./features/today/TodayPage";
+import SettingsPage from "./features/settings/SettingsPage";
 
-type Section = "today" | "todo" | "calendar" | "memos" | "project" | "files";
+type Section = "today" | "todo" | "calendar" | "memos" | "project" | "files" | "settings";
 type QuickCaptureNavigation = { kind: "memo" | "todo" | "schedule"; id: number };
 
 const ICON_SIZE = 18;
@@ -59,6 +60,13 @@ const ProjectIcon = () => (
 const FilesIcon = () => (
   <svg {...iconProps} aria-hidden>
     <path d="M3.5 7.5v11A1.5 1.5 0 0 0 5 20h14a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 19 8h-7.2L9.6 5.7A1.5 1.5 0 0 0 8.5 5H5a1.5 1.5 0 0 0-1.5 1.5z" />
+  </svg>
+);
+
+const SettingsIcon = () => (
+  <svg {...iconProps} aria-hidden>
+    <circle cx="12" cy="12" r="3" />
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
   </svg>
 );
 
@@ -134,6 +142,20 @@ export default function App() {
             </span>
           </div>
         ))}
+        {/* 설정은 도메인이 아니라 사이드바 맨 아래에 고정 */}
+        <div
+          className={`sidebar-item sidebar-item--bottom${section === "settings" ? " active" : ""}`}
+          onClick={() => setSection("settings")}
+          role="button"
+          aria-label="설정"
+        >
+          <span className="sidebar-item-icon">
+            <SettingsIcon />
+          </span>
+          <span className="sidebar-item-label" aria-hidden>
+            설정
+          </span>
+        </div>
       </aside>
       <main
         className={`main${section === "memos" || section === "project" || section === "files" ? " main--flush" : ""}`}
@@ -163,6 +185,7 @@ export default function App() {
         {section === "memos" && <MemoPage selectedMemoId={selectedMemoId} />}
         {section === "project" && <ProjectPage />}
         {section === "files" && <FilesPage />}
+        {section === "settings" && <SettingsPage />}
       </main>
     </div>
   );

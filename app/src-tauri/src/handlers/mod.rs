@@ -8,6 +8,7 @@ pub(crate) mod files;
 pub(crate) mod memo;
 pub(crate) mod project;
 pub(crate) mod schedule;
+pub(crate) mod skill;
 pub(crate) mod todo;
 
 pub(super) fn core_err(e: CoreError) -> String {

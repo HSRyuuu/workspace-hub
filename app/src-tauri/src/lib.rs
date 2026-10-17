@@ -158,6 +158,9 @@ pub fn run() {
             handlers::files::reveal_in_finder,
             handlers::files::open_application,
             handlers::files::open_url,
+            handlers::skill::skill_targets,
+            handlers::skill::skill_install,
+            handlers::skill::skill_uninstall,
         ])
         .build(tauri::generate_context!())
         .expect("error while building tauri application");

@@ -6,8 +6,8 @@
   "build": {
     "frontendDist": "../dist",
     "devUrl": "http://localhost:3003",
-    "beforeDevCommand": "pnpm dev",
-    "beforeBuildCommand": "pnpm build"
+    "beforeDevCommand": "sh scripts/build-cli.sh && pnpm dev",
+    "beforeBuildCommand": "sh scripts/build-cli.sh release && pnpm build"
   },
   "plugins": {
     "fs": {
@@ -45,6 +45,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "externalBin": ["binaries/workspace-hub-cli"],
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

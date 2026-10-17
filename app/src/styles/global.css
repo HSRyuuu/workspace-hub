@@ -66,6 +66,10 @@ a {
   border: 1px solid transparent;
 }
 
+.sidebar-item--bottom {
+  margin-top: auto;
+}
+
 .sidebar-item:hover:not(.active):not(.disabled) {
   background: var(--color-hairline);
   color: var(--color-charcoal);
@@ -4117,4 +4121,74 @@ textarea.info-input {
     border-left: 0;
     border-top: 1px solid var(--color-hairline);
   }
+}
+
+/* ── 설정 ─────────────────────────────────────────────────────────────── */
+.settings-page {
+  width: min(880px, 100%);
+  margin: 0 auto;
+  padding-bottom: var(--space-xxl);
+}
+.settings-card-head {
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--color-hairline);
+}
+.settings-card-head h2 {
+  margin: 0 0 var(--space-xs);
+  color: var(--color-ink);
+  font-size: var(--fs-h3);
+}
+.settings-card-head p {
+  margin: 0;
+  color: var(--color-stone);
+  font-size: var(--fs-sm);
+  line-height: 1.6;
+}
+.settings-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+}
+.settings-row + .settings-row {
+  border-top: 1px solid var(--color-hairline);
+}
+.settings-row-main {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+.settings-row-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-ink);
+  font-weight: 600;
+}
+.settings-row-path {
+  color: var(--color-stone);
+  font-size: var(--fs-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.settings-row-actions {
+  display: flex;
+  gap: var(--space-xs);
+  flex-shrink: 0;
+}
+.settings-badge {
+  padding: 1px 8px;
+  border: 1px solid var(--color-hairline-strong);
+  border-radius: var(--radius-sm);
+  color: var(--color-stone);
+  font-size: var(--fs-xs);
+  font-weight: 500;
+}
+.settings-badge--warn {
+  border-color: var(--color-ink);
+  background: var(--color-ink);
+  color: var(--color-canvas);
 }

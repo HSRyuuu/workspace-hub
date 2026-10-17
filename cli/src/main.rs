@@ -1,4 +1,4 @@
-use clap::{Parser, Subcommand};
+use clap::{CommandFactory, Parser, Subcommand};
 
 mod commands;
 mod output;
@@ -49,6 +49,9 @@ enum Command {
 
     /// 버전 출력
     Version,
+
+    /// 전체 명령 명세를 Markdown 으로 출력 (AI 스킬 references 용)
+    Spec,
 }
 
 fn main() {
@@ -85,11 +88,37 @@ fn run(cli: &Cli) -> Result<(), AppError> {
             }
             Ok(())
         }
+        Command::Spec => {
+            print!("{}", spec_markdown());
+            Ok(())
+        }
         Command::Todo(cmd) => commands::todo::run(cmd, cli.human),
         Command::Schedule(cmd) => commands::schedule::run(cmd, cli.human),
         Command::Memo(cmd) => commands::memo::run(cmd, cli.human),
         Command::MemoFolder(cmd) => commands::memo_folder::run(cmd, cli.human),
         Command::Project(cmd) => commands::project::run(cmd, cli.human),
+    }
+}
+
+/// clap help 를 재귀로 돌며 명령별 Markdown 섹션을 만든다. `docs/CLI_SPEC.md` 와 동일해야 한다.
+fn spec_markdown() -> String {
+    let mut root = Cli::command();
+    root.build();
+    let mut out = String::from(
+        "# workspace-hub CLI 명세\n\n> `workspace-hub spec` 으로 생성. 직접 수정하지 말 것.\n",
+    );
+    push_spec(&mut out, &mut root);
+    out
+}
+
+fn push_spec(out: &mut String, cmd: &mut clap::Command) {
+    let name = cmd.get_bin_name().unwrap_or(cmd.get_name()).to_string();
+    let help = cmd.render_long_help().to_string();
+    out.push_str(&format!("\n## `{name}`\n\n```text\n{}\n```\n", help.trim_end()));
+    for sub in cmd.get_subcommands_mut() {
+        if sub.get_name() != "help" {
+            push_spec(out, sub);
+        }
     }
 }
 

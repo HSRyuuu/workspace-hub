@@ -33,6 +33,17 @@ fn version_human_outputs_human_text() {
 }
 
 #[test]
+fn spec_matches_checked_in_docs() {
+    let dir = TempDir::new().unwrap();
+    let expected = include_str!("../../docs/CLI_SPEC.md");
+    cli(dir.path())
+        .arg("spec")
+        .assert()
+        .success()
+        .stdout(predicate::eq(expected));
+}
+
+#[test]
 fn todo_add_emits_json_with_normalized_due() {
     let dir = TempDir::new().unwrap();
     let out = cli(dir.path())

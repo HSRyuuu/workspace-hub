@@ -14,6 +14,8 @@ function todo(overrides: Partial<Todo>): Todo {
     workspace_id: null,
     title: "Todo",
     description: null,
+    summary: null,
+    links: [],
     start_date: "2026-07-01",
     due_date: null,
     due_time: 0,

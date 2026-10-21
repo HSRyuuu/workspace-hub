@@ -312,3 +312,64 @@ fn data_dir_is_isolated_per_test() {
         .success()
         .stdout(predicates::str::contains("only-in-a").not());
 }
+
+fn run_json(dir: &std::path::Path, args: &[&str]) -> serde_json::Value {
+    let out = cli(dir)
+        .args(args)
+        .assert()
+        .success()
+        .get_output()
+        .stdout
+        .clone();
+    serde_json::from_slice(&out).unwrap()
+}
+
+#[test]
+fn todo_summary_and_links_roundtrip_through_add_update_list() {
+    let dir = TempDir::new().unwrap();
+    let added = run_json(
+        dir.path(),
+        &[
+            "todo", "add", "--title", "t", "--summary", "s", "--link", "https://a.example/1",
+            "--link", "https://b.example/2",
+        ],
+    );
+    assert_eq!(added["summary"], "s");
+    assert_eq!(
+        added["links"],
+        serde_json::json!(["https://a.example/1", "https://b.example/2"])
+    );
+    let id = added["id"].as_i64().unwrap().to_string();
+
+    let replaced = run_json(dir.path(), &["todo", "update", &id, "--link", "https://c.example"]);
+    assert_eq!(replaced["links"], serde_json::json!(["https://c.example"]));
+    assert_eq!(replaced["summary"], "s", "update 에서 지정하지 않은 summary 는 보존");
+
+    let listed = run_json(dir.path(), &["todo", "list"]);
+    assert_eq!(listed[0]["links"], serde_json::json!(["https://c.example"]));
+    assert_eq!(listed[0]["summary"], "s");
+
+    let cleared_links = run_json(dir.path(), &["todo", "update", &id, "--clear-links"]);
+    assert_eq!(cleared_links["links"], serde_json::json!([]));
+
+    let cleared_summary = run_json(dir.path(), &["todo", "update", &id, "--clear-summary"]);
+    assert!(cleared_summary["summary"].is_null());
+}
+
+#[test]
+fn todo_add_without_summary_or_links_emits_null_and_empty_array() {
+    let dir = TempDir::new().unwrap();
+    let v = run_json(dir.path(), &["todo", "add", "--title", "plain"]);
+    assert!(v["summary"].is_null());
+    assert_eq!(v["links"], serde_json::json!([]));
+}
+
+#[test]
+fn todo_add_non_http_link_exits_with_user_error_code_1() {
+    let dir = TempDir::new().unwrap();
+    cli(dir.path())
+        .args(["todo", "add", "--title", "x", "--link", "ftp://x"])
+        .assert()
+        .code(1)
+        .stderr(contains("link"));
+}

@@ -9,6 +9,8 @@ export interface Todo {
   workspace_id: number | null;
   title: string;
   description: string | null;
+  summary: string | null;
+  links: string[];
   start_date: string;
   due_date: string | null;
   due_time: number;
@@ -22,6 +24,8 @@ export interface Todo {
 export interface NewTodoInput {
   title: string;
   description?: string | null;
+  summary?: string | null;
+  links?: string[];
   start_date?: string | null;
   due_date?: string | null;
   due_time?: number | null;
@@ -36,6 +40,9 @@ export interface NewTodoInput {
 export interface TodoPatch {
   title?: string;
   description?: string | null;
+  summary?: string | null;
+  /** 지정하면 링크 목록 전체를 교체한다. 빈 배열 = 모두 지우기. */
+  links?: string[];
   start_date?: string;
   due_date?: string | null;
   due_time?: number;

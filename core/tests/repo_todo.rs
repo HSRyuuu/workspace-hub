@@ -27,6 +27,8 @@ fn mk(title: &str) -> NewTodo {
         due_date: None,
         due_time: None,
         priority: Priority::Mid,
+        summary: None,
+        links: vec![],
     }
 }
 
@@ -130,6 +132,8 @@ fn update_to_hold_clears_completed_at() {
             due_time: None,
             priority: None,
             status: Some(TodoStatus::Hold),
+            summary: None,
+            links: None,
         },
     )
     .unwrap();
@@ -155,6 +159,8 @@ fn list_orders_open_before_hold_before_done() {
             due_time: None,
             priority: None,
             status: Some(TodoStatus::Hold),
+            summary: None,
+            links: None,
         },
     )
     .unwrap();
@@ -185,7 +191,7 @@ fn v013_drops_project_tables_and_todo_project_id() {
         )
         .unwrap();
 
-    assert_eq!(db::LATEST_SCHEMA_VERSION, 13);
+    assert_eq!(db::LATEST_SCHEMA_VERSION, 14);
     assert_eq!(project_tables, 0);
     assert_eq!(project_id_columns, 0);
 }
@@ -198,7 +204,9 @@ fn v013_preserves_v012_todos_and_creates_backup() {
         let conn = db::open_at(&path).unwrap();
         repo::create(&conn, &mk("keep me")).unwrap();
         conn.execute_batch(
-            "DELETE FROM schema_version WHERE version = 13;
+            "DELETE FROM schema_version WHERE version >= 13;
+             ALTER TABLE todo DROP COLUMN summary;
+             ALTER TABLE todo DROP COLUMN links;
              CREATE TABLE project (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT NOT NULL);
              INSERT INTO project (id, title) VALUES (1, 'old');
              ALTER TABLE todo ADD COLUMN project_id INTEGER REFERENCES project(id) ON DELETE SET NULL;
@@ -277,8 +285,8 @@ fn v011_preserves_v010_todos_and_creates_backup() {
         .query_row("SELECT COUNT(*) FROM todo", [], |row| row.get(0))
         .unwrap();
 
-    assert_eq!(db::LATEST_SCHEMA_VERSION, 13);
-    assert_eq!(version, 13);
+    assert_eq!(db::LATEST_SCHEMA_VERSION, 14);
+    assert_eq!(version, 14);
     assert_eq!(count, 2);
     assert_eq!(repo::get(&conn, 1).unwrap().status, TodoStatus::Open);
     assert_eq!(repo::get(&conn, 2).unwrap().status, TodoStatus::Done);
@@ -308,7 +316,7 @@ fn v011_preserves_v010_todos_and_creates_backup() {
             row.get(0)
         })
         .unwrap();
-    assert_eq!(retried_version, 13);
+    assert_eq!(retried_version, 14);
     assert_eq!(repo::list(&retried, None).unwrap().len(), 2);
 }
 
@@ -476,6 +484,8 @@ fn update_single_field_patch() {
             due_time: None,
             priority: Some(Priority::High),
             status: None,
+            summary: None,
+            links: None,
         },
     )
     .unwrap();
@@ -503,6 +513,8 @@ fn update_null_clear() {
             due_time: None,
             priority: None,
             status: None,
+            summary: None,
+            links: None,
         },
     )
     .unwrap();
@@ -532,6 +544,8 @@ fn update_unspecified_fields_preserved() {
             due_time: None,
             priority: None,
             status: None,
+            summary: None,
+            links: None,
         },
     )
     .unwrap();
@@ -562,6 +576,8 @@ fn update_due_date_clear_resets_due_time() {
             due_time: None,
             priority: None,
             status: None,
+            summary: None,
+            links: None,
         },
     )
     .unwrap();
@@ -588,6 +604,8 @@ fn update_status_syncs_completed_at() {
             due_time: None,
             priority: None,
             status: Some(TodoStatus::Done),
+            summary: None,
+            links: None,
         },
     )
     .unwrap();
@@ -606,6 +624,8 @@ fn update_status_syncs_completed_at() {
             due_time: None,
             priority: None,
             status: Some(TodoStatus::Open),
+            summary: None,
+            links: None,
         },
     )
     .unwrap();
@@ -664,4 +684,143 @@ fn migrates_existing_due_at_to_due_date_and_due_time() {
     assert!(two.due_date.is_none());
     assert_eq!(two.due_time, 0);
     assert_eq!(two.completed_at.as_deref(), Some("2026-05-03T01:02:03Z"));
+}
+
+fn empty_patch() -> TodoPatch {
+    TodoPatch {
+        title: None,
+        description: None,
+        start_date: None,
+        due_date: None,
+        due_time: None,
+        priority: None,
+        status: None,
+        summary: None,
+        links: None,
+    }
+}
+
+#[test]
+fn summary_and_links_roundtrip_on_create() {
+    let (_dir, conn) = fresh_conn();
+    let created = repo::create(
+        &conn,
+        &NewTodo {
+            summary: Some("요청자 · 맥락".into()),
+            links: vec!["https://a.example/1".into(), "  https://b.example/2  ".into()],
+            ..mk("with links")
+        },
+    )
+    .unwrap();
+    assert_eq!(created.summary.as_deref(), Some("요청자 · 맥락"));
+    assert_eq!(created.links, vec!["https://a.example/1", "https://b.example/2"]);
+
+    let fetched = repo::get(&conn, created.id).unwrap();
+    assert_eq!(fetched.links, created.links);
+    let listed = repo::list(&conn, None).unwrap();
+    assert_eq!(listed[0].links, created.links);
+}
+
+#[test]
+fn update_replaces_and_clears_summary_and_links() {
+    let (_dir, conn) = fresh_conn();
+    let t = repo::create(
+        &conn,
+        &NewTodo {
+            summary: Some("s".into()),
+            links: vec!["https://a".into(), "https://b".into()],
+            ..mk("t")
+        },
+    )
+    .unwrap();
+
+    let replaced = repo::update(
+        &conn,
+        t.id,
+        &TodoPatch {
+            links: Some(vec!["https://c".into()]),
+            ..empty_patch()
+        },
+    )
+    .unwrap();
+    assert_eq!(replaced.links, vec!["https://c"]);
+    assert_eq!(replaced.summary.as_deref(), Some("s"), "미지정 summary 는 보존");
+
+    let preserved = repo::update(
+        &conn,
+        t.id,
+        &TodoPatch {
+            title: Some("renamed".into()),
+            ..empty_patch()
+        },
+    )
+    .unwrap();
+    assert_eq!(preserved.links, vec!["https://c"], "미지정 links 는 보존");
+
+    let cleared = repo::update(
+        &conn,
+        t.id,
+        &TodoPatch {
+            summary: Some(None),
+            links: Some(vec![]),
+            ..empty_patch()
+        },
+    )
+    .unwrap();
+    assert_eq!(cleared.summary, None);
+    assert!(cleared.links.is_empty());
+}
+
+#[test]
+fn links_reject_non_http_and_blank() {
+    let (_dir, conn) = fresh_conn();
+    for bad in ["ftp://x", "javascript:alert(1)", "   ", "slack://channel"] {
+        let err = repo::create(
+            &conn,
+            &NewTodo {
+                links: vec![bad.into()],
+                ..mk("bad")
+            },
+        )
+        .unwrap_err();
+        assert!(matches!(err, CoreError::InvalidInput(_)), "create {bad:?}");
+    }
+
+    let t = repo::create(&conn, &mk("ok")).unwrap();
+    let err = repo::update(
+        &conn,
+        t.id,
+        &TodoPatch {
+            links: Some(vec!["https://ok".into(), "ftp://x".into()]),
+            ..empty_patch()
+        },
+    )
+    .unwrap_err();
+    assert!(matches!(err, CoreError::InvalidInput(_)));
+    assert!(
+        repo::get(&conn, t.id).unwrap().links.is_empty(),
+        "거부된 update 는 아무것도 바꾸지 않는다"
+    );
+}
+
+#[test]
+fn migration_v014_keeps_existing_rows_with_empty_links() {
+    let dir = TempDir::new().unwrap();
+    let path = dir.path().join("old.sqlite");
+    {
+        let conn = db::open_at(&path).unwrap();
+        repo::create(&conn, &mk("before")).unwrap();
+        conn.execute_batch(
+            "ALTER TABLE todo DROP COLUMN summary;
+             ALTER TABLE todo DROP COLUMN links;
+             DELETE FROM schema_version WHERE version = 14;",
+        )
+        .unwrap();
+    }
+    let conn = db::open_at(&path).unwrap();
+    let todos = repo::list(&conn, None).unwrap();
+    assert_eq!(todos.len(), 1);
+    assert_eq!(todos[0].title, "before");
+    assert_eq!(todos[0].summary, None);
+    assert!(todos[0].links.is_empty());
 }

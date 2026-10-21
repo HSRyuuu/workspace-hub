@@ -1,5 +1,6 @@
 import { Button, PriorityDot } from "../../../components/ui";
 import type { Todo } from "../types";
+import { LinkChip } from "./LinkChip";
 
 interface TodoListProps {
   todos: Todo[];
@@ -91,7 +92,17 @@ export function TodoList({
               }}
               aria-label={isDone ? "완료 해제" : "완료"}
             />
-            <span className="todo-title">{t.title}</span>
+            <div className="todo-main">
+              <span className="todo-title">{t.title}</span>
+              {t.summary && <span className="todo-summary">{t.summary}</span>}
+              {t.links.length > 0 && (
+                <div className="todo-links">
+                  {t.links.map((url) => (
+                    <LinkChip key={url} url={url} />
+                  ))}
+                </div>
+              )}
+            </div>
             {t.status === "hold" && (
               <span className="ws-chip">
                 <span className="ws-chip-dot" style={{ background: "var(--color-warning)" }} />

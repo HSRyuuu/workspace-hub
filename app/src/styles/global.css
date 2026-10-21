@@ -478,8 +478,79 @@ a {
 }
 
 .todo-title {
+  font-size: var(--fs-h3);
   font-weight: 500;
   color: var(--color-ink);
+}
+
+/* 제목 · 요약 · 링크 chip 을 세로로 쌓는 행 본문 (grid 의 1fr 칸) */
+.todo-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.todo-summary {
+  font-size: var(--fs-sm);
+  color: var(--color-slate);
+}
+
+.todo-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 2px;
+}
+
+/* === Link chip · 열기 / 복사 / (삭제) === */
+.link-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 280px;
+  border: 1px solid var(--color-hairline-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-canvas);
+  font-size: var(--fs-sm);
+  line-height: 1;
+}
+.link-chip button {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--color-slate);
+  cursor: pointer;
+}
+.link-chip-open {
+  padding: 4px 6px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.link-chip-open:hover {
+  color: var(--color-ink);
+  text-decoration: underline;
+}
+.link-chip .link-chip-btn {
+  padding: 4px 5px;
+  border-left: 1px solid var(--color-hairline);
+}
+.link-chip .link-chip-btn:hover {
+  color: var(--color-ink);
+  background: var(--color-surface);
+}
+
+.link-add-row {
+  display: flex;
+  gap: var(--space-xs);
+}
+.link-add-row .input {
+  flex: 1;
+}
+.link-error {
+  font-size: var(--fs-sm);
+  color: var(--color-error);
 }
 
 .todo-meta {

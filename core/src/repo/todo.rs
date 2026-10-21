@@ -19,11 +19,17 @@ fn map_row(row: &Row<'_>) -> rusqlite::Result<Todo> {
             )),
         )
     })?;
+    let links_json: String = row.get("links")?;
+    let links = serde_json::from_str::<Vec<String>>(&links_json).map_err(|e| {
+        rusqlite::Error::FromSqlConversionFailure(0, rusqlite::types::Type::Text, Box::new(e))
+    })?;
     Ok(Todo {
         id: row.get("id")?,
         workspace_id: row.get("workspace_id")?,
         title: row.get("title")?,
         description: row.get("description")?,
+        summary: row.get("summary")?,
+        links,
         start_date: row.get("start_date")?,
         due_date: row.get("due_date")?,
         due_time: row.get("due_time")?,
@@ -36,7 +42,7 @@ fn map_row(row: &Row<'_>) -> rusqlite::Result<Todo> {
 }
 
 const SELECT_COLUMNS: &str =
-    "id, workspace_id, title, description, start_date, due_date, due_time, priority, status, completed_at, created_at, updated_at";
+    "id, workspace_id, title, description, summary, links, start_date, due_date, due_time, priority, status, completed_at, created_at, updated_at";
 
 const TODO_ORDER: &str =
     "ORDER BY CASE status WHEN 'open' THEN 0 WHEN 'hold' THEN 1 ELSE 2 END ASC, \
@@ -54,6 +60,31 @@ pub struct TodoPatch {
     pub due_time: Option<i64>,
     pub priority: Option<Priority>,
     pub status: Option<TodoStatus>,
+    pub summary: Option<Option<String>>,
+    /// `None` = 보존, `Some(v)` = 통째 교체 (빈 벡터 = 비우기).
+    pub links: Option<Vec<String>>,
+}
+
+/// 링크는 http/https 만 허용한다 (앱의 `open_url` 이 그 외는 열지 못한다). 앞뒤 공백은 제거한다.
+fn normalize_links(links: &[String]) -> Result<Vec<String>, CoreError> {
+    links
+        .iter()
+        .map(|raw| {
+            let url = raw.trim();
+            let lower = url.to_ascii_lowercase();
+            if lower.starts_with("http://") || lower.starts_with("https://") {
+                Ok(url.to_string())
+            } else {
+                Err(CoreError::InvalidInput(format!(
+                    "link must start with http:// or https://, got: {raw}"
+                )))
+            }
+        })
+        .collect()
+}
+
+fn links_json(links: &[String]) -> Result<String, CoreError> {
+    serde_json::to_string(links).map_err(|e| CoreError::Parse(e.to_string()))
 }
 
 pub fn create(conn: &Connection, input: &NewTodo) -> Result<Todo, CoreError> {
@@ -71,14 +102,18 @@ pub fn create(conn: &Connection, input: &NewTodo) -> Result<Todo, CoreError> {
         0
     };
 
+    let links = links_json(&normalize_links(&input.links)?)?;
+
     conn.execute(
         "INSERT INTO todo
-            (workspace_id, title, description, start_date, due_date, due_time, priority, status, created_at, updated_at)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'open', ?8, ?8)",
+            (workspace_id, title, description, summary, links, start_date, due_date, due_time, priority, status, created_at, updated_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, 'open', ?10, ?10)",
         params![
             input.workspace_id,
             input.title.trim(),
             input.description,
+            input.summary,
+            links,
             start_date,
             due_date,
             due_time,
@@ -246,6 +281,16 @@ pub fn update(conn: &Connection, id: i64, patch: &TodoPatch) -> Result<Todo, Cor
         Some(Some(desc)) => push!("description", Some(desc.clone())),
         Some(None) => push!("description", Option::<String>::None),
         None => {}
+    }
+
+    match &patch.summary {
+        Some(Some(summary)) => push!("summary", Some(summary.clone())),
+        Some(None) => push!("summary", Option::<String>::None),
+        None => {}
+    }
+
+    if let Some(links) = &patch.links {
+        push!("links", links_json(&normalize_links(links)?)?);
     }
 
     if let Some(raw) = &patch.start_date {

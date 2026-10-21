@@ -35,6 +35,14 @@ pub struct AddArgs {
     #[arg(long, allow_hyphen_values = true)]
     pub description: Option<String>,
 
+    /// 한 줄 요약 (선택)
+    #[arg(long, allow_hyphen_values = true)]
+    pub summary: Option<String>,
+
+    /// 링크 URL — http(s) 만 허용. 여러 번 지정 가능, 지정 순서 유지.
+    #[arg(long = "link", value_name = "URL")]
+    pub links: Vec<String>,
+
     /// 시작일 — YYYY-MM-DD 또는 RFC3339. DateTime 이면 날짜만 보존.
     #[arg(long)]
     pub start: Option<String>,
@@ -72,6 +80,22 @@ pub struct UpdateArgs {
     /// 설명 지우기
     #[arg(long)]
     pub clear_description: bool,
+
+    /// 새 요약
+    #[arg(long, allow_hyphen_values = true)]
+    pub summary: Option<String>,
+
+    /// 요약 지우기
+    #[arg(long)]
+    pub clear_summary: bool,
+
+    /// 링크 URL — http(s) 만 허용. 지정하면 기존 링크 목록 전체를 이 값들로 교체한다. 여러 번 지정 가능.
+    #[arg(long = "link", value_name = "URL")]
+    pub links: Vec<String>,
+
+    /// 링크 모두 지우기
+    #[arg(long)]
+    pub clear_links: bool,
 
     /// 새 마감일 (YYYY-MM-DD 또는 RFC3339)
     #[arg(long)]
@@ -160,6 +184,8 @@ pub fn run(cmd: &TodoCommand, human: bool) -> Result<(), AppError> {
                 workspace_id: args.workspace,
                 title: args.title.clone(),
                 description: args.description.clone(),
+                summary: args.summary.clone(),
+                links: args.links.clone(),
                 start_date: args.start.clone(),
                 due_date: args.due.clone(),
                 due_time: parse_due_time(args.due_time.as_ref())?,
@@ -182,6 +208,14 @@ pub fn run(cmd: &TodoCommand, human: bool) -> Result<(), AppError> {
             let patch = TodoPatch {
                 title: args.title.clone(),
                 description: clear_or_value(args.clear_description, args.description.clone()),
+                summary: clear_or_value(args.clear_summary, args.summary.clone()),
+                links: if args.clear_links {
+                    Some(vec![])
+                } else if args.links.is_empty() {
+                    None
+                } else {
+                    Some(args.links.clone())
+                },
                 start_date: args.start.clone(),
                 due_date: clear_or_value(args.clear_due, args.due.clone()),
                 due_time: parse_due_time(args.due_time.as_ref())?,

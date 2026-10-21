@@ -1,7 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { DateField, MarkdownEditor, PriorityDot, Select, TimeField } from "../../../components/ui";
+import {
+  Button,
+  DateField,
+  MarkdownEditor,
+  PriorityDot,
+  Select,
+  TimeField,
+} from "../../../components/ui";
 import type { MarkdownEditorHandle, SelectOption } from "../../../components/ui";
 import type { Priority, Todo, TodoPatch, TodoStatus } from "../types";
+import { LinkChip, isHttpUrl } from "./LinkChip";
 
 interface TodoDetailProps {
   todo: Todo | null;
@@ -23,12 +31,18 @@ const STATUS_OPTIONS: SelectOption<TodoStatus>[] = [
 
 export function TodoDetail({ todo, descriptionRef, onPatch }: TodoDetailProps) {
   const [localTitle, setLocalTitle] = useState("");
+  const [localSummary, setLocalSummary] = useState("");
+  const [linkInput, setLinkInput] = useState("");
+  const [linkError, setLinkError] = useState<string | null>(null);
   const titleRef = useRef<HTMLInputElement>(null);
 
   // todo ID 변경 시 로컬 제목 리셋 (description 은 MarkdownEditor 가 resetKey 로 처리)
   useEffect(() => {
     if (!todo) return;
     setLocalTitle(todo.title);
+    setLocalSummary(todo.summary ?? "");
+    setLinkInput("");
+    setLinkError(null);
   }, [todo?.id]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!todo) {
@@ -49,6 +63,36 @@ export function TodoDetail({ todo, descriptionRef, onPatch }: TodoDetailProps) {
     if (val.trim()) {
       onPatch(todo.id, { title: val.trim() }, true); // debounced
     }
+  };
+
+  const handleSummaryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setLocalSummary(val);
+    onPatch(todo.id, { summary: val.trim() ? val : null }, true); // debounced
+  };
+
+  // useDebouncedUpdate 는 같은 id 의 다음 patch 가 오면 대기 중 타이머를 취소한다.
+  // 요약 입력 직후 링크를 추가해도 요약이 유실되지 않도록 blur 에서 즉시 저장한다.
+  const handleSummaryBlur = () => {
+    if (localSummary === (todo.summary ?? "")) return;
+    onPatch(todo.id, { summary: localSummary.trim() ? localSummary : null }, false);
+  };
+
+  const handleAddLink = () => {
+    const url = linkInput.trim();
+    if (!url) return;
+    if (!isHttpUrl(url)) {
+      setLinkError("http:// 또는 https:// 로 시작하는 링크만 추가할 수 있어요");
+      return;
+    }
+    setLinkError(null);
+    setLinkInput("");
+    if (todo.links.includes(url)) return;
+    onPatch(todo.id, { links: [...todo.links, url] }, false);
+  };
+
+  const handleRemoveLink = (url: string) => {
+    onPatch(todo.id, { links: todo.links.filter((l) => l !== url) }, false);
   };
 
   const handleDescriptionChange = (md: string) => {
@@ -94,6 +138,55 @@ export function TodoDetail({ todo, descriptionRef, onPatch }: TodoDetailProps) {
           onChange={handleTitleChange}
           aria-label="제목"
         />
+      </div>
+
+      <div className="detail-field">
+        <label className="detail-label">요약</label>
+        <input
+          className="input"
+          value={localSummary}
+          onChange={handleSummaryChange}
+          onBlur={handleSummaryBlur}
+          placeholder="한 줄 요약"
+          aria-label="요약"
+        />
+      </div>
+
+      <div className="detail-field">
+        <label className="detail-label">링크</label>
+        {todo.links.length > 0 && (
+          <div className="todo-links">
+            {todo.links.map((url) => (
+              <LinkChip key={url} url={url} onRemove={() => handleRemoveLink(url)} />
+            ))}
+          </div>
+        )}
+        <div className="link-add-row">
+          <input
+            className="input"
+            value={linkInput}
+            onChange={(e) => {
+              setLinkInput(e.target.value);
+              setLinkError(null);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.nativeEvent.isComposing) {
+                e.preventDefault();
+                handleAddLink();
+              }
+            }}
+            placeholder="https://…"
+            aria-label="링크 URL"
+          />
+          <Button size="sm" onClick={handleAddLink}>
+            링크 추가
+          </Button>
+        </div>
+        {linkError && (
+          <span role="alert" className="link-error">
+            {linkError}
+          </span>
+        )}
       </div>
 
       <div className="detail-field">

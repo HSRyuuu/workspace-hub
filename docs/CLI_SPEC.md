@@ -70,6 +70,12 @@ Options:
       --description <DESCRIPTION>
           상세 설명 (선택)
 
+      --summary <SUMMARY>
+          한 줄 요약 (선택)
+
+      --link <URL>
+          링크 URL — http(s) 만 허용. 여러 번 지정 가능, 지정 순서 유지
+
       --start <START>
           시작일 — YYYY-MM-DD 또는 RFC3339. DateTime 이면 날짜만 보존
 
@@ -136,6 +142,18 @@ Options:
 
       --clear-description
           설명 지우기
+
+      --summary <SUMMARY>
+          새 요약
+
+      --clear-summary
+          요약 지우기
+
+      --link <URL>
+          링크 URL — http(s) 만 허용. 지정하면 기존 링크 목록 전체를 이 값들로 교체한다. 여러 번 지정 가능
+
+      --clear-links
+          링크 모두 지우기
 
       --due <DUE>
           새 마감일 (YYYY-MM-DD 또는 RFC3339)

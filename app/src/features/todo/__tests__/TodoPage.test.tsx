@@ -26,6 +26,8 @@ function makeTodo(overrides: Partial<Todo> = {}): Todo {
     workspace_id: null,
     title: "Open todo",
     description: null,
+    summary: null,
+    links: [],
     start_date: "2026-06-29",
     due_date: null,
     due_time: 0,

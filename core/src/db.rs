@@ -29,6 +29,7 @@ const MIGRATIONS: &[(u32, &str)] = &[
     (11, include_str!("../migrations/V011__todo_status_hold.sql")),
     (12, include_str!("../migrations/V012__todo_project_id.sql")),
     (13, include_str!("../migrations/V013__drop_project.sql")),
+    (14, include_str!("../migrations/V014__todo_summary_links.sql")),
 ];
 
 /// MIGRATIONS 배열의 마지막 버전. 테스트가 매직 넘버 대신 이 상수를 참조하면 새 마이그레이션

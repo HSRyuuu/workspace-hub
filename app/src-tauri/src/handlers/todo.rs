@@ -5,6 +5,22 @@ use workspace_hub_core::repo::todo::TodoPatch;
 use super::{core_err, lock_err, nullable_string_patch, parse_priority, parse_status, DeletedAck};
 use crate::DbState;
 
+/// JSON 배열을 링크 문자열 목록으로 변환한다. 키가 없으면 `None`, 문자열이 아닌 원소가 있으면 에러.
+fn links_from_json(v: Option<&serde_json::Value>) -> Result<Option<Vec<String>>, String> {
+    let Some(v) = v else { return Ok(None) };
+    let arr = v
+        .as_array()
+        .ok_or_else(|| "links must be an array of strings".to_string())?;
+    arr.iter()
+        .map(|x| {
+            x.as_str()
+                .map(String::from)
+                .ok_or_else(|| "links must be an array of strings".to_string())
+        })
+        .collect::<Result<Vec<_>, _>>()
+        .map(Some)
+}
+
 #[tauri::command]
 pub(crate) fn todo_list(
     state: tauri::State<DbState>,
@@ -45,6 +61,11 @@ pub(crate) fn todo_add(
         .get("description")
         .and_then(|v| v.as_str())
         .map(String::from);
+    let summary = input
+        .get("summary")
+        .and_then(|v| v.as_str())
+        .map(String::from);
+    let links = links_from_json(input.get("links"))?.unwrap_or_default();
     let start_date = input
         .get("start_date")
         .and_then(|v| v.as_str())
@@ -67,6 +88,8 @@ pub(crate) fn todo_add(
         workspace_id,
         title,
         description,
+        summary,
+        links,
         start_date,
         due_date,
         due_time,
@@ -87,6 +110,8 @@ pub(crate) fn todo_update(
         .and_then(|v| v.as_str())
         .map(String::from);
     let description = nullable_string_patch(patch.get("description"));
+    let summary = nullable_string_patch(patch.get("summary"));
+    let links = links_from_json(patch.get("links"))?;
     let start_date = patch
         .get("start_date")
         .and_then(|v| v.as_str())
@@ -110,6 +135,8 @@ pub(crate) fn todo_update(
         due_time,
         priority,
         status,
+        summary,
+        links,
     };
     let conn = state.0.lock().map_err(lock_err)?;
     repo::todo::update(&conn, id, &tp).map_err(core_err)

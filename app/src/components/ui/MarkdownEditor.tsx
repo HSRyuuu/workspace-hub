@@ -577,6 +577,57 @@ export const MarkdownEditor = forwardRef<MarkdownEditorHandle, MarkdownEditorPro
         {!readOnly && (
           <BubbleMenu
             editor={editor}
+            shouldShow={({ editor: ed, state }) =>
+              !state.selection.empty &&
+              ed.isEditable &&
+              !ed.isActive("table") &&
+              !ed.isActive("codeBlock")
+            }
+            updateDelay={150}
+            options={{ placement: "top", offset: 8 }}
+            className="markdown-inline-bubble"
+          >
+            <button
+              type="button"
+              className={editor.isActive("bold") ? "active" : ""}
+              onClick={() => editor.chain().focus().toggleBold().run()}
+              title="Bold (⌘B)"
+              aria-label="굵게"
+            >
+              <b>B</b>
+            </button>
+            <button
+              type="button"
+              className={editor.isActive("italic") ? "active" : ""}
+              onClick={() => editor.chain().focus().toggleItalic().run()}
+              title="Italic (⌘I)"
+              aria-label="기울임"
+            >
+              <i>I</i>
+            </button>
+            <button
+              type="button"
+              className={editor.isActive("strike") ? "active" : ""}
+              onClick={() => editor.chain().focus().toggleStrike().run()}
+              title="Strikethrough"
+              aria-label="취소선"
+            >
+              <s>S</s>
+            </button>
+            <button
+              type="button"
+              className={editor.isActive("code") ? "active" : ""}
+              onClick={() => editor.chain().focus().toggleCode().run()}
+              title="Inline code (⌘E)"
+              aria-label="인라인 코드"
+            >
+              {"<>"}
+            </button>
+          </BubbleMenu>
+        )}
+        {!readOnly && (
+          <BubbleMenu
+            editor={editor}
             shouldShow={({ editor: ed }) => ed.isActive("table")}
             updateDelay={120}
             getReferencedVirtualElement={() => {

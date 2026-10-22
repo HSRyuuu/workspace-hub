@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { showConfirmToast } from "../../components/ui/ConfirmToast";
 import type { MarkdownEditorHandle } from "../../components/ui/MarkdownEditor";
 import { showErrorToast } from "../../components/ui/Toast";
+import { ResizablePanel } from "../../components/ui";
 import { todoApi } from "./api";
 import { AddBar } from "./components/AddBar";
 import { TodoDetail } from "./components/TodoDetail";
@@ -210,18 +211,15 @@ export default function TodoPage({ selectedTodoId = null }: TodoPageProps) {
   }, []);
 
   return (
-    <>
+    <div className="todo-page">
       <AddBar onAdd={(t) => void onAdd(t)} />
       <TodoFilters filters={filters} onChange={setFilters} />
 
       {loading && todos.length === 0 ? (
         <div className="empty-state">불러오는 중…</div>
       ) : (
-        <div
-          className="todo-split"
-          style={{ display: "grid", gridTemplateColumns: "5fr 7fr", gap: "1rem" }}
-        >
-          <div>
+        <div className="todo-stage">
+          <div className="todo-stage-list">
             <TodoList
               todos={filteredTodos}
               selectedId={selectedId}
@@ -230,11 +228,13 @@ export default function TodoPage({ selectedTodoId = null }: TodoPageProps) {
               onDelete={onDelete}
             />
           </div>
-          <div>
-            <TodoDetail todo={selectedTodo} descriptionRef={descriptionRef} onPatch={onPatch} />
-          </div>
+          {selectedTodo && (
+            <ResizablePanel title="할 일 상세" onClose={() => setSelectedId(null)}>
+              <TodoDetail todo={selectedTodo} descriptionRef={descriptionRef} onPatch={onPatch} />
+            </ResizablePanel>
+          )}
         </div>
       )}
-    </>
+    </div>
   );
 }

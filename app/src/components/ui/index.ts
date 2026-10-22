@@ -1,5 +1,8 @@
 export { Button } from "./Button";
 export { WorkspaceChip } from "./Chip";
+export { ResizablePanel } from "./ResizablePanel";
+export { SegmentedControl } from "./SegmentedControl";
+export type { SegmentedItem } from "./SegmentedControl";
 export { TabsUnderline } from "./TabsUnderline";
 export type { TabItem } from "./TabsUnderline";
 export { PriorityDot } from "./PriorityDot";

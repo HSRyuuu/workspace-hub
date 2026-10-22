@@ -48,9 +48,21 @@ export function TodoDetail({ todo, descriptionRef, onPatch }: TodoDetailProps) {
   if (!todo) {
     return (
       <div className="todo-detail-empty">
-        <span className="empty-icon" aria-hidden="true">
-          📋
-        </span>
+        <svg
+          className="empty-icon"
+          width="28"
+          height="28"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <rect x="5" y="4" width="14" height="17" rx="2.5" />
+          <path d="M9 4.5h6M9 11h6M9 15h4" />
+        </svg>
         <p className="empty-primary">좌측에서 할 일을 선택하세요</p>
         <p className="empty-secondary">↑/↓ 이동, Enter 열기</p>
       </div>

@@ -1,7 +1,8 @@
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import TodayPage from "../TodayPage";
 import type { DashboardSummary } from "../types";
+import type { Schedule } from "../../calendar/types";
 import type { Todo } from "../../todo/types";
 
 const invokeMock = vi.hoisted(() => vi.fn());
@@ -28,14 +29,28 @@ function todo(overrides: Partial<Todo>): Todo {
   };
 }
 
+function schedule(overrides: Partial<Schedule>): Schedule {
+  return {
+    id: 1,
+    title: "Schedule",
+    description: null,
+    location: null,
+    start_at: new Date(2026, 6, 8, 14).toISOString(),
+    end_at: new Date(2026, 6, 8, 15).toISOString(),
+    all_day: false,
+    color: null,
+    created_at: "2026-07-01T00:00:00Z",
+    updated_at: "2026-07-01T00:00:00Z",
+    ...overrides,
+  };
+}
+
 function summary(): DashboardSummary {
   return {
     due_todos: [
       todo({ id: 1, title: "Past due", due_date: "2026-07-07" }),
       todo({ id: 2, title: "Due today", due_date: "2026-07-08" }),
       todo({ id: 3, title: "Due this week", due_date: "2026-07-10" }),
-      todo({ id: 4, title: "After week", due_date: "2026-07-13" }),
-      todo({ id: 5, title: "No due date", due_date: null }),
     ],
     open_todos: [
       todo({
@@ -43,28 +58,9 @@ function summary(): DashboardSummary {
         title: "Old open todo",
         created_at: new Date(2026, 5, 29).toISOString(),
       }),
+      todo({ id: 7, title: "Fresh open todo", created_at: new Date(2026, 6, 7).toISOString() }),
     ],
-    open_total: 2,
-    recent_memos: [
-      {
-        id: 20,
-        folder_id: null,
-        title: "",
-        body: "# Body title\ncontent",
-        pinned: false,
-        deleted_at: null,
-        created_at: "2026-07-01T00:00:00Z",
-        updated_at: "2026-07-08T00:00:00Z",
-      },
-    ],
-    recent_folders: [
-      {
-        id: 30,
-        path: "/Users/me/RecentFolder",
-        is_favorite: false,
-        last_opened_at: "2026-07-08T00:00:00Z",
-      },
-    ],
+    open_total: 9,
   };
 }
 
@@ -72,15 +68,31 @@ async function flushPromises() {
   await act(async () => {
     await Promise.resolve();
     await Promise.resolve();
+    await Promise.resolve();
   });
 }
 
-describe("TodayPage", () => {
+function renderPage(props: Partial<React.ComponentProps<typeof TodayPage>> = {}) {
+  const onNavigateToTodo = vi.fn();
+  const onNavigateToCalendar = vi.fn();
+  render(
+    <TodayPage
+      onNavigateToTodo={onNavigateToTodo}
+      onNavigateToCalendar={onNavigateToCalendar}
+      {...props}
+    />,
+  );
+  return { onNavigateToTodo, onNavigateToCalendar };
+}
+
+describe("TodayPage dashboard", () => {
   beforeEach(() => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date(2026, 6, 8, 12));
     invokeMock.mockImplementation((command: string) => {
       if (command === "dashboard_summary") return Promise.resolve(summary());
+      if (command === "schedule_list_range")
+        return Promise.resolve([schedule({ id: 10, title: "Standup" })]);
       return Promise.resolve(undefined);
     });
   });
@@ -90,61 +102,97 @@ describe("TodayPage", () => {
     invokeMock.mockReset();
   });
 
-  it("groups deadlines and renders dashboard summaries", async () => {
-    render(<TodayPage onNavigateToTodo={vi.fn()} onNavigateToMemo={vi.fn()} />);
+  it("asks for a 7-day horizon and renders the date header with counts", async () => {
+    renderPage();
     await flushPromises();
 
-    const overdue = screen.getByText("Past due");
-    expect(screen.getByRole("heading", { name: "지난 마감" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "오늘" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "이번 주" })).toBeInTheDocument();
-    expect(overdue.closest(".today-due-overdue")).not.toBeNull();
-    expect(screen.queryByText("After week")).not.toBeInTheDocument();
-    expect(screen.queryByText("No due date")).not.toBeInTheDocument();
-
-    const staleTodo = screen.getByText("Old open todo").closest(".today-row");
-    expect(staleTodo).toHaveClass("today-row--stale");
-    expect(screen.getByText("9일 경과")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "1건 더" })).toBeInTheDocument();
-    expect(screen.getByText("Body title")).toBeInTheDocument();
-    expect(screen.getByText("RecentFolder")).toBeInTheDocument();
+    expect(invokeMock).toHaveBeenCalledWith("dashboard_summary", { weekEnd: "2026-07-14" });
+    expect(screen.getByRole("heading", { level: 1, name: "7월 8일 수요일" })).toBeInTheDocument();
   });
 
-  it("routes todo and memo clicks and opens folders without touching history", async () => {
-    const onNavigateToTodo = vi.fn();
-    const onNavigateToMemo = vi.fn();
-    render(<TodayPage onNavigateToTodo={onNavigateToTodo} onNavigateToMemo={onNavigateToMemo} />);
+  it("shows stat tiles with the counts", async () => {
+    renderPage();
     await flushPromises();
-    screen.getByText("Past due");
+
+    expect(screen.getByRole("button", { name: "지난 마감 1건" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "오늘 마감 1건" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "앞으로 7일 마감 1건" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "미완료 TODO 9건" })).toBeInTheDocument();
+  });
+
+  it("lists overdue, today, and stale todos and today's schedule in their cards", async () => {
+    renderPage();
+    await flushPromises();
+
+    const overdue = screen.getByRole("region", { name: "지난 마감" });
+    expect(within(overdue).getByText("Past due")).toBeInTheDocument();
+    expect(within(overdue).getByText("1일 지남")).toBeInTheDocument();
+
+    const dueToday = screen.getByRole("region", { name: "오늘 마감" });
+    expect(within(dueToday).getByText("Due today")).toBeInTheDocument();
+
+    const stale = screen.getByRole("region", { name: "7일 넘게 열린 TODO" });
+    expect(within(stale).getByText("Old open todo")).toBeInTheDocument();
+    expect(within(stale).getByText("9일 경과")).toBeInTheDocument();
+    expect(within(stale).queryByText("Fresh open todo")).not.toBeInTheDocument();
+
+    const sched = screen.getByRole("region", { name: "오늘 일정" });
+    expect(within(sched).getByText("Standup")).toBeInTheDocument();
+    expect(within(sched).getByText("다음")).toBeInTheDocument();
+  });
+
+  it("no longer shows recent memos or folders", async () => {
+    renderPage();
+    await flushPromises();
+
+    expect(screen.queryByText("최근 메모")).not.toBeInTheDocument();
+    expect(screen.queryByText("최근 폴더")).not.toBeInTheDocument();
+  });
+
+  it("renders a 7-day strip starting today with that day's items", async () => {
+    renderPage();
+    await flushPromises();
+
+    const strip = screen.getByRole("region", { name: "다가오는 7일" });
+    const days = within(strip).getAllByRole("button");
+    expect(days).toHaveLength(7);
+    expect(days[0]).toHaveAccessibleName("8일 수요일, 일정 1건, 마감 1건");
+    expect(days[0]).toHaveTextContent("오늘");
+    expect(days[2]).toHaveAccessibleName("10일 금요일, 일정 0건, 마감 1건");
+    expect(within(days[2]).getByText("Due this week")).toBeInTheDocument();
+  });
+
+  it("routes todo rows, tiles, and calendar-bound items", async () => {
+    const { onNavigateToTodo, onNavigateToCalendar } = renderPage();
+    await flushPromises();
 
     fireEvent.click(screen.getByRole("button", { name: /Past due/ }));
-    fireEvent.click(screen.getByRole("button", { name: "1건 더" }));
-    fireEvent.click(screen.getByRole("button", { name: /Body title/ }));
-    fireEvent.click(screen.getByRole("button", { name: /RecentFolder/ }));
+    fireEvent.click(screen.getByRole("button", { name: "미완료 TODO 9건" }));
+    fireEvent.click(screen.getByRole("button", { name: /Standup/ }));
 
     expect(onNavigateToTodo).toHaveBeenCalledWith(1);
     expect(onNavigateToTodo).toHaveBeenCalledWith(null);
-    expect(onNavigateToMemo).toHaveBeenCalledWith(20);
-    expect(invokeMock).toHaveBeenCalledWith("open_in_finder", {
-      path: "/Users/me/RecentFolder",
-    });
-    expect(invokeMock).not.toHaveBeenCalledWith("files_folder_touch", expect.anything());
+    expect(onNavigateToCalendar).toHaveBeenCalledTimes(1);
   });
 
-  it("shows section empty states", async () => {
-    invokeMock.mockResolvedValueOnce({
-      due_todos: [],
-      open_todos: [],
-      open_total: 0,
-      recent_memos: [],
-      recent_folders: [],
-    });
-    render(<TodayPage onNavigateToTodo={vi.fn()} onNavigateToMemo={vi.fn()} />);
+  it("shows friendly empty states", async () => {
+    invokeMock.mockImplementation((command: string) =>
+      Promise.resolve(
+        command === "dashboard_summary"
+          ? {
+              due_todos: [],
+              open_todos: [],
+              open_total: 0,
+            }
+          : [],
+      ),
+    );
+    renderPage();
     await flushPromises();
 
-    expect(screen.getByText("마감된 TODO가 없습니다.")).toBeInTheDocument();
-    expect(screen.getByText("미완료 TODO가 없습니다.")).toBeInTheDocument();
-    expect(screen.getByText("최근 메모가 없습니다.")).toBeInTheDocument();
-    expect(screen.getByText("최근 폴더가 없습니다.")).toBeInTheDocument();
+    expect(screen.getByText("오늘 일정이 없어요.")).toBeInTheDocument();
+    expect(screen.getByText("오늘 마감인 TODO가 없어요.")).toBeInTheDocument();
+    expect(screen.getByText("지난 마감이 없어요.")).toBeInTheDocument();
+    expect(screen.getByText("오래 묵은 TODO가 없어요.")).toBeInTheDocument();
   });
 });

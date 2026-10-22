@@ -3,6 +3,7 @@ import { Button, showErrorToast } from "../../components/ui";
 import { todoApi } from "../todo/api";
 import type { Todo } from "../todo/types";
 import { MonthGrid } from "./MonthGrid";
+import { MonthPicker } from "./MonthPicker";
 import { ScheduleEditor } from "./ScheduleEditor";
 import { TodoDetailPanel } from "./TodoDetailPanel";
 import { scheduleApi } from "./api";
@@ -79,9 +80,14 @@ export default function CalendarPage({ onNavigateToTodo }: CalendarPageProps) {
         <Button variant="secondary" onClick={() => gotoMonth(-1)} aria-label="이전 달">
           ‹
         </Button>
-        <div className="cal-cursor">
-          {cursor.year}년 {cursor.month}월
-        </div>
+        <MonthPicker
+          year={cursor.year}
+          month={cursor.month}
+          onSelect={(year, month) => {
+            setCursor({ year, month });
+            setSelection(null);
+          }}
+        />
         <Button variant="secondary" onClick={() => gotoMonth(1)} aria-label="다음 달">
           ›
         </Button>
@@ -90,7 +96,7 @@ export default function CalendarPage({ onNavigateToTodo }: CalendarPageProps) {
         </Button>
       </div>
 
-      <div className="cal-split">
+      <div className={`cal-split${selection ? " cal-split--open" : ""}`}>
         <div className="cal-split-grid">
           {loading && schedules.length === 0 && todos.length === 0 ? (
             <div className="empty-state">불러오는 중…</div>
@@ -107,46 +113,48 @@ export default function CalendarPage({ onNavigateToTodo }: CalendarPageProps) {
             />
           )}
         </div>
-        <aside className="cal-split-panel">
-          {selectedSchedule ? (
-            <ScheduleEditor
-              existing={selectedSchedule}
-              defaultDayIso={null}
-              onSaved={async () => {
-                await refresh();
-              }}
-              onDeleted={async () => {
-                setSelection(null);
-                await refresh();
-              }}
-              onCancel={() => setSelection(null)}
-            />
-          ) : composeDayIso ? (
-            <ScheduleEditor
-              existing={null}
-              defaultDayIso={composeDayIso}
-              onSaved={async (s) => {
-                setSelection({ kind: "schedule", id: s.id });
-                await refresh();
-              }}
-              onDeleted={() => setSelection(null)}
-              onCancel={() => setSelection(null)}
-            />
-          ) : selectedTodo ? (
-            <TodoDetailPanel
-              todo={selectedTodo}
-              onToggled={async () => {
-                await refresh();
-              }}
-              onNavigateToTodo={onNavigateToTodo}
-              onClose={() => setSelection(null)}
-            />
-          ) : (
-            <div className="cal-panel-empty">
-              <p>왼쪽 캘린더에서 일정을 클릭하거나 날짜의 "+ 추가"를 눌러 새 일정을 만드세요.</p>
-            </div>
-          )}
-        </aside>
+        {selection && (
+          <aside className="cal-split-panel">
+            {selectedSchedule ? (
+              <ScheduleEditor
+                existing={selectedSchedule}
+                defaultDayIso={null}
+                onSaved={async () => {
+                  await refresh();
+                }}
+                onDeleted={async () => {
+                  setSelection(null);
+                  await refresh();
+                }}
+                onCancel={() => setSelection(null)}
+              />
+            ) : composeDayIso ? (
+              <ScheduleEditor
+                existing={null}
+                defaultDayIso={composeDayIso}
+                onSaved={async (s) => {
+                  setSelection({ kind: "schedule", id: s.id });
+                  await refresh();
+                }}
+                onDeleted={() => setSelection(null)}
+                onCancel={() => setSelection(null)}
+              />
+            ) : selectedTodo ? (
+              <TodoDetailPanel
+                todo={selectedTodo}
+                onToggled={async () => {
+                  await refresh();
+                }}
+                onNavigateToTodo={onNavigateToTodo}
+                onClose={() => setSelection(null)}
+              />
+            ) : (
+              <div className="cal-panel-empty">
+                <p>왼쪽 캘린더에서 일정을 클릭하거나 날짜의 "+ 추가"를 눌러 새 일정을 만드세요.</p>
+              </div>
+            )}
+          </aside>
+        )}
       </div>
     </div>
   );

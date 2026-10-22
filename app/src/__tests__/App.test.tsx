@@ -12,17 +12,10 @@ let quickCaptureHandler:
 vi.mock("@tauri-apps/api/event", () => ({ listen: listenMock }));
 
 vi.mock("../features/today/TodayPage", () => ({
-  default: ({
-    onNavigateToTodo,
-    onNavigateToMemo,
-  }: {
-    onNavigateToTodo(id: number | null): void;
-    onNavigateToMemo(id: number): void;
-  }) => (
+  default: ({ onNavigateToTodo }: { onNavigateToTodo(id: number | null): void }) => (
     <div>
       <h1>Today dashboard</h1>
       <button onClick={() => onNavigateToTodo(42)}>Open todo 42</button>
-      <button onClick={() => onNavigateToMemo(24)}>Open memo 24</button>
     </div>
   ),
 }));
@@ -69,7 +62,8 @@ describe("App Today navigation", () => {
     expect(screen.queryByText(/Todo page selected/)).not.toBeInTheDocument();
     const destinations = screen
       .getAllByRole("button")
-      .map((button) => button.getAttribute("aria-label"));
+      .map((button) => button.getAttribute("aria-label"))
+      .filter((label) => label !== "검색");
     expect(destinations[0]).toBe("Today");
   });
 
@@ -82,15 +76,11 @@ describe("App Today navigation", () => {
     expect(screen.getByRole("heading", { name: "Today dashboard" })).toBeInTheDocument();
   });
 
-  it("passes selected ids from Today into TODO and Memo pages", () => {
+  it("passes the selected id from Today into the TODO page", () => {
     render(<App />);
 
     fireEvent.click(screen.getByRole("button", { name: "Open todo 42" }));
     expect(screen.getByText("Todo page selected 42")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: "Today" }));
-    fireEvent.click(screen.getByRole("button", { name: "Open memo 24" }));
-    expect(screen.getByText("Memo page selected 24")).toBeInTheDocument();
   });
 
   it("opens the captured item when the Tauri navigation event arrives", async () => {

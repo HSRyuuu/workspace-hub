@@ -150,3 +150,11 @@ export function shiftMonth(
 export function todayIso(): string {
   return toIsoDate(new Date());
 }
+
+/** YYYY-MM-DD 에 일수를 더한 로컬 날짜(음수 가능). */
+export function addDays(iso: string, days: number): string {
+  const d = fromIsoDate(iso);
+  if (!d) throw new Error(`invalid date: ${iso}`);
+  d.setDate(d.getDate() + days);
+  return toIsoDate(d);
+}

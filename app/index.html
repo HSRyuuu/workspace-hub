@@ -4,6 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>workspace-hub</title>
+    <script>
+      // 첫 페인트 전에 테마를 적용해 라이트→다크 깜빡임을 막는다. 로직은 src/theme.ts 와 동일하게 유지.
+      (function () {
+        try {
+          var v = localStorage.getItem("wh.theme");
+          var dark =
+            v === "dark" ||
+            (v !== "light" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.dataset.theme = dark ? "dark" : "light";
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

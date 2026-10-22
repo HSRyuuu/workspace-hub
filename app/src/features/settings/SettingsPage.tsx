@@ -1,13 +1,26 @@
 import { useCallback, useEffect, useState } from "react";
-import { Button } from "../../components/ui";
+import { Button, SegmentedControl } from "../../components/ui";
 import { showConfirmToast } from "../../components/ui/ConfirmToast";
 import { showErrorToast, showHintToast } from "../../components/ui/Toast";
+import { getThemePref, setThemePref, type ThemePref } from "../../theme";
 import { settingsApi } from "./api";
 import type { SkillTarget } from "./types";
+
+const THEME_ITEMS: { value: ThemePref; label: string }[] = [
+  { value: "system", label: "시스템" },
+  { value: "light", label: "라이트" },
+  { value: "dark", label: "다크" },
+];
 
 export default function SettingsPage() {
   const [targets, setTargets] = useState<SkillTarget[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [theme, setTheme] = useState<ThemePref>(getThemePref);
+
+  const changeTheme = (next: ThemePref) => {
+    setThemePref(next);
+    setTheme(next);
+  };
 
   const load = useCallback(() => {
     settingsApi
@@ -54,10 +67,26 @@ export default function SettingsPage() {
 
       <section className="today-card settings-card">
         <div className="settings-card-head">
+          <h2>화면 테마</h2>
+          <p>시스템을 고르면 macOS 의 라이트/다크 설정을 따라가요.</p>
+        </div>
+        <div className="settings-row">
+          <div className="settings-row-title">테마</div>
+          <SegmentedControl
+            items={THEME_ITEMS}
+            value={theme}
+            onChange={changeTheme}
+            ariaLabel="화면 테마"
+          />
+        </div>
+      </section>
+
+      <section className="today-card settings-card settings-card--stack">
+        <div className="settings-card-head">
           <h2>AI 스킬</h2>
           <p>
-            로컬 Claude Code·Codex 가 이 앱의 TODO·일정·메모·프로젝트를 CLI 로 조회하고 수정할 수
-            있게 하는 <code>workspace-hub</code> 스킬을 설치해요. 스킬에는 CLI 명세(
+            로컬 Claude Code·Codex 가 이 앱의 TODO·일정·메모를 CLI 로 조회하고 수정할 수 있게 하는{" "}
+            <code>workspace-hub</code> 스킬을 설치해요. 스킬에는 CLI 명세(
             <code>references/cli-spec.md</code>)가 함께 들어가요.
           </p>
         </div>

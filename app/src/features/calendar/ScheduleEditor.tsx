@@ -1,5 +1,12 @@
-import { useEffect, useRef, useState } from "react";
-import { Button, ColorSwatch, DateField, TimeField, showConfirmToast } from "../../components/ui";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Button,
+  ColorSwatch,
+  DateField,
+  MarkdownEditor,
+  TimeField,
+  showConfirmToast,
+} from "../../components/ui";
 import { TrashIcon } from "../../components/ui/icons";
 import { scheduleApi } from "./api";
 import { buildLocalIso, formatDateLocal, parseUtcIso, toIsoDate } from "./dateUtils";
@@ -122,6 +129,15 @@ export function ScheduleEditor({
   }, [existing?.id, existing?.updated_at, defaultDayIso]);
 
   const isNew = existing === null;
+
+  // 설명 에디터는 "편집 대상이 바뀔 때만" 내용을 다시 채운다 (타이핑마다 state 를 되먹이지 않는다).
+  const descriptionKey = `${existing?.id ?? "new"}:${existing?.updated_at ?? defaultDayIso ?? ""}`;
+  const descriptionSeed = useMemo(
+    () => defaultsFor(existing, defaultDayIso).description,
+    // descriptionKey 가 existing/defaultDayIso 의 변경을 대표한다
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [descriptionKey],
+  );
 
   function patchState<K extends keyof typeof state>(key: K, value: (typeof state)[K]) {
     setState((prev) => ({ ...prev, [key]: value }));
@@ -280,16 +296,17 @@ export function ScheduleEditor({
         />
       </label>
 
-      <label className="cal-field">
+      <div className="cal-field">
         <span className="cal-field-label">설명</span>
-        <textarea
-          className="input cal-textarea"
-          rows={8}
-          value={state.description}
-          onChange={(e) => patchState("description", e.target.value)}
-          placeholder="(선택)"
-        />
-      </label>
+        <div className="cal-description">
+          <MarkdownEditor
+            resetKey={descriptionKey}
+            initialMarkdown={descriptionSeed}
+            onChange={(md) => patchState("description", md)}
+            placeholder="(선택)"
+          />
+        </div>
+      </div>
 
       <div className="cal-field">
         <span className="cal-field-label">색상</span>

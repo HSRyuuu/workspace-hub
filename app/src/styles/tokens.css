@@ -1,19 +1,31 @@
 /*
  * workspace-hub Design Tokens
- * Source: docs/DESIGN.md (Linear 톤으로 이행 중 — Notion 보라 → Linear 인디고).
- * 외부 폰트 다운로드 없음 — Inter 미설치 시 시스템 폰트로 fallback.
+ * 라이트(Quiet Ink) 가 기본값이고, <html data-theme="dark"> 일 때 다크(Graphite Lime) 값으로 덮어쓴다.
+ * 토큰 이름은 두 테마 공통 — 컴포넌트 CSS 는 색을 직접 쓰지 않고 항상 이 토큰만 참조한다.
+ * 테마 선택/적용 로직은 src/theme.ts, 결정 근거는 docs/ADR.md ADR-0014.
+ * 외부 폰트 다운로드 없음 — 시스템 폰트 스택만 사용.
  */
 
 :root {
-  /* === Surface & Canvas (라이트 단일 테마) === */
+  color-scheme: light;
+
+  /* === Surface & Canvas ===
+     page = 앱 바탕(전체 폭 패널·본문 뒤), canvas = 그 위에 올라오는 카드·입력·버튼 면,
+     surface = 카드 안 헤더/hover, surface-soft = 사이드바, elevated = 팝오버·모달 */
+  --color-page: #f6f6f8;
   --color-canvas: #ffffff;
-  --color-surface: #fafafa;
-  --color-surface-soft: #f5f5f7;
+  --color-surface: #f4f4f6;
+  --color-surface-soft: #ececef;
+  --color-elevated: #ffffff;
 
   /* === Hairlines / Borders === */
   --color-hairline: rgba(15, 15, 15, 0.08);
   --color-hairline-soft: rgba(15, 15, 15, 0.04);
   --color-hairline-strong: rgba(15, 15, 15, 0.16);
+  /* 마크다운 표 등 본문 안 테두리 */
+  --color-table-border: #c8c8c8;
+  /* 행 hover·드롭 대상처럼 면 위에 살짝 얹는 오버레이 */
+  --color-overlay-hover: rgba(15, 15, 15, 0.06);
 
   /* === Text === */
   --color-ink-deep: #0f0f12;
@@ -21,22 +33,31 @@
   --color-charcoal: #27272a;
   --color-slate: #3f3f46;
   --color-steel: #52525b;
-  --color-stone: #71717a;
+  /* 메타·라벨 텍스트 (흰 배경 6.0:1, 사이드바 5.5:1) */
+  --color-stone: #62626b;
+  /* placeholder·비활성 전용 — 본문 텍스트로 쓰지 않는다 (2.6:1) */
   --color-muted: #a1a1aa;
 
-  /* === Primary (Ink black — 핵심 액션 버튼) === */
+  /* === Primary (라이트: 잉크 검정 / 다크: 라임) — CTA·체크·오늘 표시 === */
   --color-primary: #18181b;
   --color-primary-pressed: #09090b;
   --color-primary-deep: #09090b;
   --color-on-primary: #ffffff;
-  /* selected 행 / active 토글 — 옅은 회색 (검정 primary에 어울리는 중성 배경)
-     #f4f4f5 → #e4e4e7: 사이드바 배경(canvas, surface)과 차이가 너무 작아 hover/selected 가
-     시각적으로 안 잡히던 회귀를 해결. 흰 배경 위에서도 명확히 구분되는 톤. */
-  --color-primary-soft: #e4e4e7;
-  /* focus ring — 중성 회색 톤 (보라/블루 X) */
+  /* primary 면 위에 얹는 kbd 칩 등 */
+  --color-on-primary-overlay: rgba(255, 255, 255, 0.18);
+  --color-on-primary-overlay-border: rgba(255, 255, 255, 0.22);
+  /* selected 행 / active 토글 — 옅은 회색 (ADR-0011).
+     사이드바 배경(canvas, surface)과 차이가 작으면 안 보이므로 #e4e4e7 이상으로 유지. */
+  --color-primary-soft: #dfdfe4;
+  /* focus ring */
   --color-primary-ring: #d4d4d8;
 
-  /* === Data colors — workspace dot · priority · 카테고리 === */
+  /* === Accent — 포커스 링 · "다음" 표시 · 링크성 강조 (라이트: 블루 / 다크: 라임) === */
+  --color-accent: #3f6ac4;
+  --color-accent-soft: #eaf0fb;
+  --color-accent-ink: #2f55a8;
+
+  /* === Data colors — dot · priority · 카테고리 === */
   --color-data-blue: #3f6ac4;
   --color-data-violet: #7c5cd9;
   --color-data-teal: #0ea5a4;
@@ -65,10 +86,36 @@
   --color-error: #c33b3b;
   --color-link-blue: #2469cf;
 
+  /* === Toast (라이트: 반전 검정 / 다크: 한 단계 밝은 회색) === */
+  --color-toast-bg: #0f0f12;
+  --color-toast-fg: #ffffff;
+  --color-toast-hover: rgba(255, 255, 255, 0.08);
+  --color-toast-action-bg: #ffffff;
+  --color-toast-action-fg: #0f0f12;
+  --color-toast-action-hover: #e4e4e7;
+  --color-toast-border: transparent;
+  /* error 면(--color-error) 위에 얹는 오버레이 */
+  --color-on-error-overlay: rgba(255, 255, 255, 0.14);
+
+  /* === 캘린더 pill — 일정 색은 사용자가 고른 값이라 테마별로 섞는 비율만 바꾼다 === */
+  --pill-bg-pct: 18%;
+  --pill-fg-pct: 90%;
+  --pill-dot-pct: 100%;
+  --pill-mix: #000000;
+
+  /* === 코드 하이라이트 (CodeMirror — features/files/syntaxTheme.ts) === */
+  --syntax-keyword: #7c3aed;
+  --syntax-string: #b42343;
+  --syntax-number: #0f766e;
+  --syntax-comment: #6b7280;
+  --syntax-function: #2f55a8;
+  --syntax-type: #0e7490;
+  --syntax-property: #9a3412;
+
   /* === Typography === */
   --font-sans:
-    "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "Apple SD Gothic Neo",
-    system-ui, sans-serif;
+    -apple-system, BlinkMacSystemFont, "SF Pro Text", "Apple SD Gothic Neo", "Segoe UI", system-ui,
+    sans-serif;
   --font-mono: "SF Mono", ui-monospace, Menlo, monospace;
 
   --fs-hero: 48px;
@@ -76,9 +123,9 @@
   --fs-h1: 22px;
   --fs-h2: 18px;
   --fs-h3: 15px;
-  --fs-body: 12px;
-  --fs-sm: 11px;
-  --fs-xs: 10px;
+  --fs-body: 13px;
+  --fs-sm: 12px;
+  --fs-xs: 11px;
 
   /* === Radius === */
   --radius-xs: 3px;
@@ -107,9 +154,101 @@
   --z-modal: 100;
   --z-toast: 200;
 
-  /* === Priority chip (todo) — DESIGN.md 의 brand-orange/error 와 결합한 시맨틱 토큰 === */
+  /* === Priority chip (todo) — 시맨틱 토큰 === */
   --color-priority-high-bg: var(--color-tint-peach);
   --color-priority-high-fg: #8b3a0a;
   --color-priority-urgent-bg: var(--color-tint-rose);
   --color-priority-urgent-fg: #8b1a1a;
+}
+
+/* === Dark — Graphite Lime === */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-page: #1a1a1c;
+  --color-canvas: #222225;
+  --color-surface: #29292d;
+  --color-surface-soft: #121213;
+  --color-elevated: #2a2a2e;
+
+  --color-hairline: rgba(255, 255, 255, 0.08);
+  --color-hairline-soft: rgba(255, 255, 255, 0.04);
+  --color-hairline-strong: rgba(255, 255, 255, 0.16);
+  --color-table-border: #45454b;
+  --color-overlay-hover: rgba(255, 255, 255, 0.08);
+
+  --color-ink-deep: #ffffff;
+  --color-ink: #f2f2f0;
+  --color-charcoal: #e4e4e0;
+  --color-slate: #cfcfcb;
+  --color-steel: #b4b4ae;
+  --color-stone: #9a9a95;
+  --color-muted: #6b6b66;
+
+  --color-primary: #c6f24e;
+  --color-primary-pressed: #b3dd3f;
+  --color-primary-deep: #a5cd36;
+  --color-on-primary: #11140a;
+  --color-on-primary-overlay: rgba(0, 0, 0, 0.14);
+  --color-on-primary-overlay-border: rgba(0, 0, 0, 0.2);
+  --color-primary-soft: #34343a;
+  --color-primary-ring: rgba(198, 242, 78, 0.32);
+
+  --color-accent: #c6f24e;
+  --color-accent-soft: #26300f;
+  --color-accent-ink: #d8f882;
+
+  --color-data-blue: #7aa2ff;
+  --color-data-violet: #a48bf2;
+  --color-data-teal: #2ec4c0;
+  --color-data-emerald: #4fd18b;
+  --color-data-amber: #f0a43a;
+  --color-data-rose: #ff6b80;
+  --color-data-slate: #8a93a3;
+
+  --color-tint-peach: #3a2a20;
+  --color-tint-rose: #3a2224;
+  --color-tint-mint: #1f3228;
+  --color-tint-lavender: #2a2640;
+  --color-tint-sky: #1f2c3a;
+  --color-tint-yellow: #35311a;
+  --color-tint-yellow-bold: #5a4f12;
+  --color-tint-cream: #2a271d;
+  --color-tint-gray: #222222;
+
+  --color-success: #6fdc8c;
+  --color-warning: #ffb35c;
+  --color-error: #ff6b5e;
+  --color-link-blue: #8db3ff;
+
+  --color-toast-bg: #2e2e32;
+  --color-toast-fg: #f2f2f0;
+  --color-toast-hover: rgba(255, 255, 255, 0.08);
+  --color-toast-action-bg: #c6f24e;
+  --color-toast-action-fg: #11140a;
+  --color-toast-action-hover: #d8f882;
+  --color-toast-border: rgba(255, 255, 255, 0.12);
+  --color-on-error-overlay: rgba(0, 0, 0, 0.16);
+
+  --syntax-keyword: #c4a5ff;
+  --syntax-string: #ffa3a8;
+  --syntax-number: #7fdbca;
+  --syntax-comment: #8a8a85;
+  --syntax-function: #8db3ff;
+  --syntax-type: #6fd3e8;
+  --syntax-property: #ffb98a;
+
+  --pill-bg-pct: 28%;
+  --pill-fg-pct: 40%;
+  --pill-dot-pct: 70%;
+  --pill-mix: #ffffff;
+
+  --shadow-1: rgba(0, 0, 0, 0.3) 0px 1px 2px 0px;
+  --shadow-2: rgba(0, 0, 0, 0.45) 0px 4px 12px 0px;
+  --shadow-modal: rgba(0, 0, 0, 0.6) 0px 16px 48px -8px;
+
+  --color-priority-high-bg: var(--color-tint-peach);
+  --color-priority-high-fg: #ffb98a;
+  --color-priority-urgent-bg: var(--color-tint-rose);
+  --color-priority-urgent-fg: #ff9a9a;
 }

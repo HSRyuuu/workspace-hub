@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { ConfirmToast } from "./components/ui/ConfirmToast";
 import { Toast } from "./components/ui/Toast";
+import { CommandPalette } from "./features/search/CommandPalette";
+import type { SearchHit } from "./features/search/search";
+import { todoApi } from "./features/todo/api";
 import TodoPage from "./features/todo/TodoPage";
 import CalendarPage from "./features/calendar/CalendarPage";
 import MemoPage from "./features/memo/MemoPage";
@@ -61,19 +64,101 @@ const SettingsIcon = () => (
   </svg>
 );
 
-const SECTIONS: { id: Section; label: string; enabled: boolean; Icon: () => JSX.Element }[] = [
-  { id: "today", label: "Today", enabled: true, Icon: TodayIcon },
-  { id: "todo", label: "TODO", enabled: true, Icon: TodoIcon },
-  { id: "calendar", label: "Calendar", enabled: true, Icon: CalendarIcon },
-  { id: "memos", label: "Memo", enabled: true, Icon: MemoIcon },
-  { id: "files", label: "파일탐색기", enabled: true, Icon: FilesIcon },
+const SearchIcon = () => (
+  <svg {...iconProps} aria-hidden>
+    <circle cx="11" cy="11" r="6.5" />
+    <path d="M20 20l-4.2-4.2" />
+  </svg>
+);
+const CollapseIcon = () => (
+  <svg {...iconProps} aria-hidden>
+    <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" />
+    <path d="M9.5 4.5v15" />
+  </svg>
+);
+
+// 사이드바 순서 = ⌘1~5 단축키 순서
+const SECTIONS: { id: Exclude<Section, "settings">; label: string; Icon: () => JSX.Element }[] = [
+  { id: "today", label: "Today", Icon: TodayIcon },
+  { id: "todo", label: "TODO", Icon: TodoIcon },
+  { id: "calendar", label: "Calendar", Icon: CalendarIcon },
+  { id: "memos", label: "Memo", Icon: MemoIcon },
+  { id: "files", label: "파일탐색기", Icon: FilesIcon },
 ];
+
+const SIDEBAR_COLLAPSED_KEY = "wh.sidebar.collapsed";
+
+function readCollapsed(): boolean {
+  try {
+    return window.localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
 
 export default function App() {
   const [section, setSection] = useState<Section>("today");
   const [selectedTodoId, setSelectedTodoId] = useState<number | null>(null);
   const [selectedMemoId, setSelectedMemoId] = useState<number | null>(null);
   const [calendarNonce, setCalendarNonce] = useState(0);
+  const [collapsed, setCollapsed] = useState(readCollapsed);
+  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [openTodoCount, setOpenTodoCount] = useState<number | null>(null);
+
+  const toggleCollapsed = useCallback(() => {
+    setCollapsed((prev) => {
+      try {
+        window.localStorage.setItem(SIDEBAR_COLLAPSED_KEY, prev ? "0" : "1");
+      } catch {
+        // 저장 실패해도 현재 세션에는 적용한다
+      }
+      return !prev;
+    });
+  }, []);
+
+  // 사이드바 TODO 배지 — 화면을 옮길 때마다 갱신 (로컬 호출이라 가볍다)
+  useEffect(() => {
+    todoApi
+      .list("open")
+      .then((list) => setOpenTodoCount(Array.isArray(list) ? list.length : null))
+      .catch(() => undefined);
+  }, [section]);
+
+  // ⌘1~5 화면 이동 · ⌘, 설정 · ⌘K 검색 · ⌘\ 사이드바 접기. ⌥/⇧ 조합은 에디터 단축키(⌘⌥1~9 등)라 건드리지 않는다.
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (!e.metaKey || e.altKey || e.shiftKey || e.ctrlKey) return;
+      const index = Number(e.key) - 1;
+      if (index >= 0 && index < SECTIONS.length) {
+        e.preventDefault();
+        setSection(SECTIONS[index].id);
+      } else if (e.key === ",") {
+        e.preventDefault();
+        setSection("settings");
+      } else if (e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setPaletteOpen((open) => !open);
+      } else if (e.key === "\\") {
+        e.preventDefault();
+        toggleCollapsed();
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [toggleCollapsed]);
+
+  const openHit = (hit: SearchHit) => {
+    if (hit.kind === "todo") {
+      setSelectedTodoId(hit.id);
+      setSection("todo");
+    } else if (hit.kind === "memo") {
+      setSelectedMemoId(hit.id);
+      setSection("memos");
+    } else {
+      setCalendarNonce((n) => n + 1);
+      setSection("calendar");
+    }
+  };
 
   useEffect(() => {
     let unlisten: (() => void) | undefined;
@@ -104,61 +189,90 @@ export default function App() {
   }, []);
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell${collapsed ? " app-shell--collapsed" : ""}`}>
       {/* App 루트 단일 마운트 — 어느 도메인에서도 showConfirmToast/showErrorToast 로 접근 */}
       <ConfirmToast />
       <Toast />
-      <aside className="sidebar">
-        {SECTIONS.map((s) => (
-          <div
+      {paletteOpen && (
+        <CommandPalette
+          navItems={SECTIONS.map((s, i) => ({ id: s.id, label: s.label, shortcut: `⌘${i + 1}` }))}
+          onClose={() => setPaletteOpen(false)}
+          onNavigate={(id) => setSection(id as Section)}
+          onOpenHit={openHit}
+        />
+      )}
+      <aside className="sidebar" aria-label="주요 메뉴">
+        <button
+          type="button"
+          className="sidebar-search"
+          aria-label="검색"
+          title="검색 (⌘K)"
+          onClick={() => setPaletteOpen(true)}
+        >
+          <span className="sidebar-item-icon">
+            <SearchIcon />
+          </span>
+          <span className="sidebar-item-label">검색</span>
+          <kbd className="sidebar-kbd">⌘K</kbd>
+        </button>
+        {SECTIONS.map((s, i) => (
+          <button
             key={s.id}
-            className={[
-              "sidebar-item",
-              section === s.id ? "active" : "",
-              s.enabled ? "" : "disabled",
-            ]
-              .filter(Boolean)
-              .join(" ")}
-            onClick={() => s.enabled && setSection(s.id)}
-            role="button"
+            type="button"
+            className={`sidebar-item${section === s.id ? " active" : ""}`}
             aria-label={s.label}
-            aria-disabled={!s.enabled}
+            aria-current={section === s.id ? "page" : undefined}
+            title={`${s.label} (⌘${i + 1})`}
+            onClick={() => setSection(s.id)}
           >
             <span className="sidebar-item-icon">
               <s.Icon />
             </span>
-            <span className="sidebar-item-label" aria-hidden>
-              {s.label}
-            </span>
-          </div>
+            <span className="sidebar-item-label">{s.label}</span>
+            {s.id === "todo" && openTodoCount !== null && openTodoCount > 0 && (
+              <span className="sidebar-count" aria-hidden>
+                {openTodoCount}
+              </span>
+            )}
+          </button>
         ))}
-        {/* 설정은 도메인이 아니라 사이드바 맨 아래에 고정 */}
-        <div
+        {/* 설정·접기는 도메인이 아니라 사이드바 맨 아래에 고정 */}
+        <button
+          type="button"
           className={`sidebar-item sidebar-item--bottom${section === "settings" ? " active" : ""}`}
-          onClick={() => setSection("settings")}
-          role="button"
           aria-label="설정"
+          aria-current={section === "settings" ? "page" : undefined}
+          title="설정 (⌘,)"
+          onClick={() => setSection("settings")}
         >
           <span className="sidebar-item-icon">
             <SettingsIcon />
           </span>
-          <span className="sidebar-item-label" aria-hidden>
-            설정
+          <span className="sidebar-item-label">설정</span>
+        </button>
+        <button
+          type="button"
+          className="sidebar-item"
+          aria-label={collapsed ? "사이드바 펼치기" : "사이드바 접기"}
+          title="사이드바 접기/펼치기 (⌘\)"
+          onClick={toggleCollapsed}
+        >
+          <span className="sidebar-item-icon">
+            <CollapseIcon />
           </span>
-        </div>
+          <span className="sidebar-item-label">접기</span>
+        </button>
       </aside>
-      <main
-        className={`main${section === "memos" || section === "files" ? " main--flush" : ""}`}
-      >
+      <main className={`main${section === "memos" || section === "files" ? " main--flush" : ""}`}>
         {section === "today" && (
           <TodayPage
+            onNavigateToCalendar={() => {
+              setCalendarNonce((n) => n + 1);
+              setSection("calendar");
+            }}
             onNavigateToTodo={(id) => {
               setSelectedTodoId(id);
               setSection("todo");
-            }}
-            onNavigateToMemo={(id) => {
-              setSelectedMemoId(id);
-              setSection("memos");
             }}
           />
         )}

@@ -10,6 +10,7 @@ import { json } from "@codemirror/lang-json";
 import { markdown } from "@codemirror/lang-markdown";
 import { python } from "@codemirror/lang-python";
 import { languageForFile, shouldWrapEditorLines, type LanguageId } from "./helpers";
+import { syntaxTheme } from "./syntaxTheme";
 
 function languageExtension(id: LanguageId | null): Extension {
   switch (id) {
@@ -55,6 +56,7 @@ export function FileEditor({ path, initialContent, onChange }: FileEditorProps) 
       doc: initialContent,
       extensions: [
         basicSetup,
+        syntaxTheme,
         languageExtension(languageForFile(name)),
         ...wrapExtension,
         EditorView.updateListener.of((u) => {

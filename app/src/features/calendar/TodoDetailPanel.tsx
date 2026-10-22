@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, PriorityDot } from "../../components/ui";
+import { Button, MarkdownEditor, PriorityDot } from "../../components/ui";
 import { todoApi } from "../todo/api";
 import type { Todo } from "../todo/types";
 
@@ -71,7 +71,15 @@ export function TodoDetailPanel({
           <dt>마감일</dt>
           <dd>{dueLabel}</dd>
         </dl>
-        {todo.description && <p className="cal-todo-desc">{todo.description}</p>}
+        {todo.description && (
+          <div className="cal-todo-desc">
+            <MarkdownEditor
+              readOnly
+              resetKey={`${todo.id}:${todo.updated_at}`}
+              initialMarkdown={todo.description}
+            />
+          </div>
+        )}
       </div>
 
       <div className="cal-editor-actions">

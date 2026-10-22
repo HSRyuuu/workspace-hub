@@ -84,23 +84,6 @@ pub fn list(conn: &Connection, scope: ListScope) -> Result<Vec<Memo>, CoreError>
     Ok(out)
 }
 
-pub fn list_recent(conn: &Connection, limit: i64) -> Result<Vec<Memo>, CoreError> {
-    let sql = format!(
-        "SELECT {SELECT_COLUMNS}
-         FROM memo
-         WHERE deleted_at IS NULL
-         ORDER BY updated_at DESC, id DESC
-         LIMIT ?1"
-    );
-    let mut stmt = conn.prepare(&sql)?;
-    let rows = stmt.query_map(params![limit], map_row)?;
-    let mut out = Vec::new();
-    for row in rows {
-        out.push(row?);
-    }
-    Ok(out)
-}
-
 pub fn update(conn: &Connection, id: i64, patch: &UpdateMemo) -> Result<Memo, CoreError> {
     let current = get(conn, id)?;
 
